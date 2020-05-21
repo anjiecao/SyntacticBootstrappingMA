@@ -1,6 +1,8 @@
 ---
 title: "visualizing procedure"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 #TODO: maybe put on the same scale? 
@@ -51,9 +53,12 @@ ggplot() +
 scale_x_continuous(name="x") + 
 scale_y_continuous(name="y") +
   ylim(0,20) + 
-geom_rect(data=d,mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2, fill=t), color="black", alpha=0.5) 
-    
-  }else{
+geom_rect(data=d,mapping=aes(xmin=x1, xmax=x2, ymin=y1, ymax=y2, fill=t), color="black", alpha=0.5)
+```
+
+
+```{r}
+}else{
   xmins = generate_xmin(num_of_block,num_of_phase_each_block)
   xmaxs = xmins + 1
   ymins = rep(1, num_of_block*num_of_phase_each_block)
@@ -85,8 +90,10 @@ p7 <- generate_procedure_plot(4,2,2,FALSE) + labs(title ="johnson2002")
 p8 <- generate_procedure_plot(4,3,3,FALSE) + labs(title = "lidz2009")
 p9 <- generate_procedure_plot(1,3,3,FALSE) + labs(title ="messenger2014")
 p10 <- generate_procedure_plot(8,2,2,FALSE) + labs(title = "mills2019")
+```
 
 
+```{r}
 p1 
 p2
 p3
@@ -96,6 +103,10 @@ p6
 p7
 p8
 p9
+```
+
+
+```{r}
 p10
 ```
 
