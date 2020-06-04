@@ -1,9 +1,13 @@
 ---
-title: "sb DRAFT"
+title: "sb DRAFT-everything"
 output:
   html_document:
     df_print: paged
 ---
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+                     warning=FALSE, message=FALSE)
+```
 
 
 
@@ -12,10 +16,12 @@ library(tidyverse)
 library(googlesheets4)
 library(metafor)
 library(knitr)
+library(gridExtra)
 source("calculate_es_bootstrapping.R")
 source("tidy_data_bootstrapping.R")
 GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
 ```
+
 
 
 ```{r}
@@ -23,80 +29,168 @@ GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
 read_raw_data_and_clean("1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o")
 write_tidy_sheet("1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o")
 ma_data <- read_sheet(MA_DATA_GOOGLE_SHEET_ID, "MA data tidy with ES NEW")
-ma_data
+
+
+ma_data <- ma_data %>% filter(!is.na(d_calc)) %>% mutate(practice_phase = ifelse(practice_phase == "NA","no",practice_phase),
+                                                         character_identification = ifelse(character_identification == "NA", "no", character_identification),
+                                                         presentation_type = ifelse(presentation_type == "immediate-after", "immediate_after", ifelse(presentation_type == "Immediate-after", "immediate_after", presentation_type)),
+                                                         patient_argument_type = ifelse(patient_argument_type == "N/A", "NA", patient_argument_type),
+                                                         population_type = ifelse(population_type == "typical_developing", "typically_developing", population_type),
+                                                         agent_argument_type = ifelse(agent_argument_type == "pronoun_and_noun" | agent_argument_type == "pronoung_and_noun", "noun_and_pronoun", agent_argument_type),
+                                                         test_type = ifelse(test_type == "actor", "agent", test_type))
 ```
 
 
+# Data Overview
 
-### First trim the label
+- number of differnet effectsizes
+- number of conditions included 
+
+```{r}
+N_effect_sizes <- length((!is.na(ma_data$d_calc))&!(ma_data$d_calc ==0))
+N_papers <- length(unique(ma_data$unique_id))
+```
+
+There are `r N_effect_sizes` effect sizes collected from `r N_papers` different papers.
+
+
+
+# Variable Summary 
+- distribution of sample size 
 ```{r}
 
-#FIX ME: SOMETHING WRONG ABOUT THIS FUNCTION
-shorter_reference <- function(ref){
-  ref_list <- as.list(strsplit(ref, ","))
-  first_author <- ref_list[[1]][1]
-  last_item <- sapply(ref_list, tail,1)
-  year <- as.character(as.numeric(gsub("\\D"," ",last_item)))
-  short <- paste(first_author, " et al.", "(", year, ")",sep = "")
-  return(short)
-}
+summary(ma_data$n_1)
+ma_data %>% 
+  ggplot(aes(x = n_1)) + 
+  geom_histogram() + 
+  geom_vline(xintercept =mean(ma_data$n_1)) +
+  stat_bin(binwidth = 2) + 
+  labs(title = "Distribution of sample size")
 
 
-ma_data %>%  mutate(short_cite = 
-                     ifelse(nchar(short_cite)>50, 
-                            shorter_reference(short_cite),
-                            short_cite)) -> ma_data
 ```
 
-
-
-```{r fig.height = 10, fig.width = 5}
-ma_data
-```
-
-
-```{r fig.height = 10, fig.width = 5}
-ma_model <- rma(ma_data$d_calc, ma_data$d_var_calc)
-ma_model
-forest(ma_model,
-       header = T,
-       slab = ma_data$unique_id,
-       col = "red",
-       cex = .7)
-```
-
-Funnel plot
-filter(verb_type == "fake_verb" & abs(d_calc) < 5) 
+- distribtuion of x_1 
 ```{r}
-# if transitive, color red; intransitive, color blue 
+
+summary(ma_data$x_1)
+ma_data %>% 
+  ggplot(aes(x = x_1)) + 
+  geom_histogram() + 
+  stat_bin(binwidth = 0.05) + 
+  geom_vline(xintercept =mean(ma_data$x_1))+
+  labs(title = "Distribution of x_1")
+
+```
+- distribtuion of sd_1 
+
+```{r}
+summary(ma_data$SD_1)
+ma_data %>% 
+  ggplot(aes(x =SD_1 )) + 
+  geom_histogram() + 
+  stat_bin(binwidth = 0.01) + 
+  geom_vline(xintercept =mean(ma_data$SD_1))+
+  labs(title = "Distribution of sd_1")
+```
+
+- distribution of d_calc
+```{r}
+summary(ma_data$d_calc)
+ma_data %>% 
+  ggplot(aes(x =d_calc )) + 
+  geom_histogram() + 
+  geom_vline(xintercept = mean(ma_data$d_calc))+
+  labs(title = "Distribution of d_calc")
+```
+
+- summary for all categorical variables 
+
+```{r}
+ma_data %>% group_by(sentence_structure) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=sentence_structure, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8)) ->p1
+
+ma_data %>% group_by(language) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=language, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8)) ->p2
+
+ma_data %>% group_by(population_type) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=population_type, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p3
+
+ma_data %>% group_by(agent_argument_type) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=agent_argument_type, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p4
+
+ma_data %>% group_by(patient_argument_type) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=patient_argument_type	, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p5
+
+ma_data %>% group_by(stimuli_type) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=stimuli_type	, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p6
+
+ma_data %>% group_by(stimuli_modality) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=stimuli_modality, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p7
+
+ma_data %>% group_by(stimuli_actor) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=stimuli_actor, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p8
+
+ma_data %>% group_by(presentation_type) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=presentation_type, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p9
+
+ma_data %>% group_by(character_identification) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=character_identification, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p10
+
+ma_data %>% group_by(practice_phase) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=practice_phase, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p11
+
+ma_data %>% group_by(test_mass_or_distributed) %>% 
+  summarize(count = n()) %>% ggplot(aes(x=test_mass_or_distributed, y=count)) +     
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8))->p12
+
+margin = theme(plot.margin = unit(c(2,2,2,2), "cm"))
+grid.arrange(p1, p2, p3, p4,p5,p6,p7,p8,p9,p10,p11,p12, nrow = 3)
 
 
-ma_model_funnel <- rma(ma_data$d_calc, ma_data$d_var_calc)
-f<- funnel(ma_model_funnel, xlab = "Effect Size") 
-
-#see a closer look (exclude outlier)
-
-ma_data %>% filter(abs(d_calc) < 5) -> ma_data_no_outlier 
-ma_model_funnel_no_outlier <- rma(ma_data_no_outlier$d_calc, ma_data_no_outlier$d_var_calc)
-f<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size") 
 
 ```
 
 
-# Potential Moderators 
-## Continuous 
-### Age: 
+# age 
+## age only
+
 ```{r}
-ggplot(ma_data, aes(x = mean_age, 
-                                 y = d_calc, 
-                                 size = n_1)) +
+# all ages (days)
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, size = n_1)) +
   geom_point() +
-  geom_smooth(method = "lm") +
   ylab("Effect Size") +
   xlab("Age (days)") +
   ggtitle("Syntactical Bootstrapping effect size vs. Age (days)") +
   theme_classic() +
-  theme(legend.position = "none")
+  theme(legend.position = "none") 
+
+# all ages (months)
 
 ggplot(ma_data, aes(x = (mean_age/30.44), 
                                  y = d_calc, 
@@ -108,19 +202,359 @@ ggplot(ma_data, aes(x = (mean_age/30.44),
   ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") +
   theme_classic() +
   theme(legend.position = "none")
+
+# Younger than 50 months 
+
+ma_data %>% filter(mean_age <= 50*30.44) %>% 
+  ggplot( mapping = aes(x = mean_age, y = d_calc, size = n_1)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), younger than 50 months") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+ma_data %>% filter(mean_age <= 50*30.44) %>% 
+  ggplot(mapping = aes(x = mean_age/30.44, y = d_calc, size = n_1)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), younger than 50 months") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+# younger than 36 months
+  
+ma_data %>% filter(mean_age <= 36*30.44) %>% 
+  ggplot(mapping = aes(x = mean_age, y = d_calc, size = n_1)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), younger than 36 months") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+ma_data %>% filter(mean_age <= 36*30.44) %>% 
+  ggplot(mapping = aes(x = mean_age/30.44, y = d_calc, size = n_1)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), younger than 36 months") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+
+
+```
+## age and sentence structure 
+```{r}
+
+ma_data_no_bare_verb <- ma_data %>% filter(sentence_structure != "bare_verb")
+
+# all ages (days)
+ggplot(data = ma_data_no_bare_verb, aes(x = mean_age, y = d_calc, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days)") +
+  theme_classic() 
+
+# all ages (months)
+
+ggplot(data = ma_data_no_bare_verb, aes(x = (mean_age/30.44), y = d_calc, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days)") +
+  theme_classic() 
+
+# Younger than 50 months 
+ma_data_no_bare_verb_less_50 <- ma_data_no_bare_verb %>% filter(mean_age < 50*30.44 |mean_age==50*30.44)
+
+ggplot(data = ma_data_no_bare_verb_less_50, mapping = aes(x = mean_age, y = d_calc, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), younger than 50 months") +
+  theme_classic() 
+
+ggplot(data = ma_data_no_bare_verb_less_50, mapping = aes(x = mean_age/30.44, y = d_calc, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), younger than 50 months") +
+  theme_classic() 
+
+# younger than 36 months
+
+ma_data_no_bare_verb_less_36 <- ma_data_no_bare_verb %>% filter(mean_age < 36*30.44|mean_age  == 36*30.44)
+
+ggplot(data = ma_data_no_bare_verb_less_36, mapping = aes(x = mean_age, y = d_calc, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), younger than 36 months") +
+  theme_classic() 
+
+ggplot(data=ma_data_no_bare_verb_less_36, mapping = aes(x = mean_age/30.44, y = d_calc, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), younger than 36 months") +
+  theme_classic() 
 ```
 
-### vocab [skip for now]
-```{r}
-```
-## Categorical 
-### sentence structure 
-```{r}
-ma_data %>% group_by(sentence_structure) %>% summarise(n = n())
-ma_data_sentence_structure <- ma_data %>% filter(!is.na(d_calc) & sentence_structure != "bare_verb") 
+## age and others
 
-cis_by_structure <- ma_data_sentence_structure %>%
-    group_by(sentence_structure) %>%
+```{r}
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = population_type)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by population type") +
+  theme_classic() -> ae1
+
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = stimuli_modality)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by stimuli_modality") +
+  theme_classic() -> ae2
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = stimuli_actor)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by stimuli_actor") +
+  theme_classic() -> ae3
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = character_identification)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by character_identification") +
+  theme_classic() -> ae4
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = practice_phase)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by practice phase") +
+  theme_classic() -> ae5
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = test_mass_or_distributed)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by test type") +
+  theme_classic() -> ae6
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = presentation_type)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by presentation type") +
+  theme_classic() -> ae7
+
+ma_data %>% 
+ggplot(aes(x = mean_age, y = d_calc, color = test_type)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days) break down by test type") +
+  theme_classic() -> ae8
+
+grid.arrange(ae1,ae2,ae3,ae4, nrow = 2)
+grid.arrange(ae5,ae6,ae7, ae8, nrow =2)
+ae1
+ae2
+ae3
+ae4
+ae5
+ae6
+ae7
+ae8
+```
+
+
+
+## Models
+```{r}
+m1 <- rma.mv(d_calc, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m1)
+```
+
+### Age
+```{r}
+m2 <- rma.mv(d_calc ~ mean_age , V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m2)
+```
+
+### Age + sentence structure 
+```{r}
+m3 <- rma.mv(d_calc ~ mean_age + sentence_structure , V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_no_bare_verb)
+summary(m3)
+```
+### Age + sentence structure & interaction??
+```{r}
+m4 <- rma.mv(d_calc ~ mean_age + sentence_structure + mean_age*sentence_structure , V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_no_bare_verb)
+summary(m4)
+```
+#vocab
+
+productive_vocab_median has more entries than productive_vocab_mean, so using productive_vocab_median here
+```{r}
+ma_data %>% 
+  filter(productive_vocab_median != "NA") %>% 
+  mutate(productive_vocab_median = as.numeric(productive_vocab_median))-> ma_data_vocab_median 
+ 
+```
+
+#vocab
+## vocab and age 
+```{r}
+ma_data_vocab_median %>% 
+  ggplot(aes(x = productive_vocab_median, y = mean_age)) +
+  geom_point() + 
+  geom_smooth(method = "lm") + 
+  labs(title = "median productive vocabulary and age by day")
+
+```
+
+## vocab and effect size
+```{r}
+ma_data_vocab_median %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc)) +
+  geom_point() + 
+  geom_smooth(method = "lm") + 
+  labs(title = "median productive vocabulary and sample size")
+
+
+```
+
+## model:
+```{r}
+m4 <- rma.mv(d_calc ~ productive_vocab_median  , V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab_median)
+summary(m4)
+```
+
+
+# n_repetition sentence
+## age and n_repetition
+older kiddos have less repetitions
+```{r}
+ma_data %>% 
+  ggplot(mapping = aes(x = mean_age, y = n_repetitions_sentence)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("number of repetition per novel verb") +
+  xlab("mean_age") +
+  ggtitle("mean_age vs. number of repetitions for verb (all)") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+ma_data %>% filter(mean_age <= 50*30.44) %>% 
+  ggplot( mapping = aes(x = mean_age, y = n_repetitions_sentence)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("number of repetition per novel verb") +
+  xlab("mean_age") +
+  ggtitle("mean_age vs. number of repetitions for verb (all), younger than 50 months") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+ma_data %>% filter(mean_age <= 36*30.44) %>% 
+  ggplot( mapping = aes(x = mean_age,y = n_repetitions_sentence)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("number of repetition per novel verb") +
+  xlab("mean_age") +
+  ggtitle("mean_age vs. number of repetitions for verb (all), younger than 36 months") +
+  theme_classic() +
+  theme(legend.position = "none")
+```
+
+
+does not seem to correlate with effect sizes
+```{r}
+ma_data %>% 
+  ggplot(mapping = aes(x = n_repetitions_sentence, y = d_calc)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("number of repetition per novel verb") +
+  ggtitle("Syntactical Bootstrapping effect size vs. number of repetitions for verb") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+ma_data %>% 
+  ggplot(mapping = aes(x = n_repetitions_sentence, y = d_calc, color = test_mass_or_distributed)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("number of repetition per novel verb") +
+  ggtitle("Syntactical Bootstrapping effect size vs. number of repetitions for verb") +
+  theme_classic() 
+
+ma_data %>% 
+  ggplot(mapping = aes(x = n_repetitions_sentence, y = d_calc, color = character_identification)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("number of repetition per novel verb") +
+  ggtitle("Syntactical Bootstrapping effect size vs. number of repetitions for verb (break down by character identification)") +
+  theme_classic() 
+
+ma_data %>% 
+  ggplot(mapping = aes(x = n_repetitions_sentence, y = d_calc, color = practice_phase)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("number of repetition per novel verb") +
+  ggtitle("Syntactical Bootstrapping effect size vs. number of repetitions for verb (break down by practice phase)") +
+  theme_classic() 
+```
+
+## model  
+```{r}
+m5 <- rma.mv(d_calc ~ n_repetitions_sentence , V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m5)
+
+m6 <- rma.mv(d_calc ~ n_repetitions_sentence + mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m6)
+
+m7 <- rma.mv(d_calc ~ n_repetitions_sentence + mean_age + n_repetitions_sentence * mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m7)
+```
+
+
+# argument types 
+
+```{r}
+ma_data 
+
+
+cis_by_at <- ma_data %>%
+    group_by(agent_argument_type) %>%
     summarize(mean = mean(d_calc),
             sd = sd(d_calc),
             n = n()) %>%
@@ -128,22 +562,24 @@ cis_by_structure <- ma_data_sentence_structure %>%
          ci_lower = mean - ci_range_95,
          ci_upper = mean + ci_range_95)
 
+ma_data %>% filter(agent_argument_type == "pronoun" | agent_argument_type == "noun") -> ma_data_by_at
+cis_by_at %>% filter(agent_argument_type == "pronoun" | agent_argument_type == "noun") -> cis_by_at
 
-ggplot(ma_data_sentence_structure, aes(x = sentence_structure, 
+ggplot(data=ma_data_by_at, aes(x = agent_argument_type, 
                     y = d_calc, 
-                    color = sentence_structure)) +
+                    color = agent_argument_type)) +
   geom_violin() +
   geom_point(alpha = .4)  +
   ylab("Effect Size") +
-  xlab("Sentence Structure") +
-  ggtitle("SB effect size by Sentence Structure") +
-  geom_errorbar(data = cis_by_structure, 
-                  aes(x = sentence_structure,
+  xlab("Agent Argument Type") +
+  ggtitle("SB effect size by agent argument type") +
+  geom_errorbar(data = cis_by_at, 
+                  aes(x = agent_argument_type,
                       y = mean, ymin = ci_lower, 
                       ymax = ci_upper), 
                   color = "black") +
-  geom_pointrange(data = cis_by_structure, 
-                  aes(x = sentence_structure,
+  geom_pointrange(data = cis_by_at, 
+                  aes(x = agent_argument_type,
                       y = mean, ymin = ci_lower, 
                       ymax = ci_upper), 
                   color = "black") +
@@ -151,15 +587,36 @@ ggplot(ma_data_sentence_structure, aes(x = sentence_structure,
   theme_classic(base_size = 16) +
   theme(legend.position = "none")
 
-```
+ggplot(data=ma_data_by_at, aes(x = agent_argument_type, 
+                    y = d_calc, 
+                    color = agent_argument_type)) +
+  geom_violin() +
+  geom_point(alpha = .4)  +
+  ylab("Effect Size") +
+  xlab("Agent Argument Type") +
+  ggtitle("SB effect size by agent argument type") +
+  geom_errorbar(data = cis_by_at, 
+                  aes(x = agent_argument_type,
+                      y = mean, ymin = ci_lower, 
+                      ymax = ci_upper), 
+                  color = "black") +
+  geom_pointrange(data = cis_by_at, 
+                  aes(x = agent_argument_type,
+                      y = mean, ymin = ci_lower, 
+                      ymax = ci_upper), 
+                  color = "black") +
+  geom_hline(aes(yintercept = 0), linetype = 2) +
+  facet_wrap(~sentence_structure) + 
+  theme_classic(base_size = 16) +
+  theme(legend.position = "none") 
 
-### test type 
-```{r}
-ma_data %>% group_by(test_type) %>% summarise(n = n())
-ma_data_test_type <- ma_data %>% filter(!is.na(d_calc)) 
 
-cis_by_test_type <- ma_data_test_type %>%
-    group_by(test_type) %>%
+ma_data_by_at %>% 
+  filter(sentence_structure == "transitive") %>% 
+  filter(patient_argument_type == "pronoun" | patient_argument_type == "noun") -> ma_data_by_pat
+  
+cis_by_pat <- ma_data_by_pat %>%
+    group_by(patient_argument_type) %>%
     summarize(mean = mean(d_calc),
             sd = sd(d_calc),
             n = n()) %>%
@@ -167,244 +624,89 @@ cis_by_test_type <- ma_data_test_type %>%
          ci_lower = mean - ci_range_95,
          ci_upper = mean + ci_range_95)
 
-
-ggplot(ma_data_test_type, aes(x = test_type, 
+ggplot(data=ma_data_by_pat, aes(x = patient_argument_type, 
                     y = d_calc, 
-                    color = test_type)) +
+                    color = patient_argument_type)) +
   geom_violin() +
   geom_point(alpha = .4)  +
   ylab("Effect Size") +
-  xlab("Test Type") +
-  ggtitle("SB effect size by Test type") +
-  geom_errorbar(data = cis_by_test_type, 
-                  aes(x = test_type,
+  xlab("Patient Argument Type") +
+  ggtitle("SB effect size by patient argument type") +
+  geom_errorbar(data = cis_by_pat, 
+                  aes(x = patient_argument_type,
                       y = mean, ymin = ci_lower, 
                       ymax = ci_upper), 
                   color = "black") +
-  geom_pointrange(data = cis_by_test_type, 
-                  aes(x = test_type,
+  geom_pointrange(data = cis_by_pat, 
+                  aes(x = patient_argument_type,
                       y = mean, ymin = ci_lower, 
                       ymax = ci_upper), 
                   color = "black") +
+  facet_wrap(~agent_argument_type) +
   geom_hline(aes(yintercept = 0), linetype = 2) +
   theme_classic(base_size = 16) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") 
+   
+
 ```
 
 
-### agent argument type / patient argument type [show variances]
+# summary 
+## tree plot 
 
+```{r fig.height = 10, fig.width = 5}
+ma_model <- rma(ma_data$d_calc, ma_data$d_var_calc)
+ma_model
+forest(ma_model,
+       header = T,
+       slab = ma_data$unique_id,
+       col = "red",
+       cex = .7)
+```
+
+
+## Funnel plot
 ```{r}
-ma_data %>% group_by(agent_argument_type,patient_argument_type) %>% summarise(n = n())
+ma_data %>% 
+  mutate(color = ifelse(sentence_structure == "transitive", "red", "blue"),
+         color_sample_size = ifelse(n_1 < 10, "red", ifelse(n_1 < 20, "orange", "yellow")),
+         color_confidence = ifelse(inclusion_certainty == 1, "red", "black"))-> ma_data_funnel
+
+ma_data_funnel %>% filter (abs(d_calc) < 5) -> ma_data_funnel_no_outlier
+ss_colors <- ma_data_funnel$color
+ss_colors_no_outlier <- ma_data_funnel_no_outlier$color 
+size_colors <- ma_data_funnel$color_sample_size
+size_colors_no_outlier <- ma_data_funnel_no_outlier$color_sample_size
+c_colors <- ma_data_funnel$color_confidence
+c_colors_no_outlier <- ma_data_funnel_no_outlier$color_confidence
+
+ma_model_funnel <- rma(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc)
+ma_model_funnel_no_outlier <- rma(ma_data_funnel_no_outlier$d_calc, ma_data_funnel_no_outlier$d_var_calc)
+
+f1<- funnel(ma_model_funnel, xlab = "Effect Size", col = ss_colors) 
+legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,col=c("red", "blue"))
+title(main = "All effect sizes break down by sentence structure")
+
+f2<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = ss_colors_no_outlier) 
+legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,col=c("red", "blue"))
+title(main = "effect sizes excluded outliers (abs <5) break down by sentence structure")
+
+f3<- funnel(ma_model_funnel, xlab = "Effect Size", col = size_colors) 
+legend("topright",bg = "white",legend = c("small(<10)","medium(10-20)", "large(>20)"),pch=16,col=c("red", "orange", "yellow"))
+title(main = "all effect sizes break down by sample size")
+
+f4<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = size_colors_no_outlier) 
+legend("topright",bg = "white",legend = c("small(<10)","medium(10-20)", "large(>20)"),pch=16,col=c("red", "orange", "yellow"))
+title(main = "effect sizes excluded outliers (abs <5) break down by sample size")
+
+
+f5<- funnel(ma_model_funnel, xlab = "Effect Size", col = c_colors) 
+legend("topright",bg = "white",legend = c("weird ones","normal ones"),pch=16,col=c("red", "black"))
+title(main = "all effect sizes break down by confidence")
+
+f6<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = c_colors_no_outlier) 
+legend("topright",bg = "white",legend = c("weird ones","normal ones"),pch=16,col=c("red", "black"))
+title(main = "effect sizes excluded outliers (abs <5) break down by confidence")
+
 
 ```
-
-### stimuli_modality 
-
-```{r}
-ma_data %>% group_by(stimuli_modality) %>% summarise(n = n())
-
-```
-
-```{r}
-ma_data %>%  filter(!is.na(d_calc)) -> mata_data_noNAd
-```
-
-
-### stimuli_actor
-
-```{r}
-mata_data_noNAd %>% group_by(stimuli_actor) %>% summarise(n = n())
-
-cis_by_stimuli_actor <- mata_data_noNAd %>%
-    group_by(stimuli_actor) %>%
-    summarize(mean = mean(d_calc),
-            sd = sd(d_calc),
-            n = n()) %>%
-    mutate(ci_range_95 =  1.96 * (sd/sqrt(n)),
-         ci_lower = mean - ci_range_95,
-         ci_upper = mean + ci_range_95)
-
-
-ggplot(mata_data_noNAd, aes(x = stimuli_actor, 
-                    y = d_calc, 
-                    color = stimuli_actor)) +
-  geom_violin() +
-  geom_point(alpha = .4)  +
-  ylab("Effect Size") +
-  xlab("Actor Type") +
-  ggtitle("SB effect size by Stimuli Actor") +
-  geom_errorbar(data = cis_by_stimuli_actor, 
-                  aes(x = stimuli_actor,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_pointrange(data = cis_by_stimuli_actor, 
-                  aes(x = stimuli_actor,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  theme_classic(base_size = 16) +
-  theme(legend.position = "none")
-```
-
-### character identification 
-
-```{r}
-#collapse no and NA
-mata_data_noNAd %>% 
-  mutate(character_identification = ifelse(character_identification == "NA","no",character_identification)) -> mata_data_noNAd
-
-mata_data_noNAd %>% group_by(character_identification) %>% summarise(n = n())
-
-cis_by_character_identification <- mata_data_noNAd %>%
-    group_by(character_identification) %>%
-    summarize(mean = mean(d_calc),
-            sd = sd(d_calc),
-            n = n()) %>%
-    mutate(ci_range_95 =  1.96 * (sd/sqrt(n)),
-         ci_lower = mean - ci_range_95,
-         ci_upper = mean + ci_range_95)
-
-
-ggplot(mata_data_noNAd, aes(x = character_identification, 
-                    y = d_calc, 
-                    color = character_identification)) +
-  geom_violin() +
-  geom_point(alpha = .4)  +
-  ylab("Effect Size") +
-  xlab("Character Identification") +
-  ggtitle("SB effect size by Character Identification") +
-  geom_errorbar(data = cis_by_character_identification, 
-                  aes(x = character_identification,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_pointrange(data = cis_by_character_identification, 
-                  aes(x = character_identification,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  theme_classic(base_size = 16) +
-  theme(legend.position = "none")
-```
-
-### practice phase
-```{r}
-mata_data_noNAd %>% 
-  mutate(practice_phase = ifelse(practice_phase == "NA","no",practice_phase)) -> mata_data_noNAd
-
-mata_data_noNAd %>% group_by(practice_phase) %>% summarise(n = n())
-
-cis_by_practice_phase<- mata_data_noNAd %>%
-    group_by(practice_phase) %>%
-    summarize(mean = mean(d_calc),
-            sd = sd(d_calc),
-            n = n()) %>%
-    mutate(ci_range_95 =  1.96 * (sd/sqrt(n)),
-         ci_lower = mean - ci_range_95,
-         ci_upper = mean + ci_range_95)
-
-
-ggplot(mata_data_noNAd, aes(x = practice_phase, 
-                    y = d_calc, 
-                    color = practice_phase)) +
-  geom_violin() +
-  geom_point(alpha = .4)  +
-  ylab("Effect Size") +
-  xlab("Practice phase") +
-  ggtitle("SB effect size by practice phase") +
-  geom_errorbar(data = cis_by_practice_phase, 
-                  aes(x = practice_phase,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_pointrange(data = cis_by_practice_phase, 
-                  aes(x = practice_phase,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  theme_classic(base_size = 16) +
-  theme(legend.position = "none")
-
-```
-
-
-### mass_or_distribute 
-```{r}
-
-mata_data_noNAd %>% group_by(test_mass_or_distributed) %>% summarise(n = n())
-
-cis_by_test_mass_or_distributed<- mata_data_noNAd %>%
-    group_by(test_mass_or_distributed) %>%
-    summarize(mean = mean(d_calc),
-            sd = sd(d_calc),
-            n = n()) %>%
-    mutate(ci_range_95 =  1.96 * (sd/sqrt(n)),
-         ci_lower = mean - ci_range_95,
-         ci_upper = mean + ci_range_95)
-
-
-ggplot(mata_data_noNAd, aes(x = test_mass_or_distributed, 
-                    y = d_calc, 
-                    color = test_mass_or_distributed)) +
-  geom_violin() +
-  geom_point(alpha = .4)  +
-  ylab("Effect Size") +
-  xlab("Test mass or distributed") +
-  ggtitle("SB effect size by Test mass or distributed") +
-  geom_errorbar(data = cis_by_test_mass_or_distributed, 
-                  aes(x = test_mass_or_distributed,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_pointrange(data = cis_by_test_mass_or_distributed, 
-                  aes(x = test_mass_or_distributed,
-                      y = mean, ymin = ci_lower, 
-                      ymax = ci_upper), 
-                  color = "black") +
-  geom_hline(aes(yintercept = 0), linetype = 2) +
-  theme_classic(base_size = 16) +
-  theme(legend.position = "none")
-```
-
-
-### show a summary of n_reptition_sentence / n_repetition_video 
-```{r}
-mata_data_noNAd %>% 
-  ggplot(mapping = aes(x = n_train_test_pair)) + 
-  geom_histogram() + 
-  ggtitle("Histogram of the train-test pair distribution") 
-```
-
-
-```{r}
-mata_data_noNAd %>% 
-  ggplot(mapping = aes(x = N_test_trial_per_pair)) + 
-  geom_histogram() + 
-  ggtitle("Histogram of the test_trial_per_pai") 
-```
-
-
-```{r}
-mata_data_noNAd %>% 
-  filter(!is.na(n_repetitions_sentence)) %>% 
-  ggplot(mapping = aes(x = n_repetitions_sentence)) + 
-  geom_histogram() + 
-  ggtitle("Histogram of the n_repetitions_sentence") 
-```
-
-
-
-```{r}
-mata_data_noNAd %>% 
-  filter(!is.na(n_repetitions_video)) %>% 
-  ggplot(mapping = aes(x = n_repetitions_video)) + 
-  geom_histogram() + 
-  ggtitle("Histogram of the n_repetitions_video") 
-```
-
-
