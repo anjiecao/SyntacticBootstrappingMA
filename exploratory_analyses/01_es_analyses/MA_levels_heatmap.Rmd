@@ -1,0 +1,85 @@
+---
+title: "Syntactic Bootstrapping Moderator Levels Exploration"
+subtitle: "Data V2"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    code_folding: hide 
+    number_sections: no
+---
+
+
+```{r setup, include = F}
+library(tidyverse)
+library(googlesheets4)
+library(metafor)
+library(knitr)
+library(gridExtra)
+library(here)
+library(heatmaply)
+library(glue)
+
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.height=6, fig.path='Figs/',
+                     warning=FALSE, message=FALSE)
+theme_set(theme_classic()) # sets global plot theme
+```
+
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make all variables (i.e. things that might change) as capital letters at the top of the scripts
+
+ma_data <- read_csv(DATA_PATH)   %>%
+  filter(language == "English",
+         population_type == "typically_developing", 
+         stimuli_modality == "video",
+         !is.na(mean_age))
+```
+
+
+```{r, fig.height = 9, fig.width = 10}
+ALL_CATEGORICAL_VARS <- c("test_type","presentation_type",
+                      "agent_argument_type", "patient_argument_type", 
+                     "stimuli_modality", "stimuli_actor", "character_identification",   "practice_phase", "test_mass_or_distributed")
+
+
+get_cross_counts <- function(args, df){
+  var1 = args[[1]]
+  var2 = args[[2]]
+  
+  if (var1 != var2){
+  
+  df %>%
+    select_(var1, var2) %>%
+    rename(v1 = var1, 
+          v2 = var2) %>%
+    count(v1, v2) %>%
+    mutate(v1_long = glue("{var1}/{v1}"),
+           v2_long = glue("{var2}/{v2}"))  %>%
+    select(v1_long, v2_long, n) 
+
+  }
+}
+
+all_pair_counts <- list(ALL_CATEGORICAL_VARS,
+                        ALL_CATEGORICAL_VARS) %>%
+  cross() %>%
+  map_df(get_cross_counts, ma_data) %>%
+  complete(v1_long, v2_long, fill = list(n = 0)) %>%
+  filter(v1_long != v2_long)
+
+
+  all_counts_wide <- all_pair_counts %>%
+    pivot_wider(names_from = v2_long, values_from = n) 
+  
+
+  all_counts_wide_matrix <- all_counts_wide %>%
+    select(-v1_long) %>%
+    as.matrix()
+  
+  row.names(all_counts_wide_matrix) <-   all_counts_wide$v1_long
+  heatmaply(all_counts_wide_matrix,
+            fontsize_row = 8,
+            fontsize_col = 8)
+```

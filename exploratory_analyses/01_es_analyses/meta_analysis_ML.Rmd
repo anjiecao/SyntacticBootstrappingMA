@@ -176,7 +176,7 @@ summary(m_age_young)
 ```
 
 
-## age and sentence structure {.tabset}
+## age and sentence structure{.tabset}
 
 ### all
 ```{r}
