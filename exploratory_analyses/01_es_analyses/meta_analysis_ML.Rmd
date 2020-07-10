@@ -34,7 +34,9 @@ DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make
 ma_data <- read_csv(DATA_PATH)   %>%
   filter(language == "English",
          population_type == "typically_developing",
-         stimuli_modality == "video")
+         stimuli_modality == "video",
+         !is.na(mean_age)) 
+  
 ```
 
 
@@ -65,7 +67,6 @@ ma_data %>%
   DT::datatable()
 ```
 
-mean age is misssing for one
 
 # Variable Summary 
 ## Continuous variables

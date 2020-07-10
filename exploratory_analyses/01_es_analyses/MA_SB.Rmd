@@ -13,6 +13,7 @@ output:
 
 
 ```{r setup, include = F}
+library(glue)
 library(tidyverse)
 library(googlesheets4)
 library(metafor)
@@ -38,9 +39,34 @@ DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make
 ma_data <- read_csv(DATA_PATH)   %>%
   filter(language == "English",
          population_type == "typically_developing", 
-         stimuli_modality == "video",
+         stimuli_modality == "video"|stimuli_modality == "animation",
          !is.na(mean_age))
+
+ma_data
 ```
+
+# With Raw Calculation 
+```{r}
+ma_data <- ma_data %>% 
+  mutate(
+    d_calc_raw = case_when(
+      !is.na(x_2_raw) & !is.na(sd_2_raw) ~ (x_1 - x_2_raw) / sqrt((sd_1^2 + sd_2_raw^2)/2),
+      TRUE ~  NA_real_ 
+    ), 
+    d_var_calc_raw = case_when(
+      !is.na(x_2_raw) & !is.na(sd_2_raw) ~  (1 / n_1) + (d_calc_raw ^ 2 / (2 * n_1)), 
+      TRUE ~ NA_real_
+    )) 
+
+ma_data_with_raw <- ma_data %>% filter(!is.na(d_calc_raw))
+
+cor.test(ma_data_with_raw$d_calc,
+         ma_data_with_raw$d_calc_raw)
+
+ma_data_with_raw
+```
+
+
 
 
 # Data Overview
@@ -64,7 +90,64 @@ ma_data %>%
   arrange(-n) %>%
   DT::datatable()
 ```
+# Forest plot 
+```{r}
+ma_model <- rma(ma_data$d_calc, ma_data$d_var_calc)
+ma_model
+forest(ma_model,
+       header = T,
+       slab = ma_data$unique_id,
+       col = "red",
+       cex = .7)
 
+```
+#funnel plot {.tabset}
+## vanilla 
+```{r}
+
+ma_data %>% 
+  mutate(color = ifelse(sentence_structure == "transitive", "red", "blue"),
+         color_sample_size = ifelse(n_1 < 10, "red", ifelse(n_1 < 20, "orange", "yellow")),
+         color_confidence = ifelse(inclusion_certainty == 1, "red", "black"))-> ma_data_funnel
+
+
+ma_data_funnel %>% filter (abs(d_calc) < 5) -> ma_data_funnel_no_outlier
+
+ss_colors <- ma_data_funnel$color
+ss_colors_no_outlier <- ma_data_funnel_no_outlier$color 
+
+ma_model_funnel <- rma(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc)
+ma_model_funnel_no_outlier <- rma(ma_data_funnel_no_outlier$d_calc, ma_data_funnel_no_outlier$d_var_calc)
+
+f1<- funnel(ma_model_funnel, xlab = "Effect Size", col = ss_colors) 
+legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,col=c("red", "blue"))
+title(main = "All effect sizes break down by sentence structure")
+
+f2<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = ss_colors_no_outlier) 
+legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,col=c("red", "blue"))
+title(main = "effect sizes excluded outliers (abs <5) break down by sentence structure")
+```
+
+## take int occount sentence structure? 
+```{r}
+ma_model_sentence_structure <- rma(ma_data_funnel$d_calc~ma_data_funnel$sentence_structure, ma_data_funnel$d_var_calc)
+ma_model_no_outlier_ss <- rma(ma_data_funnel_no_outlier$d_calc~ma_data_funnel_no_outlier$sentence_structure, ma_data_funnel_no_outlier$d_var_calc)
+
+f3 <- funnel(ma_model_sentence_structure, xlab = "effect size", col = ss_colors)
+f3_b <- funnel(ma_model_no_outlier_ss, xlab = "effect size", col = ss_colors_no_outlier)
+```
+
+## take int account sentence structure and age? 
+```{r}
+ma_model_ss_age <- rma(ma_data_funnel$d_calc~ma_data_funnel$sentence_structure + ma_data_funnel $mean_age, ma_data_funnel$d_var_calc)
+ma_model_funnel_no_outlier_ss_age <- rma(ma_data_funnel_no_outlier$d_calc~ma_data_funnel_no_outlier$sentence_structure+ma_data_funnel_no_outlier$mean_age, ma_data_funnel_no_outlier$d_var_calc)
+
+
+
+f4 <- funnel(ma_model_ss_age, xlab = "effect size", col = ss_colors)
+f4_b <- funnel(ma_model_funnel_no_outlier_ss_age, xlab = "effect size", col = ss_colors_no_outlier)
+
+```
 
 # Variable Summary 
 ## Continuous Variables
@@ -93,7 +176,7 @@ long_continuous %>%
 ```{r, fig.height = 10}
 CATEGORICAL_VARS <- c("sentence_structure", "agent_argument_type", "patient_argument_type", "stimuli_actor",
                      "presentation_type", "character_identification",
-                     "test_mass_or_distributed", "practice_phase")
+                     "test_mass_or_distributed", "practice_phase", "test_method")
 
 long_categorical <- ma_data %>%
   pivot_longer(cols = CATEGORICAL_VARS) %>%
@@ -139,6 +222,16 @@ summary(m_old)
 ```
 
 ## age only{.tabset}
+### colored by unique_id
+```{r}
+ma_data %>% 
+  ggplot(aes(x = mean_age/30.44, y = d_calc,color = unique_id)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") 
+```
+
 
 ### all
 ```{r}
@@ -158,6 +251,19 @@ m_age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data)
 summary(m_age)
 ```
+```{r fig.width = 10, fig.height = 12}
+forest(m_age,
+       header = T,
+       slab = ma_data$unique_id,
+       col = "red",
+       cex = .7
+)
+
+```
+
+```{r}
+funnel(m_age)
+```
 
 ### young, < 36
  
@@ -173,10 +279,19 @@ ma_data_young %>%
   theme(legend.position = "none") 
 ```
 
-```{r}
+```{r fig.width = 10, fig.height = 12}
 m_age_young <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data_young)
 summary(m_age_young)
+```
+```{r fig.width = 10, fig.height = 12}
+forest(m_age_young,
+       header = T,
+       slab = ma_data_young$unique_id,
+       col = "red",
+       cex = .7
+)
+
 ```
 
 
@@ -195,9 +310,30 @@ ma_data_old %>%
 ```
 
 ```{r}
-ma_data_old <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+m_age_old <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data_old)
-summary(ma_data_old)
+summary(m_age_old)
+```
+
+
+
+
+## age and test type {.tabset}
+### all 
+```{r}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = test_method)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), breakdown my method") 
+```
+```{r}
+m_age_method <- rma.mv(d_calc ~ mean_age + test_method, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_method)
 ```
 
 ## age and sentence structure {.tabset}
@@ -781,189 +917,58 @@ cor.test(ma_data_with_vocab$mean_age,
          ma_data_with_vocab$productive_vocab_median)
 ```
 
-# contingency table and heat map 
+
+# contingency table 
 ```{r}
 ALL_CATEGORICAL_VARS <- c("test_type","presentation_type",
-                      "agent_argument_type", "patient_argument_type", 
-                      "stimuli_modality", "stimuli_actor", "character_identification", "practice_phase", "test_mass_or_distributed")
-
-SETUP_CATEGORICAL_VARS <- c("stimuli_actor", "character_identification", "practice_phase","test_mass_or_distributed","test_type","presentation_type")
+                      "agent_argument_type_clean", "patient_argument_type_clean", 
+                     "stimuli_modality", "stimuli_actor", "character_identification", "practice_phase", "test_mass_or_distributed", "test_method")
 
 
-CATEGORICAL_VARS_DICT <- dict()
-CATEGORICAL_VARS_DICT[["stimuli_actor"]] <- c("person", "non-person")
-CATEGORICAL_VARS_DICT[["character_identification"]] <- c("yes", "no")
-CATEGORICAL_VARS_DICT[["practice_phase"]] <- c("yes", "no")
-CATEGORICAL_VARS_DICT[["test_mass_or_distributed"]] <- c("mass", "distributed")
-CATEGORICAL_VARS_DICT[["test_type"]] <- c("agent", "action")
-CATEGORICAL_VARS_DICT[["presentation_type"]] <- c("immediate_after", "asynchronous")
-keys <- CATEGORICAL_VARS_DICT$keys()
 
 
-create_ctable <- function(dictionary, df){
-  keys <- dictionary$keys()
-  l <- length(keys)
-  all_df <-data.frame()
-  for (k in 1:l)
-  {
-    key = keys[[k]]
-    values = dictionary$get(key)
-    for (v in 1 : length(values)){
-      long_categorical_v <-  df %>%
-      filter(eval(as.symbol(key)) == values[v]) %>% 
-      pivot_longer(cols = all_of(SETUP_CATEGORICAL_VARS)) %>% 
-      mutate(new_value = paste(name, value)) %>% 
-      count(name, new_value) %>% 
-      mutate(key_value = paste(keys[[k]], values[v]))
-      all_df <- rbind(all_df, long_categorical_v) 
-
-    }
+get_cross_counts <- function(args, df){
+  var1 = args[[1]]
+  var2 = args[[2]]
   
+  if (var1 != var2){
+  
+  df %>%
+    select_(var1, var2) %>%
+    rename(v1 = var1, 
+          v2 = var2) %>%
+    count(v1, v2) %>%
+    mutate(v1_long = glue("{var1}/{v1}"),
+           v2_long = glue("{var2}/{v2}"))  %>%
+    select(v1_long, v2_long, n) 
+
   }
-return (all_df)
 }
 
-ma_data_hmap <- ma_data %>% 
-  filter(presentation_type != "simultaneous") 
-
-ma_data_hmap
-
-h <- create_ctable(CATEGORICAL_VARS_DICT, ma_data_hmap)
-h
-h %>% 
-  pivot_wider(names_from = key_value, values_from = n) %>% 
-  select(-name) %>% 
-  rename(set_up_row = new_value) %>% 
-  gather(set_up_colum, freq, 2:13) %>% 
-  replace(is.na(.), 0) -> h_heatmap
-
-h_heatmap %>% 
-  ggplot(aes(x=set_up_row, y=set_up_colum, fill = freq)) +
-  geom_tile() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+all_pair_counts <- list(ALL_CATEGORICAL_VARS,
+                        ALL_CATEGORICAL_VARS) %>%
+  cross() %>%
+  map_df(get_cross_counts, ma_data) %>%
+  complete(v1_long, v2_long, fill = list(n = 0)) %>%
+  filter(v1_long != v2_long)
 
 
-h_heatmap_wider <- h_heatmap %>% 
-  replace(is.na(.), 0) %>% 
-  pivot_wider(names_from = set_up_colum, values_from = freq) 
-
-h_heatmap_wider %>% 
-  filter(set_up_row == "test_type action")
-
-
-h_heatmap_wider <- as.data.frame(h_heatmap_wider)
-rownames(h_heatmap_wider) <- c("character_identification no	",
-                               "character_identification yes", 
-                               "practice_phase no",
-                               "practice_phase yes",
-                               "presentation_type immediate_after",
-                               "stimuli_actor non-person",
-                               "stimuli_actor person",
-                               "test_mass_or_distributed distributed",
-                               "test_mass_or_distributed mass",
-                               "test_type action",
-                               "test_type agent",
-                               "presentation_type asynchronous")
-
-
-
-
-h_heatmap_wider %>% select(-set_up_row) %>%  heatmaply(keep.dendro = TRUE)
-
-
-
-```
-
-
-```{r}
-
-SETUP_CATEGORICAL_VARS <- c("stimuli_actor", "character_identification", "practice_phase","test_mass_or_distributed","test_type")
-
-
-CATEGORICAL_VARS_DICT <- dict()
-CATEGORICAL_VARS_DICT[["stimuli_actor"]] <- c("person", "non-person")
-CATEGORICAL_VARS_DICT[["character_identification"]] <- c("yes", "no")
-CATEGORICAL_VARS_DICT[["practice_phase"]] <- c("yes", "no")
-CATEGORICAL_VARS_DICT[["test_mass_or_distributed"]] <- c("mass", "distributed")
-CATEGORICAL_VARS_DICT[["test_type"]] <- c("agent", "action")
-keys <- CATEGORICAL_VARS_DICT$keys()
-
-
-create_ctable <- function(dictionary, df){
-  keys <- dictionary$keys()
-  l <- length(keys)
-  all_df <-data.frame()
-  for (k in 1:l)
-  {
-    key = keys[[k]]
-    values = dictionary$get(key)
-    for (v in 1 : length(values)){
-      long_categorical_v <-  df %>%
-      filter(eval(as.symbol(key)) == values[v]) %>% 
-      pivot_longer(cols = all_of(SETUP_CATEGORICAL_VARS)) %>% 
-      mutate(new_value = paste(name, value)) %>% 
-      count(name, new_value) %>% 
-      mutate(key_value = paste(keys[[k]], values[v]))
-      all_df <- rbind(all_df, long_categorical_v) 
-
-    }
+  all_counts_wide <- all_pair_counts %>%
+    pivot_wider(names_from = v2_long, values_from = n) 
   
-  }
-return (all_df)
-}
 
-ma_data_hmap <- ma_data
-
-
-h <- create_ctable(CATEGORICAL_VARS_DICT, ma_data_hmap)
-h
-h %>% 
-  pivot_wider(names_from = key_value, values_from = n) %>% 
-  select(-name) %>% 
-  rename(set_up_row = new_value) %>% 
-  gather(set_up_colum, freq, 2:11) %>% 
-  replace(is.na(.), 0) -> h_heatmap
-
-h_heatmap %>% 
-  ggplot(aes(x=set_up_row, y=set_up_colum, fill = freq)) +
-  geom_tile() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-
-h_heatmap_wider <- h_heatmap %>% 
-  replace(is.na(.), 0) %>% 
-  pivot_wider(names_from = set_up_colum, values_from = freq) 
-
-h_heatmap_wider %>% 
-  filter(set_up_row == "test_type action")
-
-
-h_heatmap_wider <- as.data.frame(h_heatmap_wider)
-h_heatmap_wider
-rownames(h_heatmap_wider) <- c("character_identification no	",
-                               "practice_phase no",
-                               "stimuli_actor person",
-                               "test_mass_or_distributed distributed",
-                               "test_type agent",
-                               "character_identification yes", 
-                               "practice_phase yes",
-                               "stimuli_actor non-person",
-                               "test_mass_or_distributed mass",
-                               "test_type action")
-
-
-
-
-h_heatmap_wider %>% select(-set_up_row) %>%  heatmaply(keep.dendro = TRUE)
-
-
+  all_counts_wide_matrix <- all_counts_wide %>%
+    select(-v1_long) %>%
+    as.matrix()
+  
+  row.names(all_counts_wide_matrix) <-   all_counts_wide$v1_long
+  heatmaply(all_counts_wide_matrix,
+            fontsize_row = 8,
+            fontsize_col = 8)
 ```
 
-```{r}
-dend <- hclust(dist(h_heatmap_wider, method = "euclidean"), method = "complete")
-kable(cutree(dend, k = 4)) 
 
-```
+
 
 # Model selections??
 http://www.metafor-project.org/doku.php/tips:model_selection_with_glmulti_and_mumin
@@ -972,7 +977,7 @@ eval(metafor:::.MuMIn)
 
 ma_data
 
-full <- rma.mv(d_calc, d_var_calc, mods = ~ mean_age + test_mass_or_distributed + practice_phase + character_identification + sentence_structure,
+full <- rma.mv(d_calc, d_var_calc, mods = ~ mean_age + agent_argument_type_clean + patient_argument_type_clean + stimuli_modality + stimuli_actor + presentation_type + test_mass_or_distributed + practice_phase + character_identification + n_repetitions_sentence + n_repetitions_video + test_method,
             data=ma_data, method="ML")
 
 res <- dredge(full, trace=2)
@@ -983,11 +988,15 @@ subset(res, delta <= 2, recalc.weights=FALSE)
 ```
 
 ```{r}
+res
+```
+
+```{r}
 
 rma.glmulti <- function(formula,data)
   {rma.mv(formula, d_var_calc, data=ma_data, method="ML")
 }
-res <- glmulti(d_calc ~ mean_age + test_mass_or_distributed + practice_phase + character_identification + sentence_structure, data=ma_data,
+res <- glmulti(d_calc ~mean_age + agent_argument_type_clean + patient_argument_type_clean + stimuli_modality + stimuli_actor + presentation_type + test_mass_or_distributed + practice_phase + character_identification + n_repetitions_sentence + n_repetitions_video + test_method, data=ma_data,
                level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize=32)
 print(res)
 
@@ -999,6 +1008,12 @@ plot(res, type="s")
 
 
 ```
+
+```{r}
+summary(res@objects[[2]])
+plot(res, type="s")
+```
+
 
 ```{r}
 eval(metafor:::.glmulti)

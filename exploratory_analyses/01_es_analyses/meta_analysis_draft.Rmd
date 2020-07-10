@@ -1,8 +1,14 @@
 ---
-title: "sb DRAFT-everything"
-output:
+title: "Syntactic Boostrapping MA"
+subtitle: "Data V2"
+author: "Anjie Cao and Molly Lewis"
+date: "`r Sys.Date()`"
+output: 
   html_document:
-    df_print: paged
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: yes
 ---
 ```{r global_options, include=FALSE}
 knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
@@ -17,11 +23,170 @@ library(googlesheets4)
 library(metafor)
 library(knitr)
 library(gridExtra)
-source("calculate_es_bootstrapping.R")
-source("tidy_data_bootstrapping.R")
+library(here)
+library(dict)
+library(heatmaply)
+
 GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
 ```
 
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+
+ma_data <- read_csv(DATA_PATH)   %>%
+  filter(language == "English",
+         population_type == "typically_developing")
+```
+
+
+
+
+
+#contingency table 
+```{r}
+ALL_CATEGORICAL_VARS <- c("test_type","presentation_type",
+                      "agent_argument_type", "patient_argument_type", 
+                      "stimuli_modality", "stimuli_actor", "character_identification", "practice_phase", "test_mass_or_distributed")
+
+SETUP_CATEGORICAL_VARS <- c("stimuli_modality", "stimuli_actor", "character_identification", "practice_phase","test_mass_or_distributed","test_type","presentation_type")
+
+
+CATEGORICAL_VARS_DICT <- dict()
+CATEGORICAL_VARS_DICT[["stimuli_modality"]] <- c("video", "picture", "animation")
+CATEGORICAL_VARS_DICT[["stimuli_actor"]] <- c("person", "non-person")
+CATEGORICAL_VARS_DICT[["character_identification"]] <- c("yes", "no")
+CATEGORICAL_VARS_DICT[["practice_phase"]] <- c("yes", "no")
+CATEGORICAL_VARS_DICT[["test_mass_or_distributed"]] <- c("mass", "distributed")
+CATEGORICAL_VARS_DICT[["test_type"]] <- c("agent", "action")
+CATEGORICAL_VARS_DICT[["presentation_type"]] <- c("immediate_after", "asynchronous", "simultaneous")
+keys <- CATEGORICAL_VARS_DICT$keys()
+
+
+  
+#long_cateorical %>% pull(new_value_row) %>% unique() -> categories
+
+create_ctable <- function(dictionary, df){
+  keys <- dictionary$keys()
+  l <- length(keys)
+  all_df <-data.frame()
+  for (k in 1:l)
+  {
+    key = keys[[k]]
+    values = dictionary$get(key)
+    for (v in 1 : length(values)){
+      long_categorical_v <-  df %>%
+      filter(eval(as.symbol(key)) == values[v]) %>% 
+      pivot_longer(cols = all_of(SETUP_CATEGORICAL_VARS)) %>% 
+      mutate(new_value = paste(name, value)) %>% 
+      count(name, new_value) %>% 
+      mutate(key_value = paste(keys[[k]], values[v]))
+      all_df <- rbind(all_df, long_categorical_v) 
+
+    }
+  
+  }
+return (all_df)
+}
+
+h <- create_ctable(CATEGORICAL_VARS_DICT, ma_data)
+h %>% 
+ clean_names() %>% 
+  pivot_wider(names_from = key_value, values_from = n) %>% 
+  select(-name) %>% 
+  rename(set_up_row = new_value) %>% 
+  gather(set_up_colum, freq, 2:17) %>% 
+  replace(is.na(.), 0) -> h_heatmap
+
+h_heatmap %>% 
+  ggplot(aes(x=set_up_row, y=set_up_colum, fill = freq)) +
+  geom_tile() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  
+h_heatmap %>% 
+  filter(set_up_row == "character_identification yes" | set_up_row == "character_identification no") %>% 
+  arrange(freq) %>% 
+  ggplot(aes(x=set_up_row, y=set_up_colum, fill = freq)) +
+  geom_tile() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  
+c("stimuli_modality", "stimuli_actor", "character_identification", "practice_phase","test_mass_or_distributed","test_type","presentation_type")
+
+
+h_heatmap %>% 
+  filter (set_up_row != set_up_colum) %>% 
+  mutate(cat_row = case_when(
+    grepl('stimuli_modality', set_up_row) ~ "stimuli_modality",
+    grepl('stimuli_actor', set_up_row) ~ "stimuli_actor",
+    grepl('character_identification', set_up_row) ~ "character_identification",
+    grepl('practice_phase', set_up_row) ~ "practice_phase",
+    grepl('test_mass_or_distributed', set_up_row) ~ "test_mass_or_distributed",
+    grepl('test_type', set_up_row) ~ "test_type",
+    grepl('presentation_type', set_up_row) ~ "presentation_type"), 
+    cat_col = case_when(
+    grepl('stimuli_modality', set_up_colum) ~ "stimuli_modality",
+    grepl('stimuli_actor', set_up_colum) ~ "stimuli_actor",
+    grepl('character_identification', set_up_colum) ~ "character_identification",
+    grepl('practice_phase', set_up_colum) ~ "practice_phase",
+    grepl('test_mass_or_distributed', set_up_colum) ~ "test_mass_or_distributed",
+    grepl('test_type', set_up_colum) ~ "test_type",
+    grepl('presentation_type', set_up_colum) ~ "presentation_type")
+  ) %>% 
+  group_by(cat_row, set_up_colum) %>% 
+  summarize(
+    total_freq = sum(freq)
+  ) %>% 
+  arrange(cat_row, -total_freq)
+  #arrange(-freq) 
+  #ggplot(x = rowname, y = Column, fill = Value))
+
+```
+```{r}
+h_heatmap
+h_heatmap %>% 
+  pivot_wider(names_from = set_up_colum, values_from = freq) %>% 
+  heatmaply()
+
+
+```
+
+
+
+```{r}
+
+
+ma_data %>% 
+  mutate(
+    pp_option = case_when(
+      practice_phase == "yes" ~ "pp_yes",
+      practice_phase == "no" ~ "pp_no"
+    ), 
+    ci_option = case_when(
+      character_identification == "yes" ~ "ci_yes", 
+      character_identification == "no" ~ "ci_no"
+    ) 
+  ) %>% 
+  mutate(v_for_wide = 1) %>% 
+  pivot_wider(names_from = stimuli_modality, values_from = v_for_wide) %>%
+  mutate(v_for_wide = 1) %>% 
+  pivot_wider(names_from = stimuli_actor, values_from = v_for_wide) %>% 
+  mutate(v_for_wide = 1) %>% 
+  pivot_wider(names_from = test_mass_or_distributed, values_from = v_for_wide) %>% 
+  mutate(v_for_wide = 1) %>% 
+  pivot_wider(names_from = pp_option, values_from = v_for_wide) %>% 
+  mutate(v_for_wide = 1) %>% 
+  pivot_wider(names_from = ci_option, values_from = v_for_wide) %>% 
+  mutate(v_for_wide = 1) %>% 
+  pivot_wider(names_from = test_type, values_from = v_for_wide) %>% 
+  mutate(v_for_wide = 1) %>% 
+  pivot_wider(names_from = presentation_type, values_from = v_for_wide) -> ma_data_heatmap
+ 
+ma_data_heatmap %>% 
+  select(unique_id, video, picture, animation, person, 'non-person', distributed, mass, pp_yes, pp_no, ci_yes, ci_no, agent, action, immediate_after, asynchronous, simultaneous) %>% 
+  replace(is.na(.), 0) -> mini_tidy
+
+heatmaply(mini_tidy)
+ 
+```
 
 
 ```{r}
@@ -690,23 +855,6 @@ title(main = "All effect sizes break down by sentence structure")
 f2<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = ss_colors_no_outlier) 
 legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,col=c("red", "blue"))
 title(main = "effect sizes excluded outliers (abs <5) break down by sentence structure")
-
-f3<- funnel(ma_model_funnel, xlab = "Effect Size", col = size_colors) 
-legend("topright",bg = "white",legend = c("small(<10)","medium(10-20)", "large(>20)"),pch=16,col=c("red", "orange", "yellow"))
-title(main = "all effect sizes break down by sample size")
-
-f4<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = size_colors_no_outlier) 
-legend("topright",bg = "white",legend = c("small(<10)","medium(10-20)", "large(>20)"),pch=16,col=c("red", "orange", "yellow"))
-title(main = "effect sizes excluded outliers (abs <5) break down by sample size")
-
-
-f5<- funnel(ma_model_funnel, xlab = "Effect Size", col = c_colors) 
-legend("topright",bg = "white",legend = c("weird ones","normal ones"),pch=16,col=c("red", "black"))
-title(main = "all effect sizes break down by confidence")
-
-f6<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = c_colors_no_outlier) 
-legend("topright",bg = "white",legend = c("weird ones","normal ones"),pch=16,col=c("red", "black"))
-title(main = "effect sizes excluded outliers (abs <5) break down by confidence")
 
 
 ```
