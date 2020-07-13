@@ -94,6 +94,12 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
         adult_participant = case_when(
           is.na(mean_age) ~ "yes", 
           TRUE ~ "no"
+        ), 
+        data_source_clean = case_when(
+          grepl("text", data_source, fixed = TRUE) ~ "text", 
+          grepl("author", data_source, fixed = TRUE) ~ "author_contact", 
+          grepl("table", data_source, fixed = TRUE) ~ "table", 
+          TRUE ~ "plot"
         )
                                  
          ) %>%  

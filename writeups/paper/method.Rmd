@@ -67,6 +67,7 @@ library(dict)
 library(heatmaply)
 library(MuMIn)
 library(glmulti)
+library(PRISMAstatement)
 source("/Users/caoanjie/Desktop/Summer2020/SyntacticBootstrapping/exploratory_analyses/01_es_analyses/scripts/04_prisma_diagram.R") 
 
 GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
@@ -89,16 +90,78 @@ knitr::opts_chunk$set(warning = FALSE,
                       fig.pos = "t!")
 ```
 
-```{r}
+
+```{r }
+
+
+
+
+
+# prisma(found = records_identified_google_scholar + records_identified_forward_search,
+#        found_other = 123,
+#        no_dupes = 776, 
+#        screened = 776, 
+#        screen_exclusions = 13, 
+#        full_text = 763,
+#        full_text_exclusions = 17, 
+#        qualitative = 746, 
+#        quantitative = 319)
+
+
+# my_prisma_plot <- prisma2(found = records_identified_google_scholar + records_identified_forward_search, # how many unique papers
+#         found_other = records_identified_forward_search,  # how many papers did you find through other sources?
+#         screened = total_records_screened, # how many of those papers did you screen by looking at the title/abstract?
+#         screen_exclusions = screen_exclusions, # how many of those papers that you screened did you exclude?
+#         full_text = full_text_assesed_for_eligibility, # how many papers did you look at the full text for?
+#         full_text_exclusions = full_text_assesed_exclusion, # how many papers did you exclude after looking at the ful text?
+#         quantitative = final_inclusion, # how many papers went in your final meta-analysis
+#         width = 800, height = 800)
+# 
+# my_prisma_plot
+```
+
+
+
+
+# Methods
+
+## Literature Search  
+
+```{r literature search, search procedure}
+records_identified_google_scholar <- 2330
+records_identified_forward_search <- 1009
+records_identified_review_reference <- 155
+records_identified_experts_in_the_field <- 11
+total_records_identified <- records_identified_google_scholar + records_identified_forward_search + records_identified_review_reference + records_identified_experts_in_the_field
+
+records_screened_google_scholar <- 10 * 60 
+records_screened_forward_search <- 10 * 10 
+records_screened_review_reference <- 155 
+records_screened_experts_in_the_field <- 14
+
+total_records_screened <- records_screened_google_scholar + records_screened_forward_search + records_screened_review_reference + records_screened_experts_in_the_field
+# class project + else
+full_text_assesed_for_eligibility <- 503 + 166
+final_inclusion <- read_csv(RAW_DATA_PATH) %>% filter(paper_eligibility == "include") %>% distinct(unique_id) %>% count()
+
+
+screen_exclusions <- total_records_screened - full_text_assesed_for_eligibility
+full_text_assesed_exclusion <- full_text_assesed_for_eligibility - final_inclusion
+
+```
+
+We conducted our literature search following the PRISMA (Preferred Reporting Items for Systematic Reviews and Meta-Analyses) checklist [@moher2009]. First, in Google Scholar, we conducted a keyword search with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper[@naigles1990children] (total records identified: N =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020). We screened the first 60 pages (N = 600) of the keyword search results and the first 10 pages (N = 100) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Second, additional papers were identified by consulting the references section of the most recent literature review (N = `r records_identified_review_reference`) [@fisher2020developmental] and the experts in the field (N = `r records_identified_experts_in_the_field`). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. All papers include reports of experimental studies. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
+   
+  To be included in our final sample, the paper must satisfy the following criteria: First, the experimental paradigms must involve a two-alternative forced-choice situation, in which the participants were instructed to identify the scenes that match the linguistic stimuli. Second, the visual stimuli should be displayed on a monitor, and the media of the stimuli can be either video recordings or animation clips. Third, the linguistic stimuli used in the experiments must include at least one novel verb embedded in a syntactically informative frame. For example,  "Look, Kradding!" does not provide relevant syntactic information to interpret the novel verb "kradding". In contrast, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame. If the linguistic stimuli used in the experiments only include the former example, then the experiments would not be included But as long as the participants were exposed to one exemplar of the latter example, the experiments would be included. Finally, we decided to focus on English-speaking, typically-developing children. Experimental conditions that tested on other populations were excluded from the sample.
+  
+```{r literature search - report final sample}
 n_effect_sizes <- ma_data %>%
   filter(!is.na(d_calc)) %>%
-  
   nrow()
 
 n_papers <- ma_data %>%
   distinct(unique_id) %>%
   nrow()
-
 
 unique_infants <- ma_data %>% 
   filter(unique_infant == "unique_condition") %>% 
@@ -115,138 +178,107 @@ different_infants <- unique_infants + non_unique_infants
 mean_age_day <- ma_data %>% filter(!is.na(mean_age)) %>% summarize(mean_age =  format(round(mean(mean_age), 2)))
 
 ```
-
-
-```{r}
-classical_approach <- ma_data %>% 
-  filter(!is.na(d_calc)) %>% 
-  filter(inclusion_certainty == 2) %>% 
-  count()
-
-
-non_classical_approach <- ma_data %>% 
-  filter(!is.na(d_calc)) %>% 
-  filter(inclusion_certainty == 1) %>% 
-  count()
-
-non_classical_approach <- ma_data %>% 
-  filter(!is.na(d_calc)) %>% 
-  filter(inclusion_certainty == 1) 
-non_classical_approach
-
-n_papers
-n_effect_sizes
-```
-
-```{r}
-
-```
-
-
-
-```{r}
-
-records_identified_google_scholar <- 2330
-records_identified_forward_search <- 1009
-records_identified_review_reference <- 155
-records_identified_experts_in_the_field <- 11
-total_records_identified <- records_identified_google_scholar + records_identified_forward_search + records_identified_review_reference + records_identified_experts_in_the_field
-
-records_screened_google_scholar <- 10 * 60 
-records_screened_forward_search <- 10 * 10 
-records_screened_review_reference <- 155 
-records_screened_experts_in_the_field <- 11 
-
-total_records_screened <- records_screened_google_scholar + records_screened_forward_search + records_screened_review_reference + records_screened_experts_in_the_field
-full_text_assesed_for_eligibility <- read_csv(RAW_DATA_PATH) %>% distinct(unique_id) %>% count()
-final_inclusion <- read_csv(RAW_DATA_PATH) %>% filter(paper_eligibility == "include") %>% distinct(unique_id) %>% count()
-
-
-screen_exclusions <- total_records_screened - full_text_assesed_for_eligibility
-full_text_assesed_exclusion <- full_text_assesed_for_eligibility - final_inclusion
-
-
-
-
-# my_prisma_plot <- prisma2(found = records_identified_google_scholar + records_identified_forward_search, # how many unique papers 
-#         found_other = records_identified_forward_search,  # how many papers did you find through other sources?
-#         screened = total_records_screened, # how many of those papers did you screen by looking at the title/abstract?
-#         screen_exclusions = screen_exclusions, # how many of those papers that you screened did you exclude?
-#         full_text = full_text_assesed_for_eligibility, # how many papers did you look at the full text for?
-#         full_text_exclusions = full_text_assesed_exclusion, # how many papers did you exclude after looking at the ful text?
-#         quantitative = final_inclusion, # how many papers went in your final meta-analysis
-#         width = 800, height = 800)
-# 
-# my_prisma_plot
-```
-
-
-
-Woo! An intro.
-
-# Methods
-
-## Literature Search  
-   We conducted our literature search following the PRISMA (Preferred Reporting Items for Systematic Reviews and Meta-Analyses) checklist [CITE].In Google Scholar, we conducted a keyword search with "Syntactic Bootstrapping"and a forward search on papers that cited the seminal paper, Naigles (1990) (total records identified: N =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020). Additional papers were identified by consulting the references section of a recent literature review (N = `r records_identified_review_reference`) [CITE] and the experts in the field (N = `r records_identified_experts_in_the_field`). We included works that are published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. All papers include reports of experimental studies. Each paper may include multiple experimental conditions, and thus provide multiple effect sizes for the final analysis.
-   
-  To be included in our final sample, the paper must satisfy the following criteria: First, the experimental paradigms must involve a two-alternative forced-choice situation, in which the participants were instructed to identify the scenes that match the linguistic stimuli. Second, the visual scenes are all displayed on a monitor, and the media can be either video recording or animation clips. Third, the linguistic stimuli used in the experiments must include at least one novel verb embedded in a syntactically informative frame For example,  "Look, Kradding!" does not provide relevant syntactic information to interpret the novel verb "kradding". In contrast, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame. If the linguistic stimuli used in the experiments only include the former example, then the experiments would be excluded. But as long as the participants are exposed to one exemplar of the latter example, the experiments would be included. Finally, we decided to focus on English-speaking, typically-developing children. Experimental conditions that tested on other populations were excluded from the sample.
   
    Our final sample included data from `r different_infants` unique infants (Mean age: `r mean_age_day` Days), reported in `r n_effect_sizes` individual effect sizes from `r n_papers` individual papers.
    
 ## Data Entry
 
-```{r}
-num_classical_approach <- ma_data %>% filter (inclusion_certainty == 2) %>% count()
-num_non_classical_approach <- ma_data %>% filter (inclusion_certainty == 1) %>% count()
+For each paper, we entered the authors and apa citation. We also assigned a unique ID for each individual paper. Most papers contained multiple experiments or experimental conditions to be included. Therefore, for each individual effect size, we recorded the experiment’s number, the name of the experimental condition, the source of the data and the number of participants tested in that particular condition. 
+
+```{r data_source_summary}
+data_source_summary <- ma_data %>% group_by(data_source_clean) %>% count()
+num_author_contact <- data_source_summary %>% filter(data_source_clean == "author_contact") %>% pull(n)
+num_plot <- data_source_summary %>% filter(data_source_clean == "plot") %>% pull(n)
+num_table <- data_source_summary %>% filter(data_source_clean == "table") %>% pull(n)
+num_text <- data_source_summary %>% filter(data_source_clean == "text") %>% pull(n)
+
+```
+
+In order to calculate the effect sizes, we need to enter the group mean and the across-participant standard deviation. The mean and standard deviation were obtained from one of the three ways: a)directly retrieved from the results section or the data-presenting tables (N = `r num_table + num_text`); b) recovered from the plots by measuring the height of the bars and the error bars (N =`r num_plot`); c) contacted the original authors (N = `r num_author_contact`). For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scenes by the sum of mean looking time toward the matching scenes and the mean looking time toward the non-matching scenes (i.e., excluding the look away time from the denominator). The standard deviations were also scaled by being divided by the sum. 
+
+
+```{r categorize_by_proto}
+num_proto_approach <- ma_data %>% filter (inclusion_certainty == 2) %>% count()
+num_atypical_approach <- ma_data %>% filter (inclusion_certainty == 1) %>% count()
+```
+
+We classified our final samples of effect sizes (N = `r n_effect_sizes`) into two categories: the prototypical ones (N = `r num_proto_approach`) and atypical ones (N = `r num_atypical_approach`). Prototypical studies were the ones in which the set-up and the procedures were most similar to the seminal paper [@naigles1990children]. The atypical studies were experiments that met all of the inclusion criteria, but deviated from the prototypical designs in some non-trivial ways (The stimuli involved more complex syntactic structure or event structure: N = `r n_effect_sizes - 12`; The testing procedure included a contrast phase: N = 10; The experiment was conducted through online platform: N = 2). To preserve the homogeneity of the experiments without reducing the power of our analysis, we conducted our statistical analysis both on the entire sample and specifically on the prototypical studies.
+
+```{r vocb_available}
 num_vocabulary_available <- ma_data %>% filter(!is.na(productive_vocab_median)) %>% count()
+```
+
+For all experimental conditions, we coded three types of moderators: participants-related moderators, the stimuli-related moderators, and the experimental-procedure-related moderators. The information was either retrieved from the methods section of the paper or obtained via contacting authors. 
+
+Participants-related moderators included infants' mean age by days and the median productive vocabulary measured by MacArthur-Bates Communicative Development Inventories (CDI) Words and Sentences. Most papers reported mean age by months, so we converted it to mean age by days by multiplying the reported statistics with 30.44, the average number of days in a month. All conditions (N= `r n_effect_sizes`) have the age information available.  `r  num_vocabulary_available` conditions have the vocabulary size information available.
+
+```{r categorize_by_linguistic_stimuli}
 num_transitive <- ma_data %>% filter(sentence_structure == "transitive") %>% count()
 num_intransitive <- ma_data %>% filter(sentence_structure == "intransitive") %>% count()
 
 num_agent_sum <- ma_data %>% count(agent_argument_type_clean)
-num_agent_noun <- num_agent_sum %>% filter(agent_argument_type_clean == "noun") %>% select(n)
-num_agent_noun_phrase <- num_agent_sum %>% filter(agent_argument_type_clean == "noun_phrase") %>% select(n) # is there a better way to do this?
-num_agent_pronoun <- num_agent_sum %>% filter(agent_argument_type_clean == "noun_phrase") %>% select(n)
-num_agent_two_noun <- num_agent_sum %>% filter(agent_argument_type_clean == "two_noun") %>% select(n)
-num_agent_varying <- num_agent_sum %>% filter(agent_argument_type_clean == "varying_agent") %>% select(n)
+num_agent_noun <- num_agent_sum %>% filter(agent_argument_type_clean == "noun") %>% pull(n)
+num_agent_noun_phrase <- num_agent_sum %>% filter(agent_argument_type_clean == "noun_phrase") %>% pull(n) 
+num_agent_pronoun <- num_agent_sum %>% filter(agent_argument_type_clean == "noun_phrase") %>% pull(n)
+num_agent_two_noun <- num_agent_sum %>% filter(agent_argument_type_clean == "two_noun") %>% pull(n)
+num_agent_varying <- num_agent_sum %>% filter(agent_argument_type_clean == "varying_agent") %>% pull(n)
 
 num_patient_sum <-  ma_data %>% count(patient_argument_type_clean)
-num_patient_noun <- num_patient_sum %>% filter(patient_argument_type_clean == "noun") %>% select(n)
-num_patient_noun_phrase <- num_patient_sum %>% filter(patient_argument_type_clean == "noun_phrase") %>% select(n)
-num_patient_pronoun <- num_patient_sum %>% filter(patient_argument_type_clean == "pronoun") %>% select(n)
-num_patient_varying <- num_patient_sum %>% filter(patient_argument_type_clean == "varying_patient") %>% select(n)
+num_patient_noun <- num_patient_sum %>% filter(patient_argument_type_clean == "noun") %>% pull(n)
+num_patient_noun_phrase <- num_patient_sum %>% filter(patient_argument_type_clean == "noun_phrase") %>% pull(n)
+num_patient_pronoun <- num_patient_sum %>% filter(patient_argument_type_clean == "pronoun") %>% pull(n)
+num_patient_varying <- num_patient_sum %>% filter(patient_argument_type_clean == "varying_patient") %>% pull(n)
+
+num_test_agent <- ma_data %>% filter(test_type == "agent") %>% count()
+num_test_action <- ma_data %>% filter(test_type == "action") %>% count()
+
+```
+
+Stimuli-related moderators included features of both the linguistics stimuli and the visual stimuli. For linguistic stimuli during the training phase, we focused on the structure of the sentences infants heard. The sentences were categorized as transitive(N = `r num_intransitive`), if and only if the novel verbs were embedded in a sentence with two or more noun arguments. The sentences were categorized as intransitive (N= `r num_intransitive`) if and only if the novel verbs were embedded in a sentence with one noun argument. We also coded the types of words used in the agent argument (One noun: N = `r num_agent_noun`; One pronoun: N = `r num_agent_pronoun`; Two nouns: N = `r num_agent_two_noun`; Noun phrase: N = `r num_agent_noun_phrase`; Varying across sentences: N = `r num_agent_varying`) and the patient argument(One noun: N = `r num_patient_noun`; One pronoun: N = `r num_patient_pronoun`; Noun phrase: N = `r num_patient_noun_phrase`; Varying across sentences: N = `r num_patient_varying`). For linguistic stimuli during the testing phase, we coded whether the infants were prompted to identify the action (e.g. "Where's lorping? Find lorping!", N = `r num_test_agent`) or the actors (e.g. "Which one (verbed) the other one....point!", N = `r num_test_action`). 
+
+```{r categorize_by_visual_stimuli}
+num_modality_sum <- ma_data %>% count(stimuli_modality)
+num_modality_animation <- num_modality_sum %>% filter(stimuli_modality == "animation") %>% pull(n)
+num_modality_video <- num_modality_sum %>%  filter(stimuli_modality == "video") %>%  pull(n)
+
+num_video_person <- ma_data %>% filter(stimuli_modality == "video") %>% filter(stimuli_actor == "person") %>% count()
+num_video_non_person <- ma_data %>% filter(stimuli_modality == "video") %>% filter(stimuli_actor == "non_person") %>% count()
+
+num_video_simultaneous <- ma_data %>% filter(presentation_type == "simultaneous") %>% count()
+num_video_immediate_after <- ma_data %>% filter(presentation_type == "immediate_after") %>% count()
+num_video_asynchronous <- ma_data %>% filter(presentation_type == "asynchronous") %>% count()
 
 
 ```
 
-We classified our final samples of effect sizes (N = `r n_effect_sizes`) into two categories: the ones using "classical approach"(N = `r num_classical_approach`) and the ones using "non-classical approach"(N = `r num_non_classical_approach`). The experimental conditions were categorized as using "classical approach" if the  the set-up and procedure were most similar to the seminal paper (Naigles, 1990). The ones categorized as using "non-classical approach" were experimental conditions to meet all of the inclusion criteria, but they deviated from the classical approach in some non-trivial aspects (The stimuli involved more complex syntactic structure or event structure: N = `r n_effect_sizes - 12`; the testing procedure includes a contrast phase: N = 10; the experiment was conducted through online platform: N = 2). To preserve the homogeneity of the experiments without reducing the sample sizes, we conducted our statistical analysis both on the entire sample and specifically on the experimental conditions labeled as "classical approach".
+For visual stimuli, we coded the types of media used (video or animation) and the types of protagonists in the events (person or non-person). `r num_modality_video` conditions used video recordings of human actors (N = `r num_video_person`) or human actors in animal suits (N = `r num_video_non_person`). The other `r num_modality_animation` conditions used clips of animation with non-person figures as the protagonists of the events. We also coded how the onset of the linguistic stimuli aligned with the visual stimuli. The procedure was coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action (N = `r num_video_simultaneous`). It was coded as "immediately after" if it was presented along with an attention-getter or a blank screen, immediately followed by the relevant action (N = `r num_video_immediate_after`). Finally, some experimental conditions first presented the linguistic stimuli paired with irrelevant visual scenes (e.g. a person on the phone talking). The relevant visual stimuli were not shown until the training phase is over. For experimental conditions using this alignment, they were coded as "asynchronous"(N = `r num_video_asynchronous`).
 
-Participants-related moderators included infants' mean age by days and the median productive vocabulary measured by MacArthur-Bates Communicative Development Inventories (CDI) Words and Sentences. Most papers reported mean age by months, so we converted it to mean age by days by multiplying the reported statistics with 30.44, the average number of days in a month. All conditions (N= `r n_effect_sizes`) have the age information available.  `r  num_vocabulary_available` conditions have the vocabulary size information available.
+```{r categorize_by_procedure}
+num_point <- ma_data %>% filter(test_method == "point") %>% count()
+num_look <- ma_data %>% filter(test_method == "look") %>% count()
 
-Stimuli related variables included features of both the linguistics stimuli and the visual stimuli. For linguistic stimuli during the training phase, we focused on the structure of the sentences infants heard. The sentences were categorized as transitive(N = `r num_intransitive`), if and only if the novel verbs were embedded in a sentence with two or more noun arguments. The sentences were categorized as intransitive (N= `r num_intransitive`) if the novel verbs were embedded in a sentence with one noun argument. We also coded the types of words used in the agent argument (One noun: N = `r num_agent_noun`; One pronoun: N = `r num_agent_pronoun`; Two nouns: N = `r num_agent_two_noun`; Noun phrase: N = `r num_agent_noun_phrase`; Varying across sentences: N = `r num_agent_varying`) and the patient argument(One noun: N = `r num_patient_noun`; One pronoun: N = `r num_patient_pronoun`; Noun pharse: N = `r num_patient_noun_phrase`; Varying across sentences: N = `r num_patient_varying`). For linguistic stimuli during the testing phase, we coded whether the infants were prompted to identify the action ("an example", N=) or the actors ("an example, N=). For visual stimuli, we coded both the types of media used (video or animation) and the types of protagonists in the events (person or non-person). [N=??] conditions used video recordings of human actors (N=??) or human actors in animal suits (N=??). The other [N=??] conditions used clips of animation with ??? as the protagonists of the events. We also coded how the onset of the linguistic stimuli aligned with the visual stimuli. The procedure was coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action (N=??). It was coded as "immediately after" if the first training sentence was presented along with an attention-getter or a blank screen, immediately followed by the relevant action (N=??). Finally, some experimental conditions first presented the linguistic stimuli paired with irrelevant visual scenes (for example, a person on the phone talking). The relevant visual stimuli were not shown until the training phase is over. For experimental conditions using this procedure, they were coded as "asynchronous"(N=??).
+num_practice_yes <- ma_data %>% filter(practice_phase == "yes") %>% count()
+num_practice_no <- ma_data %>% filter(practice_phase == "no") %>% count()
+num_char_id_yes <- ma_data %>% filter(character_identification == "yes") %>% count()
+num_char_id_no <- ma_data %>% filter(character_identification == "no") %>% count()
 
-
-Finally, experimental procedure related variables included the type of response elicited from the participants: whether the infants were explicitly prompted to point or their eye gaze duration were measured as they heard the linguistic stimuli. ( Pointing: N = [??]; Looking: N=[???]). Three characteristics of the experimental procedures were coded as categorical variables: the inclusion of practice phase (Yes: N= ; No: N=), the inclusion of character identification phase (Yes: N=: No:), and the distribution of the training and the testing trials. A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the very same verb (N=??). It was "distributed" if the infants were given multiple train and test pairs on multiple novel verbs (N=??) To better characterize the experience infants had prior to testing, we also coded how many train-test pair the infants were given (for mass procedure it was always 1), how many trials during the test phase infants were given, how many times the visual stimuli showing the relevant actions were presented, and how many timeseach novel verb was spoken in a syntactically-informative way. If the prompt question provided relevant syntactic context (EXAMPLE), then it was also counted. 
-
-
-
-
-
-```{r}
-ma_data %>% names
-
-
+num_mass <- ma_data %>% filter(test_mass_or_distributed == "mass") %>% count()
+num_distributed <- ma_data %>% filter(test_mass_or_distributed == "distributed") %>% count()
 ```
-  
 
-
+Finally, experimental-procedure-related moderators included the types of response elicited from the participants: whether the infants were explicitly prompted to point or their eye gaze duration were measured as they heard the linguistic stimuli (Pointing: N = `r num_point`; Looking: N = `r num_look`). Three characteristics of the experimental procedures were coded as categorical variables: the inclusion of practice phase (Yes: N = `r num_practice_yes` ; No: N = `r num_practice_no`), the inclusion of character-identification phase (Yes: N = `r num_char_id_yes`; No: N = `r num_char_id_no`), and the distribution of the training and the testing trials (Mass: N = `r num_mass`; Distributed: N = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the very same verb. It was "distributed" if the infants were given multiple train and test pairs on multiple novel verbs. To better characterize the experience infants had prior to testing, we also coded how many train-test pair the infants were given (for mass procedure it was always 1), how many trials during the test phase infants were given, how many times the visual stimuli showing the relevant actions were presented, and how many times each novel verb was spoken in a syntactically-informative way. 
   
 ## Data Preprocessing 
-  We calculated the Cohen's d effect size for each experimental conditions. Because we only included studies that used a two alterantive forced-choice test method, we compared the mean proportion of correct response against chance level (0.5) for the group[DO I need to explain the deviation?]. A small portion of the looking time studies (N=??) reported their own baseline looking time measurements, i.e., the participants' looking time before and after hearing the relevant linguistic prompts. For these studies, we calculated two versions of the effect sizes. One with the chance level and the other with the reported baseline. [maybe say something about they don't correlate very well? and said we ran two versions of the statistics analysis] The mean and standard deviation were obtained from one of the three ways: a)directly retreived from the results section or the tables presenting data(N=??); b) recovered from barplots by measuring the height of the bars and the error bars (N=??); c) contacting with the original authors (N=??). For looking time studies, when the paper only reported the raw looking time, we calculated the proportion of correct response by dividing the mean looking time toward the matching scenes by the sum of mean looking time toward the matching scenes and the mean looking time toward the non-matching scenes (i.e., excluding the look away itme). The standard deviations were also scaled by being divided by the sum. 
+
+```{r data_preprocessing}
+num_has_raw <- ma_data %>% filter(!is.na(x_2_raw)) %>% count()
+```
+
+  We calculated the Cohen's d effect size for each experimental condition. Because we only included studies that used a two alternative forced-choice test method, we compared the mean proportion of correct response against chance level (0.5) for the group. In this way, we can provide a consistent baseline for all the experimental conditions. Most experimental conditions did not report a baseline measurement. For the studies that did provide the information (N = `r num_has_raw`), we calculated two versions of the effect sizes. One with the chance level and the other with the reported baseline. 
   
-  All the effect sizes and the coded variables were then analyzed with the metafor package in R [CITE]
+  All the effect sizes and the coded variables were then analyzed with the metafor package in R [@viechtbauer2010].
+
 # Results
-
-
 
 ```{r child = "sections/section1.Rmd"}
 ```

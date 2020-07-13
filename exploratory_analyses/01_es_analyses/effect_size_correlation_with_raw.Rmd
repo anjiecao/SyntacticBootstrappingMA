@@ -1,0 +1,39 @@
+---
+title: "Correlation between effect sizes"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(tidyverse)
+library(here)
+
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+d <- read.csv(DATA_PATH)
+```
+# calculate raw effect size 
+```{r}
+d <- d %>% 
+  mutate(
+    d_calc_raw = case_when(
+      !is.na(x_2_raw) & !is.na(sd_2_raw) ~ (x_1 - x_2_raw) / sqrt((sd_1^2 + sd_2_raw^2)/2),
+      TRUE ~  NA_real_ 
+    ), 
+    d_var_calc_raw = case_when(
+      !is.na(x_2_raw) & !is.na(sd_2_raw) ~  (1 / n_1) + (d_calc_raw ^ 2 / (2 * n_1)), 
+      TRUE ~ NA_real_
+    )) 
+
+d_with_raw <- d %>% filter(!is.na(d_calc_raw))
+
+cor.test(d_with_raw$d_calc,
+         d_with_raw$d_calc_raw)
+```
+```{r}
+d_with_raw %>% ggplot(aes(x = d_calc, y = d_calc_raw, color = unique_id)) + 
+  geom_point()
+```
+

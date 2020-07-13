@@ -45,6 +45,29 @@ ma_data <- read_csv(DATA_PATH)   %>%
 ma_data
 ```
 
+```{r}
+names(ma_data)
+```
+
+
+```{r}
+# missing vocab
+ma_data %>% filter(is.na(productive_vocab_mean) & is.na(productive_vocab_median))
+# transitive missing patient argument
+ma_data %>% filter(is.na(patient_argument_type) & sentence_structure == "transitive")
+# intransitive all have no patient argument, maybe needs to be changed to something else
+ma_data %>% filter(!is.na(patient_argument_type) & sentence_structure == "intransitive" )# error needs to be fixed
+
+# missing n_repetition sentence, needs to be filled in
+ma_data %>% filter(is.na(n_repetitions_sentence))#needs to be filled in 
+# missing n_repetition video, needs to be filled in
+ma_data %>% filter(is.na(n_repetitions_video))
+# missing test question
+ma_data %>% filter(is.na(test_question))
+
+```
+
+
 # With Raw Calculation 
 ```{r}
 ma_data <- ma_data %>% 
