@@ -1,6 +1,6 @@
 ---
-title             : "woooooow"
-shorttitle        : "A Short Title"
+title             : "A meta-analysis of the syntactic bootsrapping phenomenon in word learning"
+shorttitle        : "Syntactic Boostrapping MA"
 
 author:  
   - name          : "Anjie Cao"
@@ -8,14 +8,14 @@ author:
     corresponding : yes    # Define only one corresponding author
     address       : "what is this"
     email         : ""
-  - name          : "Molly L. Lewis"
+  - name          : "Molly Y. Lewis"
     affiliation   : "2"
     email         : "okie"
 affiliation:
   - id            : "1"
     institution   : "Department of Psychology, Stanford University"
   - id            : "2"
-    institution   : "Co-author affiliation"
+    institution   : "Department of Psychology, Carnegie Mellon Unviversity"
     
 author_note: |
   okie
@@ -57,29 +57,16 @@ library(rmarkdown)
 library(tidyverse) 
 library(here)
 library(glue)
-library(tidyverse)
-library(googlesheets4)
 library(metafor)
 library(knitr)
 library(gridExtra)
 library(here)
-library(dict)
 library(heatmaply)
 library(MuMIn)
 library(glmulti)
 library(PRISMAstatement)
-source("/Users/caoanjie/Desktop/Summer2020/SyntacticBootstrapping/exploratory_analyses/01_es_analyses/scripts/04_prisma_diagram.R") 
-
-GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
-DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
-RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
-
-
-ma_data <- read_csv(DATA_PATH)   
-
-
+#source("/Users/caoanjie/Desktop/Summer2020/SyntacticBootstrapping/exploratory_analyses/01_es_analyses/scripts/04_prisma_diagram.R") 
 ```
-
 
 
 ```{r global_options, include = FALSE}
@@ -91,11 +78,14 @@ knitr::opts_chunk$set(warning = FALSE,
 ```
 
 
+```{r read in data}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
+
+ma_data <- read_csv(DATA_PATH)   
+```
+
 ```{r }
-
-
-
-
 
 # prisma(found = records_identified_google_scholar + records_identified_forward_search,
 #        found_other = 123,
@@ -139,20 +129,30 @@ records_screened_forward_search <- 10 * 10
 records_screened_review_reference <- 155 
 records_screened_experts_in_the_field <- 14
 
-total_records_screened <- records_screened_google_scholar + records_screened_forward_search + records_screened_review_reference + records_screened_experts_in_the_field
+# Yikes this code was hard to read! Line breaks are your friend! :) Minimally put a line break after each pipe. 
+total_records_screened <- records_screened_google_scholar +
+  records_screened_forward_search + 
+  records_screened_review_reference + 
+  records_screened_experts_in_the_field
+
 # class project + else
 full_text_assesed_for_eligibility <- 503 + 166
-final_inclusion <- read_csv(RAW_DATA_PATH) %>% filter(paper_eligibility == "include") %>% distinct(unique_id) %>% count()
+final_inclusion <- read_csv(RAW_DATA_PATH) %>% 
+  filter(paper_eligibility == "include") %>%
+  distinct(unique_id) %>%
+  count()
 
 
 screen_exclusions <- total_records_screened - full_text_assesed_for_eligibility
-full_text_assesed_exclusion <- full_text_assesed_for_eligibility - final_inclusion
-
+full_text_assesed_exclusion <- full_text_assesed_for_eligibility -
+  final_inclusion
 ```
 
-We conducted our literature search following the PRISMA (Preferred Reporting Items for Systematic Reviews and Meta-Analyses) checklist [@moher2009]. First, in Google Scholar, we conducted a keyword search with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper[@naigles1990children] (total records identified: N =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020). We screened the first 60 pages (N = 600) of the keyword search results and the first 10 pages (N = 100) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Second, additional papers were identified by consulting the references section of the most recent literature review (N = `r records_identified_review_reference`) [@fisher2020developmental] and the experts in the field (N = `r records_identified_experts_in_the_field`). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. All papers include reports of experimental studies. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
-   
-  To be included in our final sample, the paper must satisfy the following criteria: First, the experimental paradigms must involve a two-alternative forced-choice situation, in which the participants were instructed to identify the scenes that match the linguistic stimuli. Second, the visual stimuli should be displayed on a monitor, and the media of the stimuli can be either video recordings or animation clips. Third, the linguistic stimuli used in the experiments must include at least one novel verb embedded in a syntactically informative frame. For example,  "Look, Kradding!" does not provide relevant syntactic information to interpret the novel verb "kradding". In contrast, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame. If the linguistic stimuli used in the experiments only include the former example, then the experiments would not be included But as long as the participants were exposed to one exemplar of the latter example, the experiments would be included. Finally, we decided to focus on English-speaking, typically-developing children. Experimental conditions that tested on other populations were excluded from the sample.
+
+<!-- you can italicize parameterize like "N" with "$N$" --> 
+We conducted our literature search following the  Preferred Reporting Items for Systematic Reviews and Meta-Analyses checklist [PRISMA; @moher2009]. We identified relevant papers by conducting a keyword search in Google Scholar with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper [@naigles1990children] (total records identified: $N$ =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020). We screened the first 60 pages (N = 600) of the keyword search results and the first 10 pages (N = 100) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Additional papers were identified by consulting the references section of the most recent literature review (N = `r records_identified_review_reference`) [@fisher2020developmental] and the experts in the field (N = `r records_identified_experts_in_the_field`). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
+
+We restricted our final sample to papers that satisfied the following conditions: First, the experimental paradigm involved a two-alternative forced-choice task, in which the participants were instructed to identify the scene that matched the linguistic stimuli. Second, the visual stimuli were displayed on a monitor. We included videos that were either recordings of actors or animated clips. Third, the linguistic stimuli included at least one novel verb embedded in a syntactically informative frame. For example, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame that is informative about the meaning of the novel verb "kradding", while "Look, Kradding!" does not and therefore would be excluded. Finally, we resricted our sample to English-speaking, typically-developing children.
   
 ```{r literature search - report final sample}
 n_effect_sizes <- ma_data %>%
@@ -179,11 +179,12 @@ mean_age_day <- ma_data %>% filter(!is.na(mean_age)) %>% summarize(mean_age =  f
 
 ```
   
-   Our final sample included data from `r different_infants` unique infants (Mean age: `r mean_age_day` Days), reported in `r n_effect_sizes` individual effect sizes from `r n_papers` individual papers.
+<!-- There's a bunch of missing values in the pdf, not sure why--> 
+   Our final sample included data from `r different_infants` unique infants (Mean age: `r mean_age_day` Days), reported in `r n_effect_sizes` individual effect sizes from `r n_papers` individual papers. 
    
 ## Data Entry
 
-For each paper, we entered the authors and apa citation. We also assigned a unique ID for each individual paper. Most papers contained multiple experiments or experimental conditions to be included. Therefore, for each individual effect size, we recorded the experiment’s number, the name of the experimental condition, the source of the data and the number of participants tested in that particular condition. 
+For each paper, we entered the paper metadata (e.g., citation), information to calculate effect sizes, and moderators. We entered a separate effect size for each experimental condition and age group in paper. Most papers therefore contained multiple effect sizes.
 
 ```{r data_source_summary}
 data_source_summary <- ma_data %>% group_by(data_source_clean) %>% count()
@@ -194,7 +195,7 @@ num_text <- data_source_summary %>% filter(data_source_clean == "text") %>% pull
 
 ```
 
-In order to calculate the effect sizes, we need to enter the group mean and the across-participant standard deviation. The mean and standard deviation were obtained from one of the three ways: a)directly retrieved from the results section or the data-presenting tables (N = `r num_table + num_text`); b) recovered from the plots by measuring the height of the bars and the error bars (N =`r num_plot`); c) contacted the original authors (N = `r num_author_contact`). For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scenes by the sum of mean looking time toward the matching scenes and the mean looking time toward the non-matching scenes (i.e., excluding the look away time from the denominator). The standard deviations were also scaled by being divided by the sum. 
+In order to calculate the effect sizes, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the three ways: a) directly retrieved from the results section or the data-presenting tables (N = `r num_table + num_text`); b) recovered from the plots by measuring the height of the bars and the error bars (N =`r num_plot`); c) contacted the original authors (N = `r num_author_contact`). For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scenes by the sum of mean looking time toward the matching scenes and the mean looking time toward the non-matching scenes (i.e., excluding the look away time from the denominator). The standard deviations were also scaled by being divided by the sum. <!-- what do you mean by scaled here?-->
 
 
 ```{r categorize_by_proto}
@@ -208,9 +209,9 @@ We classified our final samples of effect sizes (N = `r n_effect_sizes`) into tw
 num_vocabulary_available <- ma_data %>% filter(!is.na(productive_vocab_median)) %>% count()
 ```
 
-For all experimental conditions, we coded three types of moderators: participants-related moderators, the stimuli-related moderators, and the experimental-procedure-related moderators. The information was either retrieved from the methods section of the paper or obtained via contacting authors. 
+For all experimental conditions, we coded three types of moderators: participant moderators,  stimuli moderators, and  procedure moderators. The information was either retrieved from the methods section of the paper or obtained via contacting authors. 
 
-Participants-related moderators included infants' mean age by days and the median productive vocabulary measured by MacArthur-Bates Communicative Development Inventories (CDI) Words and Sentences. Most papers reported mean age by months, so we converted it to mean age by days by multiplying the reported statistics with 30.44, the average number of days in a month. All conditions (N= `r n_effect_sizes`) have the age information available.  `r  num_vocabulary_available` conditions have the vocabulary size information available.
+At the participant level, we coded infants' mean age in days (N= `r n_effect_sizes`) and the median productive vocabulary measured by MacArthur-Bates Communicative Development Inventories (CDI) Words and Sentences <!--add citation--> (`r  num_vocabulary_available`). 
 
 ```{r categorize_by_linguistic_stimuli}
 num_transitive <- ma_data %>% filter(sentence_structure == "transitive") %>% count()
@@ -234,7 +235,7 @@ num_test_action <- ma_data %>% filter(test_type == "action") %>% count()
 
 ```
 
-Stimuli-related moderators included features of both the linguistics stimuli and the visual stimuli. For linguistic stimuli during the training phase, we focused on the structure of the sentences infants heard. The sentences were categorized as transitive(N = `r num_intransitive`), if and only if the novel verbs were embedded in a sentence with two or more noun arguments. The sentences were categorized as intransitive (N= `r num_intransitive`) if and only if the novel verbs were embedded in a sentence with one noun argument. We also coded the types of words used in the agent argument (One noun: N = `r num_agent_noun`; One pronoun: N = `r num_agent_pronoun`; Two nouns: N = `r num_agent_two_noun`; Noun phrase: N = `r num_agent_noun_phrase`; Varying across sentences: N = `r num_agent_varying`) and the patient argument(One noun: N = `r num_patient_noun`; One pronoun: N = `r num_patient_pronoun`; Noun phrase: N = `r num_patient_noun_phrase`; Varying across sentences: N = `r num_patient_varying`). For linguistic stimuli during the testing phase, we coded whether the infants were prompted to identify the action (e.g. "Where's lorping? Find lorping!", N = `r num_test_agent`) or the actors (e.g. "Which one (verbed) the other one....point!", N = `r num_test_action`). 
+We coded features of the linguistic stimuli during both training and testing. The training linguistic stimuli were categorized as transitive (N = `r num_intransitive`), if the novel verbs were embedded in a sentence with two or more noun arguments, and  intransitive (N = `r num_intransitive`) if the novel verbs were embedded in a sentence with one noun argument. We also coded the types of words used in the agent argument (One noun: N = `r num_agent_noun`; One pronoun: N = `r num_agent_pronoun`; Two nouns: N = `r num_agent_two_noun`; Noun phrase: N = `r num_agent_noun_phrase`; Varying across sentences: N = `r num_agent_varying`) and the patient argument(One noun: N = `r num_patient_noun`; One pronoun: N = `r num_patient_pronoun`; Noun phrase: N = `r num_patient_noun_phrase`; Varying across sentences: N = `r num_patient_varying`). We coded the  testing linguistic stimuli for whether infants were prompted to identify the action (e.g. "Where's lorping? Find lorping!", N = `r num_test_agent`) or the actors (e.g. "Which one (verbed) the other one....point!", N = `r num_test_action`). 
 
 ```{r categorize_by_visual_stimuli}
 num_modality_sum <- ma_data %>% count(stimuli_modality)
@@ -266,7 +267,7 @@ num_mass <- ma_data %>% filter(test_mass_or_distributed == "mass") %>% count()
 num_distributed <- ma_data %>% filter(test_mass_or_distributed == "distributed") %>% count()
 ```
 
-Finally, experimental-procedure-related moderators included the types of response elicited from the participants: whether the infants were explicitly prompted to point or their eye gaze duration were measured as they heard the linguistic stimuli (Pointing: N = `r num_point`; Looking: N = `r num_look`). Three characteristics of the experimental procedures were coded as categorical variables: the inclusion of practice phase (Yes: N = `r num_practice_yes` ; No: N = `r num_practice_no`), the inclusion of character-identification phase (Yes: N = `r num_char_id_yes`; No: N = `r num_char_id_no`), and the distribution of the training and the testing trials (Mass: N = `r num_mass`; Distributed: N = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the very same verb. It was "distributed" if the infants were given multiple train and test pairs on multiple novel verbs. To better characterize the experience infants had prior to testing, we also coded how many train-test pair the infants were given (for mass procedure it was always 1), how many trials during the test phase infants were given, how many times the visual stimuli showing the relevant actions were presented, and how many times each novel verb was spoken in a syntactically-informative way. 
+Finally, procedure moderators included the types of response elicited from the participants: whether the infants were explicitly prompted to point or their eye gaze duration were measured as they heard the linguistic stimuli (Pointing: N = `r num_point`; Looking: N = `r num_look`). Three characteristics of the experimental procedures were coded as categorical variables: the inclusion of practice phase (Yes: N = `r num_practice_yes` ; No: N = `r num_practice_no`), the inclusion of character-identification phase (Yes: N = `r num_char_id_yes`; No: N = `r num_char_id_no`), and the distribution of the training and the testing trials (Mass: N = `r num_mass`; Distributed: N = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the very same verb. It was "distributed" if the infants were given multiple train and test pairs on multiple novel verbs. To better characterize the experience infants had prior to testing, we also coded how many train-test pair the infants were given (for mass procedure it was always 1), how many trials during the test phase infants were given, how many times the visual stimuli showing the relevant actions were presented, and how many times each novel verb was spoken in a syntactically-informative way. 
   
 ## Data Preprocessing 
 
@@ -274,7 +275,7 @@ Finally, experimental-procedure-related moderators included the types of respons
 num_has_raw <- ma_data %>% filter(!is.na(x_2_raw)) %>% count()
 ```
 
-  We calculated the Cohen's d effect size for each experimental condition. Because we only included studies that used a two alternative forced-choice test method, we compared the mean proportion of correct response against chance level (0.5) for the group. In this way, we can provide a consistent baseline for all the experimental conditions. Most experimental conditions did not report a baseline measurement. For the studies that did provide the information (N = `r num_has_raw`), we calculated two versions of the effect sizes. One with the chance level and the other with the reported baseline. 
+  We calculated the Cohen's d effect size for each experimental condition. Because we only included studies that used a two alternative forced-choice test method, we compared the mean proportion of correct response against chance level (0.5) for the group. Although some papers collected a baseline measure (N = `r num_has_raw`; e.g. XXX, XXX), most papers did not. In order to calculate a consistent effect size measure across all condition, we used chance level as a baseline for calculating effect size for all conditions (see SI for comparision of effect sizes using reported baseline versus chance). 
   
   All the effect sizes and the coded variables were then analyzed with the metafor package in R [@viechtbauer2010].
 
