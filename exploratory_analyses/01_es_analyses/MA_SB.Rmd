@@ -45,51 +45,6 @@ ma_data <- read_csv(DATA_PATH)   %>%
 ma_data
 ```
 
-```{r}
-names(ma_data)
-```
-
-
-```{r}
-# missing vocab
-ma_data %>% filter(is.na(productive_vocab_mean) & is.na(productive_vocab_median))
-# transitive missing patient argument
-ma_data %>% filter(is.na(patient_argument_type) & sentence_structure == "transitive")
-# intransitive all have no patient argument, maybe needs to be changed to something else
-ma_data %>% filter(!is.na(patient_argument_type) & sentence_structure == "intransitive" )# error needs to be fixed
-
-# missing n_repetition sentence, needs to be filled in
-ma_data %>% filter(is.na(n_repetitions_sentence))#needs to be filled in 
-# missing n_repetition video, needs to be filled in
-ma_data %>% filter(is.na(n_repetitions_video))
-# missing test question
-ma_data %>% filter(is.na(test_question))
-
-```
-
-
-# With Raw Calculation 
-```{r}
-ma_data <- ma_data %>% 
-  mutate(
-    d_calc_raw = case_when(
-      !is.na(x_2_raw) & !is.na(sd_2_raw) ~ (x_1 - x_2_raw) / sqrt((sd_1^2 + sd_2_raw^2)/2),
-      TRUE ~  NA_real_ 
-    ), 
-    d_var_calc_raw = case_when(
-      !is.na(x_2_raw) & !is.na(sd_2_raw) ~  (1 / n_1) + (d_calc_raw ^ 2 / (2 * n_1)), 
-      TRUE ~ NA_real_
-    )) 
-
-ma_data_with_raw <- ma_data %>% filter(!is.na(d_calc_raw))
-
-cor.test(ma_data_with_raw$d_calc,
-         ma_data_with_raw$d_calc_raw)
-
-ma_data_with_raw
-```
-
-
 
 
 # Data Overview
@@ -102,6 +57,7 @@ n_effect_sizes <- ma_data %>%
 n_papers <- ma_data %>%
   distinct(unique_id) %>%
   nrow()
+
 ```
 
 There are `r n_effect_sizes` effect sizes collected from `r n_papers` different papers.
@@ -1010,38 +966,35 @@ subset(res, delta <= 2, recalc.weights=FALSE)
 
 ```
 
-```{r}
-res
-```
+
+
+
+## model selection{.tabset}
+### take everything
 
 ```{r}
-
 rma.glmulti <- function(formula,data)
   {rma.mv(formula, d_var_calc, data=ma_data, method="ML")
 }
-res <- glmulti(d_calc ~mean_age + agent_argument_type_clean + patient_argument_type_clean + stimuli_modality + stimuli_actor + presentation_type + test_mass_or_distributed + practice_phase + character_identification + n_repetitions_sentence + n_repetitions_video + test_method, data=ma_data,
-               level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize=32)
-print(res)
 
-top <- weightable(res)
+res_sink <- glmulti(d_calc ~mean_age + sentence_structure + agent_argument_type_clean + patient_argument_type_clean + test_type + stimuli_actor + stimuli_modality + presentation_type + test_mass_or_distributed + practice_phase + character_identification + n_repetitions_sentence + n_repetitions_video + test_method, data=ma_data, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize=32)
+print(res_sink)
+
+```
+```{r}
+top <- weightable(res_sink)
 top <- top[top$aicc <= min(top$aicc) + 2,]
 top
-summary(res@objects[[1]])
-plot(res, type="s")
-
-
+summary(res_sink@objects[[1]])
+plot(res_sink, type="s")
+summary(res_sink@objects[[2]])
+plot(res_sink, type="s")
 ```
-
-```{r}
-summary(res@objects[[2]])
-plot(res, type="s")
-```
-
 
 ```{r}
 eval(metafor:::.glmulti)
-coef(res)
-mmi <- as.data.frame(coef(res))
+coef(res_sink)
+mmi <- as.data.frame(coef(res_sink))
 mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
 mmi$z <- mmi$Estimate / mmi$SE
 mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
@@ -1051,6 +1004,106 @@ mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
 mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
 round(mmi, 4)
 ```
+
+three interdependence moderators, take one
+### take test type
+```{r method 1:}
+
+rma.glmulti <- function(formula,data)
+  {rma.mv(formula, d_var_calc, data=ma_data, method="ML")
+}
+
+res_test_type <- glmulti(d_calc ~mean_age + sentence_structure + agent_argument_type_clean + patient_argument_type_clean + test_type + stimuli_actor  + presentation_type + test_mass_or_distributed + practice_phase + character_identification + n_repetitions_sentence + n_repetitions_video, data=ma_data, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize=32)
+print(res_test_type)
+
+top <- weightable(res_test_type)
+top <- top[top$aicc <= min(top$aicc) + 2,]
+top
+summary(res_test_type@objects[[1]])
+plot(res_test_type, type="s")
+summary(res_test_type@objects[[2]])
+plot(res_test_type, type="s")
+
+```
+
+
+```{r}
+eval(metafor:::.glmulti)
+coef(res_test_type)
+mmi <- as.data.frame(coef(res_test_type))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+
+
+
+### take test method
+
+```{r}
+res_test_method <- glmulti(d_calc ~mean_age + sentence_structure + agent_argument_type_clean + patient_argument_type_clean  + stimuli_actor  + presentation_type + test_mass_or_distributed + practice_phase + character_identification + n_repetitions_sentence + n_repetitions_video + test_method, data=ma_data, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize=32)
+print(res)
+
+top <- weightable(res_test_method)
+top <- top[top$aicc <= min(top$aicc) + 2,]
+top
+summary(res_test_method@objects[[1]])
+plot(res_test_method, type="s")
+summary(res_test_method@objects[[2]])
+plot(res_test_method, type="s")
+```
+
+```{r}
+eval(metafor:::.glmulti)
+coef(res_test_method)
+mmi <- as.data.frame(coef(res_test_method))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
+
+### take stimuli modality
+
+```{r}
+res_stimuli_modality <- glmulti(d_calc ~mean_age + sentence_structure + agent_argument_type_clean + patient_argument_type_clean  + stimuli_actor + stimuli_modality + presentation_type + test_mass_or_distributed + practice_phase + character_identification + n_repetitions_sentence + n_repetitions_video, data=ma_data, level=1, fitfunction=rma.glmulti, crit="aicc", confsetsize=32)
+print(res)
+
+top <- weightable(res_stimuli_modality)
+top <- top[top$aicc <= min(top$aicc) + 2,]
+top
+summary(res_stimuli_modality@objects[[1]])
+plot(res_stimuli_modality, type="s")
+summary(res_stimuli_modality@objects[[2]])
+plot(res_stimuli_modality, type="s")
+```
+
+
+```{r}
+eval(metafor:::.glmulti)
+coef(res_stimuli_modality)
+mmi <- as.data.frame(coef(res_stimuli_modality))
+mmi <- data.frame(Estimate=mmi$Est, SE=sqrt(mmi$Uncond), Importance=mmi$Importance, row.names=row.names(mmi))
+mmi$z <- mmi$Estimate / mmi$SE
+mmi$p <- 2*pnorm(abs(mmi$z), lower.tail=FALSE)
+names(mmi) <- c("Estimate", "Std. Error", "Importance", "z value", "Pr(>|z|)")
+mmi$ci.lb <- mmi[[1]] - qnorm(.975) * mmi[[2]]
+mmi$ci.ub <- mmi[[1]] + qnorm(.975) * mmi[[2]]
+mmi <- mmi[order(mmi$Importance, decreasing=TRUE), c(1,2,4:7,3)]
+round(mmi, 4)
+```
+
 
 
 

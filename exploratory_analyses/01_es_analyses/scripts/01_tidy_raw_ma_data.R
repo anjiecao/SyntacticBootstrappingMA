@@ -4,10 +4,12 @@ library(tidyverse)
 library(googlesheets4) # package for reading data in spreadsheet directly into R
 library(here) # pakcage for managing paths
 
+
 MA_DATA_GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
 SHEET_NAME <- "MA data"
 OUTPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 
+OUTPATH
 read_raw_data_and_clean <- function(sheet_id, sheet_name, outpath){
 
   ma_data <- read_sheet(sheet_id, sheet_name,

@@ -22,17 +22,26 @@ ma_data <- read_csv(DATA_PATH)   %>%
          !is.na(mean_age))
 
 # missing vocab
-ma_data %>% filter(is.na(productive_vocab_mean) & is.na(productive_vocab_median)) %>%   DT::datatable()
+ma_data %>% filter(is.na(productive_vocab_mean) & is.na(productive_vocab_median)) 
 # transitive missing patient argument
-ma_data %>% filter(is.na(patient_argument_type) & sentence_structure == "transitive") %>% DT::datatable()
+ma_data %>% filter(is.na(patient_argument_type) & sentence_structure == "transitive") 
 # intransitive all have no patient argument, maybe needs to be changed to something else
-ma_data %>% filter(!is.na(patient_argument_type) & sentence_structure == "intransitive" ) %>% DT::datatable()# error needs to be fixed
+ma_data %>% filter(!is.na(patient_argument_type) & sentence_structure == "intransitive" ) # error needs to be fixed
 
 # missing n_repetition sentence, needs to be filled in
-ma_data %>% filter(is.na(n_repetitions_sentence)) %>% DT::datatable()#needs to be filled in 
+ma_data %>% filter(is.na(n_repetitions_sentence)) #needs to be filled in 
 # missing n_repetition video, needs to be filled in
-ma_data %>% filter(is.na(n_repetitions_video)) %>% DT::datatable()
+ma_data %>% filter(is.na(n_repetitions_video)) 
 # missing test question
-ma_data %>% filter(is.na(test_question)) %>% DT::datatable()
+ma_data %>% filter(is.na(test_question)) 
+
+ma_data %>% filter(is.na(patient_argument_type_clean))
+ma_data %>% filter(sentence_structure == "intransitive")
+ma_data %>% filter(is.na(patient_argument_type_clean)) %>% filter(sentence_structure == "intransitive")
+ma_data %>% filter(is.na(agent_argument_type_clean))
 
 ```
+```{r}
+ma_data %>% filter(is.na(patient_argument_type_clean))
+```
+
