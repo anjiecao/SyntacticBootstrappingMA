@@ -36,12 +36,7 @@ theme_set(theme_classic()) # sets global plot theme
 ```{r}
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make all variables (i.e. things that might change) as capital letters at the top of the scripts
 
-ma_data <- read_csv(DATA_PATH)   %>%
-  filter(language == "English",
-         population_type == "typically_developing", 
-         stimuli_modality == "video"|stimuli_modality == "animation",
-         !is.na(mean_age))
-
+ma_data <- read_csv(DATA_PATH) 
 ma_data
 ```
 
@@ -320,7 +315,6 @@ summary(m_age_method)
 ### all
 ```{r}
 ma_data %>% 
-  filter(sentence_structure != "bare_verb") %>%
   mutate(age_months = mean_age/30.44) %>% 
   ggplot(aes(x = age_months, y = d_calc, size = n_1, , color = sentence_structure)) +
   geom_point() +
@@ -341,6 +335,12 @@ m_age_sentence <- rma.mv(d_calc ~ mean_age * sentence_structure, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data)
 summary(m_age_sentence)
 ```
+### compare transitive vs intransitive 
+```{r}
+ma_data %>% 
+  
+```
+
 
 ### < 36, young 
 ```{r}
@@ -866,11 +866,48 @@ ma_data_with_vocab_age_young %>%
   ggtitle("Syntactical Bootstrapping effect size vs. vocab (months)") 
     
 ```
+
 ```{r}
-m_age_with_vocab_young <- rma.mv(d_calc ~ productive_vocab_median, V = d_var_calc,
-                            random = ~ 1 | short_cite, data = ma_data_with_vocab_age_young)
-summary(m_age_with_vocab_young)
+ggplot(ma_data, aes(x = sentence_structure, 
+                    y = d_calc, 
+                    color = sentence_structure)) +
+  geom_violin() +
+  geom_point(alpha = .4)  +
+  ylab("Effect Size") +
+  xlab("Response Mode") +
+  ggtitle("ME effect size by Response mode") +
+  theme_classic() +
+  theme(legend.position = "none")
+
+cis_by_sentence_structure <- ma_data %>%
+    group_by(sentence_structure) %>%
+    summarize(mean = mean(d_calc),
+            sd = sd(d_calc),
+            n = n()) %>%
+    mutate(ci_range_95 =  1.96 * (sd/sqrt(n)),
+         ci_lower = mean - ci_range_95,
+         ci_upper = mean + ci_range_95)
+
+
+ggplot(ma_data, aes(x = sentence_structure, 
+                    y = d_calc, 
+                    color = sentence_structure)) +
+  geom_violin() +
+  geom_point(alpha = .4)  +
+  ylab("Effect Size") +
+  xlab("Response Mode") +
+  ggtitle("ME effect size by Response mode") +
+  geom_pointrange(data = cis_by_sentence_structure, 
+                  aes(x = sentence_structure, 
+                      y = mean, ymin = ci_lower, 
+                      ymax = ci_upper), 
+                  color = "black") +
+  geom_hline(aes(yintercept = 0), linetype = 2) +
+  theme_classic(base_size = 16) +
+  theme(legend.position = "none")```
 ```
+
+
 
 ### < 36, young, age comparison
 ```{r}
