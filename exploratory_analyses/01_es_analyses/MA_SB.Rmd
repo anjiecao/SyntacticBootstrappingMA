@@ -37,13 +37,12 @@ theme_set(theme_classic()) # sets global plot theme
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make all variables (i.e. things that might change) as capital letters at the top of the scripts
 
 ma_data <- read_csv(DATA_PATH) 
-ma_data
+ma_data <- ma_data %>% filter(paradigm_type == "action_matching")
 ```
 
 
-
-# Data Overview
-
+# Data Overview {.tabset}
+## action 
 ```{r}
 n_effect_sizes <- ma_data %>%
   filter(!is.na(d_calc)) %>%
@@ -102,7 +101,7 @@ legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,co
 title(main = "effect sizes excluded outliers (abs <5) break down by sentence structure")
 ```
 
-## take int occount sentence structure? 
+## take in toccount sentence structure? 
 ```{r}
 ma_model_sentence_structure <- rma(ma_data_funnel$d_calc~ma_data_funnel$sentence_structure, ma_data_funnel$d_var_calc)
 ma_model_no_outlier_ss <- rma(ma_data_funnel_no_outlier$d_calc~ma_data_funnel_no_outlier$sentence_structure, ma_data_funnel_no_outlier$d_var_calc)
@@ -111,7 +110,7 @@ f3 <- funnel(ma_model_sentence_structure, xlab = "effect size", col = ss_colors)
 f3_b <- funnel(ma_model_no_outlier_ss, xlab = "effect size", col = ss_colors_no_outlier)
 ```
 
-## take int account sentence structure and age? 
+## take into account sentence structure and age? 
 ```{r}
 ma_model_ss_age <- rma(ma_data_funnel$d_calc~ma_data_funnel$sentence_structure + ma_data_funnel $mean_age, ma_data_funnel$d_var_calc)
 ma_model_funnel_no_outlier_ss_age <- rma(ma_data_funnel_no_outlier$d_calc~ma_data_funnel_no_outlier$sentence_structure+ma_data_funnel_no_outlier$mean_age, ma_data_funnel_no_outlier$d_var_calc)
@@ -148,7 +147,7 @@ long_continuous %>%
 
 ## Categorical Variables 
 ```{r, fig.height = 10}
-CATEGORICAL_VARS <- c("sentence_structure", "agent_argument_type", "patient_argument_type", "stimuli_actor",
+CATEGORICAL_VARS <- c("sentence_structure", "agent_argument_type_clean", "patient_argument_type_clean", "stimuli_actor","agent_argument_number","transitive_event_type","inransitive_event_type",
                      "presentation_type", "character_identification",
                      "test_mass_or_distributed", "practice_phase", "test_method")
 
@@ -221,10 +220,17 @@ ma_data %>%
 ```
 
 ```{r}
+m_simple <- rma.mv(d_calc ~ 1, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
 m_age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data)
+summary(m_simple)
 summary(m_age)
+
 ```
+
+
 ```{r fig.width = 10, fig.height = 12}
 forest(m_age,
        header = T,
@@ -302,7 +308,7 @@ ma_data %>%
   geom_smooth(method = "lm") +
   ylab("Effect Size") +
   xlab("Age (days)") +
-  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), breakdown my method") 
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), breakdown by method") 
 ```
 ```{r}
 m_age_method <- rma.mv(d_calc ~ mean_age + test_method, V = d_var_calc,
@@ -334,12 +340,6 @@ Interaction:
 m_age_sentence <- rma.mv(d_calc ~ mean_age * sentence_structure, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data)
 summary(m_age_sentence)
-```
-
-### compare transitive vs intransitive 
-```{r}
-ma_data %>% 
-  
 ```
 
 
@@ -399,6 +399,48 @@ m_age_sentence_old <- rma.mv(d_calc ~ mean_age * sentence_structure, V = d_var_c
                             random = ~ 1 | short_cite, data = ma_data_old)
 summary(m_age_sentence_old)
 ```
+## age with argument type? {.tabset}
+decide to compare noun, pronoun and varying 
+```{r}
+ma_data %>% group_by(agent_argument_type_clean) %>% count()
+```
+### all 
+```{r}
+ma_data_at <- ma_data %>% filter(agent_argument_type_clean != "noun_phrase")
+
+ma_data_at %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = agent_argument_type_clean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), breakdown by agent argument") 
+```
+```{r}
+m_age_method <- rma.mv(d_calc ~ mean_age + agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_at)
+summary(m_age_method)
+```
+
+### <36, young 
+```{r}
+ma_data_young_only %>% 
+  filter(agent_argument_type_clean != "noun_phrase") %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = agent_argument_type_clean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), breakdown by agent argument, young only") 
+  
+```
+
+
+
+
+
+
 ## age with stimuli_actor  {.tabset}
 ### all 
 ```{r}
@@ -462,6 +504,79 @@ m_age_stimuli_actor_interaction_old <- rma.mv(d_calc ~ mean_age * stimuli_actor,
                             random = ~ 1 | short_cite, data = ma_data_old)
 summary(m_age_stimuli_actor_old)
 summary(m_age_stimuli_actor_interaction_old)
+```
+
+## age with visual transitive stimuli  {.tabset}
+### all 
+```{r}
+ma_data %>% 
+  filter(transitive_event_type != "minimal_contact") %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (days)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (days), breakdown by transitive_event_type") 
+```
+
+```{r}
+m_data_transtivity <- ma_data %>% 
+  filter(transitive_event_type != "minimal_contact") 
+
+m_age_vs_tran <- rma.mv(d_calc ~ mean_age + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = m_data_transtivity)
+m_data_transtivity_interaction <- rma.mv(d_calc ~ mean_age * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = m_data_transtivity)
+summary(m_age_vs_tran)
+summary(m_data_transtivity_interaction)
+```
+### young < 36
+```{r}
+ma_data_young_only %>% 
+  filter(transitive_event_type != "minimal_contact") %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by transitive_event_type, young only") 
+```
+
+```{r}
+m_data_young_transtivity <- ma_data_young_only %>% 
+  filter(transitive_event_type != "minimal_contact") 
+
+m_age_vs_tran_young <- rma.mv(d_calc ~ mean_age + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = m_data_young_transtivity)
+m_data_transtivity_interaction_young <- rma.mv(d_calc ~ mean_age * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = m_data_young_transtivity)
+summary(m_age_vs_tran)
+summary(m_data_transtivity_interaction)
+```
+### old > 36
+```{r}
+ma_data_old %>% 
+  filter(transitive_event_type != "minimal_contact") %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by transitive_event_type, old only") 
+```
+```{r}
+m_data_old_transtivity <- ma_data_old %>% 
+  filter(transitive_event_type != "minimal_contact") 
+
+m_age_vs_tran_old <- rma.mv(d_calc ~ mean_age + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = m_data_old_transtivity)
+m_data_transtivity_interaction_old <- rma.mv(d_calc ~ mean_age * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = m_data_old_transtivity)
+summary(m_age_vs_tran_old)
+summary(m_data_transtivity_interaction_old)
 ```
 
 
@@ -804,6 +919,8 @@ summary(m_rep_age_interaction_old)
 
 ```
 
+## test method 
+
 
 
 ## vocab {.tabset}
@@ -868,47 +985,7 @@ ma_data_with_vocab_age_young %>%
     
 ```
 
-```{r WORKING}
 
-CATEGORICAL_VARS <- c("sentence_structure", "agent_argument_type", "patient_argument_type", "stimuli_actor",
-                     "presentation_type", "character_identification",
-                     "test_mass_or_distributed", "practice_phase", "test_method")
-
-
-ma_data %>% filter(!is.na(mean_age)) %>% summarize(mean_age = mean(mean_age)) 
-
-ma_data_ageExpl <- ma_data %>% mutate(AGE_group = (if_else(mean_age > 915.22, "OLD", "YOUNG")))
- 
-
-ggplot(ma_data_ageExpl, aes(x = sentence_structure, 
-                    y = d_calc, 
-                    group = presentation_type, 
-                    color = presentation_type
-                   )) +
-  geom_line() +
-  geom_point(position = "jitter") +
-  geom_point(alpha = .4)  +
-  ylab("Effect Size") +
-  xlab("Sentence Structure") +
-  ggtitle("ME effect size by Sentence Structure") 
-
-ggplot(ma_data_ageExpl, aes(x = sentence_structure, 
-                    y = d_calc, 
-                    group = unique_id, 
-                    color = unique_id
-                   )) + 
-  geom_line() +
-  geom_point(position = "jitter") +
-  geom_point(alpha = .4)  +
-  ylab("Effect Size") +
-  xlab("Sentence Structure") +
-  ggtitle("ME effect size by Sentence Structure") 
-
-```
-```{r}
-ma_data %>% 
-  group_by(agent_argument_type_clean) %>% count
-```
 
 ```{r}
 ggplot(ma_data, aes(x = agent_argument_type_clean, 

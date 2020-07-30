@@ -86,6 +86,22 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           agent_argument_type == "two_nouns_and_pronoun" ~ "varying_agent", 
           TRUE ~ agent_argument_type
         ), 
+        agent_argument_number = case_when(
+          agent_argument_type == "2noun" ~ "2", 
+          agent_argument_type == "2nouns" ~ "2", 
+          agent_argument_type == "two_nouns" ~ "2", 
+          agent_argument_type == "noun_with_adjectives" ~ "1", 
+          agent_argument_type == "noun_and_pronoun" ~ "varying", 
+          agent_argument_type == "two_nouns_and_pronoun" ~ "varying", 
+          TRUE ~ "1"
+        ), 
+        transitive_event_type = case_when(
+          transitive_event_type == "direct_ caused_movement"~ "direct_caused_action",
+          transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
+          transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
+          transitive_event_type == "indirect_cause_action"~ "indirect_caused_action",
+          TRUE ~ transitive_event_type
+        ),
         patient_argument_type_clean = case_when(
           patient_argument_type ==  "noun_and_dropping" ~ "varying_patient", 
           patient_argument_type == "pronoun_and_noun" ~ "varying_patient", 
@@ -100,9 +116,12 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           grepl("author", data_source, fixed = TRUE) ~ "author_contact", 
           grepl("table", data_source, fixed = TRUE) ~ "table", 
           TRUE ~ "plot"
+        ), 
+        paradigm_type = case_when(
+          (transitive_event_type == "AGENT") ~ "agent_matching",
+          TRUE ~ "action_matching"
         )
-                                 
-         ) %>%
+        ) %>%
   mutate(patient_argument_type_clean = if_else (is.na(patient_argument_type), 
                                                 "intransitive",
                                                 patient_argument_type_clean)) %>% 
