@@ -2,6 +2,7 @@
 library(tidyverse)
 library(here)
 library(janitor)
+library(gsubfn)
 
 
 INPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
@@ -102,11 +103,15 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           transitive_event_type == "indirect_cause_action"~ "indirect_caused_action",
           TRUE ~ transitive_event_type
         ),
+       
         patient_argument_type_clean = case_when(
           patient_argument_type ==  "noun_and_dropping" ~ "varying_patient", 
           patient_argument_type == "pronoun_and_noun" ~ "varying_patient", 
           TRUE ~ patient_argument_type,
         ), 
+        
+        visual_stimuli_pair = paste(transitive_event_type, intransitive_event_type, sep = '_'),
+        
         adult_participant = case_when(
           is.na(mean_age) ~ "yes", 
           TRUE ~ "no"
@@ -120,7 +125,8 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
         paradigm_type = case_when(
           (transitive_event_type == "AGENT") ~ "agent_matching",
           TRUE ~ "action_matching"
-        )
+        ),
+        publication_year = parse_number(unique_id)
         ) %>%
   mutate(patient_argument_type_clean = if_else (is.na(patient_argument_type), 
                                                 "intransitive",

@@ -1,0 +1,2045 @@
+---
+title: "Syntactic Boostrapping MA - action"
+subtitle: "Data V3!!"
+author: "Anjie Cao and Molly Lewis"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: yes
+---
+
+
+```{r setup, include = F}
+library(glue)
+library(tidyverse)
+library(googlesheets4)
+library(metafor)
+library(knitr)
+library(gridExtra)
+library(here)
+library(dict)
+library(heatmaply)
+library(MuMIn)
+library(glmulti)
+GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
+```
+
+
+
+```{r GlobalOptions}
+options(knitr.duplicate.label = 'allow')
+```
+
+```{r global_options, include=FALSE}
+
+
+knitr::opts_chunk$set(fig.height=6, fig.path='Figs/',
+                     warning=FALSE, message=FALSE)
+theme_set(theme_classic()) # sets global plot theme
+```
+
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make all variables (i.e. things that might change) as capital letters at the top of the scripts
+
+ma_data <- read_csv(DATA_PATH) %>% filter(paradigm_type == "action_matching")
+
+```
+
+
+
+# Data Overview {.tabset}
+## effect size & paper 
+```{r}
+n_effect_sizes <- ma_data %>%
+  filter(!is.na(d_calc)) %>%
+  nrow()
+
+n_papers <- ma_data %>%
+  distinct(unique_id) %>%
+  nrow()
+
+```
+
+There are `r n_effect_sizes` effect sizes collected from `r n_papers` different papers.
+
+Here are the papers in this analysis:
+```{r}
+ma_data %>%
+  count(short_cite) %>%
+  arrange(-n) %>%
+  DT::datatable()
+```
+## Forest plot 
+```{r}
+ma_model <- rma(ma_data$d_calc, ma_data$d_var_calc)
+ma_model
+forest(ma_model,
+       header = T,
+       slab = ma_data$unique_id,
+       col = "red",
+       cex = .7)
+
+```
+## funnel plot {.tabset}
+### vanilla 
+```{r}
+
+ma_data %>% 
+  mutate(color = ifelse(sentence_structure == "transitive", "red", "blue"),
+         color_sample_size = ifelse(n_1 < 10, "red", ifelse(n_1 < 20, "orange", "yellow")),
+         color_confidence = ifelse(inclusion_certainty == 1, "red", "black"))-> ma_data_funnel
+
+
+ma_data_funnel %>% filter (abs(d_calc) < 5) -> ma_data_funnel_no_outlier
+
+ss_colors <- ma_data_funnel$color
+ss_colors_no_outlier <- ma_data_funnel_no_outlier$color 
+
+ma_model_funnel <- rma(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc)
+ma_model_funnel_no_outlier <- rma(ma_data_funnel_no_outlier$d_calc, ma_data_funnel_no_outlier$d_var_calc)
+
+f1<- funnel(ma_model_funnel, xlab = "Effect Size", col = ss_colors) 
+legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,col=c("red", "blue"))
+title(main = "All effect sizes break down by sentence structure")
+
+f2<- funnel(ma_model_funnel_no_outlier, xlab = "Effect Size", col = ss_colors_no_outlier) 
+legend("topright",bg = "white",legend = c("transitive","intransitive"),pch=16,col=c("red", "blue"))
+title(main = "effect sizes excluded outliers (abs <5) break down by sentence structure")
+```
+
+### take into account sentence structure? 
+```{r}
+ma_model_sentence_structure <- rma(ma_data_funnel$d_calc~ma_data_funnel$sentence_structure, ma_data_funnel$d_var_calc)
+ma_model_no_outlier_ss <- rma(ma_data_funnel_no_outlier$d_calc~ma_data_funnel_no_outlier$sentence_structure, ma_data_funnel_no_outlier$d_var_calc)
+
+f3 <- funnel(ma_model_sentence_structure, xlab = "effect size", col = ss_colors)
+f3_b <- funnel(ma_model_no_outlier_ss, xlab = "effect size", col = ss_colors_no_outlier)
+```
+
+### take into account sentence structure and age? 
+```{r}
+ma_model_ss_age <- rma(ma_data_funnel$d_calc~ma_data_funnel$sentence_structure + ma_data_funnel $mean_age, ma_data_funnel$d_var_calc)
+ma_model_funnel_no_outlier_ss_age <- rma(ma_data_funnel_no_outlier$d_calc~ma_data_funnel_no_outlier$sentence_structure+ma_data_funnel_no_outlier$mean_age, ma_data_funnel_no_outlier$d_var_calc)
+
+
+
+f4 <- funnel(ma_model_ss_age, xlab = "effect size", col = ss_colors)
+f4_b <- funnel(ma_model_funnel_no_outlier_ss_age, xlab = "effect size", col = ss_colors_no_outlier)
+
+```
+
+
+# Variable Summary 
+## Distribution with years: 
+```{r}
+ma_data %>% 
+  ggplot(aes(x = publication_year, y = d_calc, size = n_1)) +
+  xlim(1990,2020) + 
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_smooth(color = "red") +
+  ylab("Effect Size") +
+  xlab("publication year") +
+  ggtitle("Syntactical Bootstrapping effect size with year") +
+  theme(legend.position = "none") 
+
+m_year <- rma.mv(d_calc ~ publication_year, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_year)
+```
+
+
+## Continuous Variables
+```{r, fig.height =8 }
+CONTINUOUS_VARS <- c("n_1", "x_1", "sd_1", "d_calc", "d_var_calc", "mean_age","n_train_test_pair","n_test_trial_per_pair","productive_vocab_mean", "productive_vocab_median")
+
+long_continuous <- ma_data %>%
+  pivot_longer(cols = CONTINUOUS_VARS)
+
+long_continuous %>%
+  ggplot(aes(x = value)) +
+  geom_histogram() + 
+  facet_wrap(~ name, scale = "free_x") +
+  labs(title = "Distribution of continuous measures")
+
+long_continuous %>%
+  group_by(name) %>%
+  summarize(mean = mean(value),
+            sd = sd(value)) %>%
+  kable()
+
+```  
+
+
+## Categorical Variables 
+```{r, fig.height = 10}
+CATEGORICAL_VARS <- c("sentence_structure", "agent_argument_type_clean", "patient_argument_type_clean", "stimuli_actor","agent_argument_number","transitive_event_type","intransitive_event_type",
+                     "presentation_type", "character_identification",
+                     "test_mass_or_distributed", "practice_phase", "test_method")
+
+long_categorical <- ma_data %>%
+  pivot_longer(cols = CATEGORICAL_VARS) %>%
+  count(name, value) # this is a short cut for group_by() %>% summarize(count = n()) 
+
+long_categorical %>%
+  ggplot(aes(x = value, y = n)) +  
+  facet_wrap(~ name, scale = "free_x") +
+  geom_col(position = 'dodge',width=0.4) + 
+  theme(text = element_text(size=8),
+        axis.text.x = element_text(angle = 90, hjust = 1))  # rotate x-axis text
+```
+
+## Prep for Moderators
+```{r seperation}
+
+ma_data_young <- ma_data_young <- ma_data %>%
+    mutate(age_months = mean_age/30.44) %>% 
+    filter(age_months < 36) 
+
+ma_data_old <-  ma_data %>%
+    mutate(age_months = mean_age/30.44) %>% 
+    filter(age_months > 36 | age_months == 36) 
+
+ma_data_vocab <- ma_data %>%
+    filter(!is.na(productive_vocab_median)) 
+
+```
+## no moderators{.tabset}
+### all
+```{r}
+m1 <- rma.mv(d_calc, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m1)
+```
+
+### <36
+```{r}
+m_young <- rma.mv(d_calc, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_young)
+```
+
+### >= 36
+```{r}
+
+m_old <- rma.mv(d_calc, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_old)
+```
+
+
+# Participants characteristics:
+
+## age only{.tabset}
+
+### colored by unique_id
+
+
+```{r plot_age_unique_id}
+ma_data %>% 
+  ggplot(aes(x = mean_age/30.44, y = d_calc,color = unique_id)) +
+  geom_point() +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") 
+```
+
+
+### all
+```{r plot_age}
+ma_data %>% 
+  ggplot(aes(x = mean_age/30.44, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_smooth(color = "red") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") +
+  theme(legend.position = "none") 
+```
+
+
+
+
+
+```{r simple_model_age}
+m_simple <- rma.mv(d_calc ~ 1, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+m_age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+m_age_log <- rma.mv(d_calc ~ log(mean_age), V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_simple)
+summary(m_age)
+summary(m_age_log)
+```
+
+
+```{r fig.width = 10, fig.height = 12}
+forest(m_age,
+       header = T,
+       slab = ma_data$unique_id,
+       col = "red",
+       cex = .7
+)
+
+```
+
+```{r funne_plot}
+funnel(m_age)
+```
+
+### young, < 36
+ 
+```{r plot_age_young}
+ma_data_young %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_smooth(color = "red") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") +
+  theme(legend.position = "none") 
+```
+
+```{r simple_model_age_young}
+m_age_young <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_young)
+```
+```{r fig.width = 10, fig.height = 12}
+forest(m_age_young,
+       header = T,
+       slab = ma_data_young$unique_id,
+       col = "red",
+       cex = .7
+)
+
+```
+
+
+### old, >= 36
+
+```{r plot_age_old}
+ma_data_old %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_smooth(color = "red") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") +
+  theme(legend.position = "none") 
+```
+
+```{r simple_model_age_old}
+m_age_old <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_old)
+```
+## vocab 
+```{r plot_vocab}
+ma_data_vocab %>%
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_smooth(color = "red") +
+  ylab("Effect Size") +
+  xlab("Median Vocabulary Size") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Median Vocabulary (months)") +
+  theme(legend.position = "none") 
+
+```
+
+```{r simple_model_vocab}
+m_vocab <- rma.mv(d_calc ~ productive_vocab_median, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_vocab)
+```
+
+```{r simple_model_vocab_a}
+m_vocab_with_age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_vocab_with_age)
+```
+
+# Linguistic Stimuli 
+
+## Sentence structure {.tabset}
+### SS only
+```{r ss_model}
+m_SS <- rma.mv(d_calc ~  sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_SS)
+
+```
+
+### all with age
+```{r plot_age_ss}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") 
+```
+```{r simple_model_ss}
+m_age_sentence <- rma.mv(d_calc ~ mean_age + sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_sentence)
+```
+```{r interaction_model_ss}
+m_age_sentence <- rma.mv(d_calc ~ mean_age * sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_sentence)
+```
+
+### < 36, young, age
+```{r plot_age_ss_young}
+
+ma_data_young %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, , color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), with sentence_structure") 
+```
+
+```{r simple_model_age_ss_young}
+m_age_sentence_young <- rma.mv(d_calc ~ mean_age + sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_sentence_young)
+```
+
+```{r interaction_model_age_ss_young}
+m_age_sentence_young <- rma.mv(d_calc ~ mean_age * sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_sentence_young)
+```
+
+### >= 36, old, age 
+```{r plot_age_ss_old}
+ma_data_old %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months)") 
+```
+```{r simple_model_age_ss_old}
+m_age_sentence_old <- rma.mv(d_calc ~ mean_age + sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_sentence_old)
+```
+```{r interaction_model_age_ss_old} 
+m_age_sentence_old_interaction <- rma.mv(d_calc ~ mean_age * sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_sentence_old)
+```
+
+### all with vocab
+```{r plot_ss_vocab}
+ma_data_vocab %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = sentence_structure)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Median Productive Vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Median Productive Vocab")
+```
+
+```{r simple_model_ss_vocab}
+m_age_sentence_vocab <- rma.mv(d_calc ~ productive_vocab_median + sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_sentence_vocab)
+```
+
+```{r interaction_model_ss_vocab}
+m_age_sentence_vocab_interaction <- rma.mv(d_calc ~ productive_vocab_median * sentence_structure, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_sentence_vocab)
+```
+
+## Agent Arguement Type {.tabset}
+
+```{r}
+m_AAT <- rma.mv(d_calc ~  agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+m_AAT_young <- rma.mv(d_calc ~  agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_AAT)
+summary(m_AAT_young)
+
+```
+
+### all 
+```{r plot_age_aat}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = agent_argument_type_clean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by agent argument") 
+```
+
+```{r simple_model_age_aat}
+m_age_aa <- rma.mv(d_calc ~ mean_age + agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_aa)
+```
+```{r interaction_model_age_aat}
+m_age_aa_interaction <- rma.mv(d_calc ~ mean_age * agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_aa_interaction)
+```
+
+### <36, young 
+```{r plot_age_aat_young}
+ma_data_young %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = agent_argument_type_clean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by agent argument, young only") 
+  
+```
+```{r simple_model_age_aat_young}
+m_age_aa_young <- rma.mv(d_calc ~ mean_age + agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_aa_young)
+```
+
+```{r interaction_model_age_young}
+m_age_aa_young_interaction <- rma.mv(d_calc ~ mean_age * agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_aa_young_interaction)
+```
+
+### >=36, old 
+```{r plot_age_aat_old}
+ma_data_old %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = agent_argument_type_clean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by agent argument, old only") 
+  
+```
+
+```{r simple_model_age_aat_old}
+m_age_aa_old <- rma.mv(d_calc ~ mean_age + agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_aa_old)
+```
+```{r interaction_model_age_old}
+m_age_aa_old_interaction <- rma.mv(d_calc ~ mean_age * agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_aa_old_interaction)
+```
+
+### Vocab 
+```{r plot_vocab_aat}
+ma_data_vocab %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = agent_argument_type_clean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by agent argument, with vocab") 
+  
+```
+
+```{r simple_model_plot_vocab_aat_old}
+m_age_aa_vocab <- rma.mv(d_calc ~ productive_vocab_median + agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_aa_vocab)
+```
+
+```{r interaction_model_plot_vocab_aat_old}
+m_age_aa_vocab_interaction <- rma.mv(d_calc ~ productive_vocab_median * agent_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_aa_vocab_interaction)
+```
+
+## Patient Argument Type
+```{r single_patientAT}
+m_PAT <- rma.mv(d_calc ~ patient_argument_type_clean, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_PAT)
+```
+
+```{r count_PAT}
+ma_data %>% group_by(patient_argument_type_clean) %>% count()
+```
+
+## Agent Argument Numbers 
+```{r single_AAN}
+m_AAN <-  rma.mv(d_calc ~ agent_argument_number, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_AAN)
+```
+
+```{r count_AAN}
+ma_data %>% group_by(agent_argument_number) %>% count()
+```
+
+## Number of sentence reptition {.tabset}
+```{r summary_plot_SR}
+ma_data %>% ggplot(aes(x = n_repetitions_sentence)) +
+  geom_histogram() 
+```
+### all
+```{r plot_SR}
+ma_data %>% 
+  ggplot(aes(x = n_repetitions_sentence, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("number of reptition in sentence") +
+  ggtitle("Syntactical Bootstrapping effect size vs. number of sentence repetition") 
+  
+```
+
+```{r simple_model_SR}
+m_rep <- rma.mv(d_calc ~ n_repetitions_sentence, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_rep)
+```
+
+```{r simple_model_SR_age}
+m_rep_age <- rma.mv(d_calc ~ n_repetitions_sentence + mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_rep_age)
+```
+
+```{r interaction_model_SR_age}
+m_rep_age_interaction <- rma.mv(d_calc ~ n_repetitions_sentence * mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_rep_age_interaction)
+```
+
+### < 36, young only 
+```{r plot_SR_young}
+ma_data_young %>% 
+  ggplot(aes(x = n_repetitions_sentence, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("number of reptition in sentence") +
+  ggtitle("Syntactical Bootstrapping effect size vs. number of sentence repetition, young only") 
+```
+
+```{r simple_model_SR_young}
+m_rep_young <- rma.mv(d_calc ~ n_repetitions_sentence, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_rep_young)
+```
+
+```{r simple_model_SR_age_young}
+m_rep_age_young <- rma.mv(d_calc ~ n_repetitions_sentence + mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_rep_age_young)
+```
+
+```{r interaction_model_SR_age_young}
+m_rep_age_interaction_young <- rma.mv(d_calc ~ n_repetitions_sentence * mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_rep_age_interaction_young)
+```
+
+### >= 36, old only
+```{r plot_SR_old}
+ma_data_old %>% 
+  ggplot(aes(x = n_repetitions_sentence, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("number of reptition in sentence") +
+  ggtitle("Syntactical Bootstrapping effect size vs. number of sentence repetition, old only") 
+```
+
+```{r simple_model_SR_old}
+m_rep_old <- rma.mv(d_calc ~ n_repetitions_sentence, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_rep_old)
+```
+
+```{r simple_model_SR_age_old}
+m_rep_age_old <- rma.mv(d_calc ~ n_repetitions_sentence + mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_rep_age_old)
+```
+
+```{r interaction_model_SR_age_old}
+m_rep_age_interaction_old <- rma.mv(d_calc ~ n_repetitions_sentence * mean_age, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_rep_age_interaction_old)
+```
+
+### add vocab in 
+```{r vocab_SR_simple}
+m_rep_v_r <- rma.mv(d_calc ~ n_repetitions_sentence + productive_vocab_median, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_rep_v_r)
+```
+
+```{r vocab_SR_interaction}
+m_rep_v_r_interaction <- rma.mv(d_calc ~ n_repetitions_sentence *productive_vocab_median, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_rep_v_r)
+```
+
+# Visual stimuli  
+
+## stimuli_modality(video vs animation) {.tabset}
+
+### single moderator
+```{r m_SM}
+
+m_SM <- rma.mv(d_calc ~ stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_SM)
+```
+
+### all
+```{r plot_StMo}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_modality)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli modality") 
+```
+
+```{r simple_model_StMo}
+m_stim_mod<- rma.mv(d_calc ~ mean_age + stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_stim_mod)
+
+```
+
+```{r interaction_model_StMo}
+m_stim_mod_interaction<- rma.mv(d_calc ~ mean_age * stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_stim_mod_interaction)
+```
+
+### < 36, young only 
+```{r plot_StMo_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_modality)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli modality, young") 
+```
+
+```{r simple_model_StMo_young}
+m_stim_mod_young<- rma.mv(d_calc ~ mean_age + stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_stim_mod_young)
+
+```
+
+```{r interaction_model_StMo_young}
+m_stim_mod_interaction_young <- rma.mv(d_calc ~ mean_age * stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_stim_mod_interaction_young)
+```
+
+### >= 36, old only
+```{r plot_StMo_old}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_modality)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli modality, old") 
+```
+
+```{r simple_model_StMo_old}
+m_stim_mod_old<- rma.mv(d_calc ~ mean_age + stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_stim_mod_old)
+
+```
+
+```{r interaction_model_StMo_old}
+m_stim_mod_interaction_old <- rma.mv(d_calc ~ mean_age * stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_stim_mod_interaction_old)
+```
+
+### vocab 
+```{r plot_StMo_vocab}
+ma_data_vocab %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = stimuli_modality)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("median vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. median vocab, breakdown by stimuli modality, vocab") 
+
+```
+
+```{r simple_model_StMo_vocab}
+m_stim_mod_v <- rma.mv(d_calc ~ productive_vocab_median + stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_stim_mod_v)
+
+```
+
+```{r interaction_model_StMo_vocab}
+m_stim_mod_intereaction_v <- rma.mv(d_calc ~ productive_vocab_median * stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_stim_mod_intereaction_v)
+```
+
+### vocab age comparison
+```{r plot_StMo_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_modality)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli modality, age compare vocab") 
+
+```
+
+```{r simple_model_StMo_vocab_a}
+m_stim_mod_v_a<- rma.mv(d_calc ~ mean_age + stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_stim_mod_v_a)
+
+```
+
+```{r interaction_model_StMo_vocab_a}
+m_stim_mod_interaction_v_a <- rma.mv(d_calc ~ mean_age * stimuli_modality, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_stim_mod_interaction_v_a)
+```
+
+## stimuli_actor (person vs non-person) {.tabset}
+
+### single moderator
+```{r m_SA}
+
+m_SA <- rma.mv(d_calc ~ stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_SA)
+```
+
+### all
+```{r plot_StAc}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_actor)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli actor, all") 
+
+
+```
+
+```{r simple_model_StAc}
+m_stim_actor_age <- rma.mv(d_calc ~ mean_age + stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_stim_actor_age)
+
+```
+
+```{r interaction_model_StAc}
+m_stim_actor_age_interaction <- rma.mv(d_calc ~ mean_age * stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_stim_actor_age_interaction)
+
+```
+
+### < 36, young only 
+```{r plot_StAc_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_actor)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli actor, young") 
+
+```
+
+```{r simple_model_StAc_young}
+m_stim_actor_age_young <- rma.mv(d_calc ~ mean_age + stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+summary(m_stim_actor_age_young)
+
+```
+
+```{r interaction_model_young}
+m_stim_actor_age_interaction_young <- rma.mv(d_calc ~ mean_age * stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+summary(m_stim_actor_age_interaction_young)
+
+```
+
+### >= 36, old only
+```{r plot_StAc_old}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_actor)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli actor, old") 
+
+```
+
+```{r simple_model_StAc_old}
+m_stim_actor_age_old <- rma.mv(d_calc ~ mean_age + stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+
+summary(m_stim_actor_age_old)
+
+```
+
+```{r interaction_model_old}
+m_stim_actor_age_interaction_old <- rma.mv(d_calc ~ mean_age * stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+
+summary(m_stim_actor_age_interaction_old)
+
+```
+
+### vocab 
+```{r plot_StAc_vocab}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = stimuli_actor)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli actor, vocab") 
+
+
+```
+
+```{r simple_model_StAc_vocab}
+m_stim_actor_vocab <- rma.mv(d_calc ~ productive_vocab_median + stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_stim_actor_vocab)
+
+```
+
+```{r interaction_model_vocab}
+m_stim_actor_vocab_interaction <- rma.mv(d_calc ~ productive_vocab_median * stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_stim_actor_vocab_interaction)
+```
+
+### vocab age comparison
+```{r plot_StAc_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = stimuli_actor)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by stimuli actor, age vocab comparison") 
+
+
+```
+
+```{r simple_model_StAc_vocab_a}
+m_stim_actor_vocab_a <- rma.mv(d_calc ~ mean_age + stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_stim_actor_vocab_a)
+
+```
+
+```{r interaction_model_vocab_a}
+m_stim_actor_vocab_interaction_a <- rma.mv(d_calc ~ mean_age * stimuli_actor, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_stim_actor_vocab_interaction_a)
+```
+
+## transitive_event (indirect_caused_action vs direct caused action) {.tabset}
+### single moderator
+```{r m_TE}
+
+m_TE <- rma.mv(d_calc ~ transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_TE)
+```
+
+```{r summary_TE}
+
+
+ma_data %>% count(transitive_event_type)
+
+
+```
+### all 
+```{r plot_TE}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by transitive_event_type") 
+```
+
+```{r simple_model_TE}
+m_age_vs_tran <- rma.mv(d_calc ~ mean_age + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_age_vs_tran)
+```
+
+```{r interaction_model_TE}
+m_data_transtivity_interaction <- rma.mv(d_calc ~ mean_age * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_data_transtivity_interaction)
+```
+
+### young < 36
+```{r plot_TE_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by transitive_event_type") 
+```
+
+```{r simple_model_TE_young}
+m_age_vs_tran_young <- rma.mv(d_calc ~ mean_age + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+summary(m_age_vs_tran_young)
+```
+
+```{r interaction_model_TE_young}
+m_data_transtivity_interaction_young <- rma.mv(d_calc ~ mean_age * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_data_transtivity_interaction_young)
+```
+
+### old > 36
+```{r plot_TE_old}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by transitive_event_type") 
+```
+
+```{r simple_model_TE_old}
+m_age_vs_tran_old <- rma.mv(d_calc ~ mean_age + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+
+summary(m_age_vs_tran_old)
+```
+
+```{r interaction_model_TE_old}
+m_data_transtivity_interaction_old <- rma.mv(d_calc ~ mean_age * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_data_transtivity_interaction_old)
+```
+
+### vocab 
+```{r plot_TE_vocab}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("median vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. median vocab, breakdown by transitive_event_type") 
+```
+
+```{r simple_model_TE_vocab}
+m_age_vs_tran_vocab <- rma.mv(d_calc ~ productive_vocab_median + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_vs_tran_old)
+```
+
+```{r interaction_model_TE_vocab }
+m_data_transtivity_interaction_vocab <- rma.mv(d_calc ~ productive_vocab_median * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_data_transtivity_interaction_vocab)
+```
+
+### vocab age comparsion 
+
+```{r plot_TE_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = mean_age, y = d_calc, size = n_1, color = transitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by transitive_event_type") 
+```
+
+```{r simple_model_TE_vocab_a}
+m_age_vs_tran_vocab <- rma.mv(d_calc ~ mean_age + transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_vs_tran_old)
+```
+
+```{r interaction_model_TE_vocab_a}
+m_data_transtivity_interaction_vocab <- rma.mv(d_calc ~ mean_age * transitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_data_transtivity_interaction_vocab)
+```
+
+
+## intransitive_event (one vs parallel) {.tabset}
+
+### single moderator 
+```{r m_IE}
+m_IE <- rma.mv(d_calc ~ intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_IE)
+
+```
+
+
+```{r summary_and_seperate_ITE}
+ma_data %>% count(intransitive_event_type) 
+```
+### all 
+```{r plot_ITE}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = intransitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by intransitive_event_type") 
+```
+
+```{r simple_model_ITE}
+m_age_vs_intran <- rma.mv(d_calc ~ mean_age + intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_age_vs_intran)
+```
+
+```{r interaction_model_ITE }
+m_data_intranstivity_interaction <- rma.mv(d_calc ~ mean_age * intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_data_intranstivity_interaction)
+```
+
+### young < 36
+```{r plot_ITE_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = intransitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by intransitive_event_type, young") 
+```
+
+```{r simple_model_ITE_young}
+m_age_vs_intran_young <- rma.mv(d_calc ~ mean_age + intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+summary(m_age_vs_intran_young)
+```
+
+```{r interaction_model_ITE_young}
+m_data_intranstivity_interaction_young <- rma.mv(d_calc ~ mean_age * intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_data_intranstivity_interaction_young)
+```
+
+### old > 36
+```{r plot_ITE_old}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = intransitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by intransitive_event_type, old") 
+```
+
+```{r simple_model_ITE_old}
+m_age_vs_intran_old <- rma.mv(d_calc ~ mean_age + intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+
+summary(m_age_vs_intran_old)
+```
+
+```{r interaction_model_ITE_old}
+m_data_intranstivity_interaction_old <- rma.mv(d_calc ~ mean_age * intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_data_intranstivity_interaction_old)
+```
+
+### vocab 
+```{r plot_ITE_vocab}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = intransitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("median vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. median vocab, breakdown by intransitive_event_type") 
+```
+
+```{r simple_model_ITE_vocab}
+m_age_vs_intran_vocab <- rma.mv(d_calc ~ productive_vocab_median + intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_vs_intran_vocab)
+```
+
+```{r interaction_model_ITE_vocab}
+m_data_intranstivity_interaction_vocab <- rma.mv(d_calc ~ productive_vocab_median * intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_data_intranstivity_interaction_vocab)
+```
+
+### vocab age comparsion 
+
+```{r plot_ITE_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = mean_age, y = d_calc, size = n_1, color = intransitive_event_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by intransitive_event_type") 
+```
+
+```{r simple_model_ITE_vocab_a}
+m_age_vs_intran_vocab <- rma.mv(d_calc ~ mean_age + intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_vs_intran_vocab)
+```
+
+```{r interaction_model_ITE_vocab_a}
+m_data_intranstivity_interaction_vocab <- rma.mv(d_calc ~ mean_age * intransitive_event_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_data_intranstivity_interaction_vocab)
+```
+
+## Visual Stimuli Pair
+```{r m_VSP}
+m_VSP <- rma.mv(d_calc ~ visual_stimuli_pair, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_VSP)
+```
+
+```{r}
+ma_data %>% count()
+```
+
+## n_repetition_video (??) {.tabset}
+### single moderator 
+```{r m_RV}
+m_RV <- rma.mv(d_calc ~ n_repetitions_video, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_RV)
+
+```
+
+```{r summary_plot_RV}
+ma_data %>% ggplot(aes(x = n_repetitions_video)) +
+  geom_histogram() 
+
+```
+
+
+# Testing Procedure 
+
+## test_method (point vs look) {.tabset}
+
+### single moderator 
+```{r m_TM}
+m_TM <- rma.mv(d_calc ~ test_method, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_TM)
+
+```
+
+```{r summary_TM}
+ma_data %>% count(test_method)
+```
+
+## presentation_type{.tabset}
+
+### single moderator 
+```{r m_PT}
+m_PT <- rma.mv(d_calc ~ presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_PT)
+
+```
+
+```{r summary_and_seperate_PT}
+ma_data %>% count(presentation_type)
+  
+```
+
+### all
+```{r plot_PT}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1,  color = presentation_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by presentation type") 
+```
+
+```{r simple_PT}
+m_age_pt <- rma.mv(d_calc ~ mean_age + presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_age_pt)
+```
+
+```{r interaction_PT}
+m_age_pt_interaction <- rma.mv(d_calc ~ mean_age * presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_pt_interaction)
+
+```
+
+### <36, young
+```{r plot_PT_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1,  color = presentation_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by presentation type, young only") 
+```
+
+```{r simple_PT_young}
+m_data_pt_young <- rma.mv(d_calc ~ mean_age + presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+
+summary(m_data_pt_young)
+```
+
+```{r interaction_PT_young}
+m_age_pt_interaction_young <- rma.mv(d_calc ~ mean_age * presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_pt_interaction_young)
+```
+
+### >= 36, old 
+```{r}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1,  color = presentation_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by presentation type, young only") 
+```
+
+### vocab 
+```{r plot_PT_vocab}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1,  color = presentation_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("median vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. median vocab, breakdown by presentation type") 
+```
+
+```{r simple_PT_vocab}
+m_pt_vocab <- rma.mv(d_calc ~ productive_vocab_median + presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_pt_vocab)
+```
+
+```{r interaction_PT_vocab}
+m_pt_vocab_interaction <- rma.mv(d_calc ~ productive_vocab_median * presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_pt_vocab_interaction)
+
+```
+
+### vocab age comparsion 
+```{r plot_PT_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = mean_age, y = d_calc, size = n_1,  color = presentation_type)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("mean age ") +
+  ggtitle("Syntactical Bootstrapping effect size vs. mean age, breakdown by presentation type") 
+```
+
+```{r simple_PT_vocab_a}
+m_pt_vocab_a <- rma.mv(d_calc ~ mean_age + presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_pt_vocab_a)
+```
+
+```{r interaction_PT_vocab_a}
+m_pt_vocab_a_interaction <- rma.mv(d_calc ~ mean_age * presentation_type, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_pt_vocab_a_interaction)
+
+```
+
+## character_identification {.tabset}
+
+### single moderator 
+```{r m_CI}
+m_CI <- rma.mv(d_calc ~ character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_CI)
+
+```
+
+```{r count_ci}
+ma_data %>% count(character_identification)
+```
+
+### all 
+```{r plot_CI}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = character_identification)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by character_identification") 
+```
+
+```{r simple_CI}
+m_age_ci <- rma.mv(d_calc ~ mean_age + character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_age_ci)
+```
+
+```{r interaction_CI}
+m_age_stimuli_ci_interaction <- rma.mv(d_calc ~ mean_age * character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_stimuli_ci_interaction)
+```
+
+
+### <36, young
+
+```{r plot_CI_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = character_identification)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by character_identification, young only") 
+```
+
+```{r simple_CI_young}
+m_age_ci_young <- rma.mv(d_calc ~ mean_age + character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+summary(m_age_ci_young)
+```
+
+```{r interaction_CI_young}
+m_age_ci_interaction_young <- rma.mv(d_calc ~ mean_age * character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_ci_interaction_young)
+```
+
+
+### >= 36, old 
+```{r plot_CI_old}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = character_identification)) +
+  geom_point() +
+   geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by character_identification, old only") 
+```
+
+```{r simple_CI_old}
+m_age_ci_old <- rma.mv(d_calc ~ mean_age + character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+
+summary(m_age_ci_old)
+```
+
+```{r interaction_CI_old}
+m_age_ci_interaction_old <- rma.mv(d_calc ~ mean_age * character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_ci_interaction_old)
+```
+
+### vocab 
+```{r plot_CI_vocab}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = character_identification)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("median vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. median voca, breakdown by character_identification, old only") 
+```
+
+```{r simple_CI_vocab}
+m_age_ci_vocab <- rma.mv(d_calc ~ productive_vocab_median + character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_ci_vocab)
+```
+
+```{r interaction_CI_vocab}
+m_age_ci_interaction_vocab <- rma.mv(d_calc ~ productive_vocab_median * character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_ci_interaction_vocab)
+```
+
+### age w/ vocab comparison 
+```{r plot_CI_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = mean_age, y = d_calc, size = n_1, color = character_identification)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by character_identification, old only") 
+```
+
+```{r simple_CI_vocab_a}
+m_age_ci_vocab_a <- rma.mv(d_calc ~ mean_age + character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_ci_vocab_a)
+```
+
+```{r interaction_CI_vocab_a}
+m_age_ci_interaction_vocab_a <- rma.mv(d_calc ~ mean_age * character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_ci_interaction_vocab_a)
+```
+
+## practice_phase {.tabset}
+
+### single moderator 
+```{r m_PP}
+m_PP <- rma.mv(d_calc ~ practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_PP)
+
+```
+
+### all 
+```{r plot_PP}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = practice_phase)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by practice_phase") 
+```
+
+```{r simple_PP}
+m_age_pp <- rma.mv(d_calc ~ mean_age + character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_age_pp)
+```
+
+```{r interaction_PP}
+m_age_pp_interaction <- rma.mv(d_calc ~ mean_age * character_identification, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_pp_interaction)
+```
+
+### <36, young
+```{r plot_PP_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = practice_phase)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by practice_phase, young only") 
+```
+
+```{r simple_PP_young}
+m_age_pp_young <- rma.mv(d_calc ~ mean_age + practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+summary(m_age_pp_young)
+```
+
+```{r interaction_PP_young}
+m_age_pp_interaction_young <- rma.mv(d_calc ~ mean_age * practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_pp_interaction_young)
+```
+
+### >= 36, old 
+```{r plot_PP_old}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = practice_phase)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by practice_phase, old only") 
+```
+
+```{r simple_PP_old}
+m_age_pp_old <- rma.mv(d_calc ~ mean_age + practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_pp_young)
+```
+
+```{r interaction_PP_old}
+m_age_pp_interaction_old <- rma.mv(d_calc ~ mean_age * practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_pp_interaction_old)
+```
+
+### vocab
+```{r plot_PP_vocab}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = practice_phase)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("productive vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. productive vocab, breakdown by practice_phase, old only") 
+```
+
+```{r simple_PP_vcocab}
+m_age_pp_vocab <- rma.mv(d_calc ~ productive_vocab_median + practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_pp_vocab)
+```
+
+```{r interaction_PP_vocab}
+m_age_pp_interaction_vocab <- rma.mv(d_calc ~ productive_vocab_median * practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_pp_interaction_vocab)
+```
+
+### age w/ vocab comparsion 
+```{r plot_PP_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = mean_age, y = d_calc, size = n_1, color = practice_phase)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("mean age") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by practice_phase, old only") 
+```
+
+```{r simple_PP_vcocab_a}
+m_age_pp_vocab_a <- rma.mv(d_calc ~ mean_age + practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_pp_vocab_a)
+```
+
+```{r interaction_PP_vocab_a}
+m_age_pp_interaction_vocab_a <- rma.mv(d_calc ~ mean_age * practice_phase, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_pp_interaction_vocab_a)
+```
+
+## test_or_mass_distributed {.tabset}
+
+### single moderator 
+```{r m_TMD}
+m_TMD <- rma.mv(d_calc ~ test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_TMD)
+
+```
+
+### all 
+```{r plot_TT}
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = test_mass_or_distributed)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by test type") 
+```
+
+```{r simple_TT}
+m_age_tt <- rma.mv(d_calc ~ mean_age + test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+
+summary(m_age_tt)
+```
+
+```{r interaction_TT}
+m_age_tt_interaction <- rma.mv(d_calc ~ mean_age * test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_age_tt_interaction)
+```
+
+### <36, young
+```{r plot_TT_young}
+ma_data_young %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = test_mass_or_distributed)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by test_mass_or_distributed, young only") 
+```
+
+```{r simple_TT_young}
+m_age_tt_young <- rma.mv(d_calc ~ mean_age + test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+
+summary(m_age_tt_young)
+```
+
+```{r interaction_TT_young}
+m_age_tt_interaction_young <- rma.mv(d_calc ~ mean_age * test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_young)
+summary(m_age_tt_interaction_young)
+```
+
+### >= 36, old 
+```{r plot_TT_old}
+ma_data_old %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = age_months, y = d_calc, size = n_1, color = test_mass_or_distributed)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by test_mass_or_distributed, old only") 
+```
+
+```{r simple_TT_old}
+m_age_tt_old <- rma.mv(d_calc ~ mean_age + test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+
+summary(m_age_tt_old)
+```
+
+```{r interaction_TT_old}
+m_age_tt_interaction_old <- rma.mv(d_calc ~ mean_age * test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_old)
+summary(m_age_tt_interaction_old)
+```
+
+### vocab 
+```{r plot_TT_vocab}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = productive_vocab_median, y = d_calc, size = n_1, color = test_mass_or_distributed)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("median vocab") +
+  ggtitle("Syntactical Bootstrapping effect size vs. median voca, breakdown by test_mass_or_distributed, old only") 
+```
+
+```{r simple_TT_vocab}
+m_age_tt_vocab <- rma.mv(d_calc ~ productive_vocab_median + test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_tt_vocab)
+```
+
+```{r interaction_TT_vocab}
+m_age_tt_interaction_vocab <- rma.mv(d_calc ~ productive_vocab_median * test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_tt_interaction_vocab)
+```
+
+### age w/ vocab comparison 
+```{r plot_TT_vocab_a}
+ma_data_vocab %>% 
+  mutate(age_months = mean_age/30.44) %>%
+  ggplot(aes(x = mean_age, y = d_calc, size = n_1, color = test_mass_or_distributed)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Syntactical Bootstrapping effect size vs. Age (months), breakdown by test_mass_or_distributed, old only") 
+```
+
+```{r simple_TT_vocab_a}
+m_age_tt_vocab_a <- rma.mv(d_calc ~ mean_age + test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+
+summary(m_age_tt_vocab_a)
+```
+
+```{r interaction_TT_vocab_a}
+m_age_tt_interaction_vocab_a <- rma.mv(d_calc ~ mean_age * test_mass_or_distributed, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data_vocab)
+summary(m_age_tt_interaction_vocab_a)
+```
+
+
+## n_train_test_pair {.tabset} 
+
+### single moderator 
+```{r m_TTP}
+m_TTP <- rma.mv(d_calc ~ n_train_test_pair, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_TTP)
+
+```
+
+```{r}
+ma_data %>% ggplot(aes(x = n_train_test_pair)) +
+  geom_histogram() 
+
+```
+
+
+
+## n_test_trial {.tabset}
+
+### single moderator 
+```{r m_TeT}
+m_TeT <- rma.mv(d_calc ~ n_test_trial_per_pair, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_TeT)
+
+```
+
+```{r}
+ma_data %>% ggplot(aes(x = n_test_trial_per_pair)) +
+  geom_histogram() 
+```
+
+
+# Single Moderator  
+```{r}
+
+summary(m_age)
+
+s_age <- coef(summary(m_age))  %>% rownames_to_column(var = "coefficient_name")
+s_vocab <- coef(summary(m_vocab))  %>% rownames_to_column(var = "coefficient_name")
+s_rep <- coef(summary(m_rep)) %>% rownames_to_column(var = "coefficient_name")
+s_SS <- coef(summary(m_SS))  %>% rownames_to_column(var = "coefficient_name")
+s_AAT <- coef(summary(m_AAT))  %>% rownames_to_column(var = "coefficient_name")
+s_PAT <- coef(summary(m_PAT))  %>% rownames_to_column(var = "coefficient_name")
+s_AAN <- coef(summary(m_AAN))  %>% rownames_to_column(var = "coefficient_name")
+s_SM <- coef(summary(m_SM))  %>% rownames_to_column(var = "coefficient_name")
+s_SA <- coef(summary(m_SA))  %>% rownames_to_column(var = "coefficient_name")
+s_TE <- coef(summary(m_TE))  %>% rownames_to_column(var = "coefficient_name")
+s_IE <- coef(summary(m_IE))  %>% rownames_to_column(var = "coefficient_name")
+s_VSP <- coef(summary(m_VSP))  %>% rownames_to_column(var = "coefficient_name")
+s_RV <- coef(summary(m_RV))  %>% rownames_to_column(var = "coefficient_name")
+s_TM <- coef(summary(m_TM))  %>% rownames_to_column(var = "coefficient_name")
+s_PT <- coef(summary(m_PT))  %>% rownames_to_column(var = "coefficient_name")
+s_CI <- coef(summary(m_CI))  %>% rownames_to_column(var = "coefficient_name")
+s_PP <- coef(summary(m_PP))  %>% rownames_to_column(var = "coefficient_name")
+s_TMD <- coef(summary(m_TMD))  %>% rownames_to_column(var = "coefficient_name")
+s_TTP <- coef(summary(m_TTP))  %>% rownames_to_column(var = "coefficient_name")
+s_TeT <- coef(summary(m_TeT))  %>% rownames_to_column(var = "coefficient_name")
+
+
+s_moderators <- bind_rows(s_age, s_vocab, s_SS,s_AAT,s_PAT,s_AAN,s_SM,s_SA,s_TE,s_IE,s_VSP,s_RV,s_TM,s_PT,s_CI,s_PP,s_TMD,s_TTP,s_TeT
+) %>% filter(coefficient_name != "intrcpt") %>% 
+  mutate(moderator_types = case_when(
+    coefficient_name == "mean_age" ~ "Participants_Characteristics",
+    coefficient_name == "productive_vocab_median" ~ "Participants_Characteristics",
+    coefficient_name == "sentence_structuretransitive" ~ "Linguistic_Stimuli", 
+    coefficient_name == "agent_argument_type_cleannoun_phrase" ~ "Linguistic_Stimuli", 
+    coefficient_name == "agent_argument_type_cleanpronoun" ~ "Linguistic_Stimuli", 
+    coefficient_name == "agent_argument_type_cleanvarying_agent" ~ "Linguistic_Stimuli", 
+    coefficient_name == "patient_argument_type_cleannoun"~ "Linguistic_Stimuli", 
+    coefficient_name == "patient_argument_type_cleannoun_phrase"~ "Linguistic_Stimuli", 
+    coefficient_name == "patient_argument_type_cleanpronoun"~ "Linguistic_Stimuli", 
+    coefficient_name == "patient_argument_type_cleanvarying_patient"~ "Linguistic_Stimuli", 
+    coefficient_name == "agent_argument_number2"~ "Linguistic_Stimuli", 
+    coefficient_name == "agent_argument_numbervarying"~ "Linguistic_Stimuli", 
+    coefficient_name == "n_repetitions_sentence"~ "Linguistic_Stimuli", 
+    coefficient_name == "patient_argument_type_cleanvarying_patient"~ "Linguistic_Stimuli",
+    coefficient_name == "n_repetitions_video"~ "Visual_Stimuli",
+    coefficient_name == "stimuli_modalityvideo" ~ "Visual_Stimuli",
+    coefficient_name == "stimuli_actorperson" ~ "Visual_Stimuli",
+    coefficient_name == "transitive_event_typeindirect_caused_action" ~ "Visual_Stimuli",
+    coefficient_name == "transitive_event_typeminimal_contact" ~ "Visual_Stimuli",
+    coefficient_name == "intransitive_event_typeone_action" ~ "Visual_Stimuli",
+    coefficient_name == "intransitive_event_typeparallel_actions" ~ "Visual_Stimuli",
+    coefficient_name == "visual_stimuli_pairdirect_caused_action_one_action" ~ "Visual_Stimuli",
+    coefficient_name == "visual_stimuli_pairdirect_caused_action_parallel_actions" ~ "Visual_Stimuli",
+    coefficient_name == "visual_stimuli_pairindirect_caused_action_one_action" ~ "Visual_Stimuli",
+    coefficient_name == "visual_stimuli_pairindirect_caused_action_parallel_actions" ~ "Visual_Stimuli",
+    coefficient_name == "visual_stimuli_pairminimal_contact_one_action" ~ "Visual_Stimuli",
+    coefficient_name == "visual_stimuli_pairminimal_contact_parallel_actions" ~ "Visual_Stimuli",
+    coefficient_name == "test_methodpoint" ~ "Test_Procedure",
+    coefficient_name == "presentation_typeimmediate_after" ~ "Test_Procedure",
+    coefficient_name == "presentation_typesimultaneous" ~ "Test_Procedure",
+    coefficient_name == "character_identificationyes" ~ "Test_Procedure",
+    coefficient_name == "practice_phaseyes" ~ "Test_Procedure",
+    coefficient_name == "test_mass_or_distributedmass" ~ "Test_Procedure",
+    coefficient_name == "n_train_test_pair" ~ "Test_Procedure",
+    coefficient_name == "n_test_trial_per_pair" ~ "Test_Procedure",
+  )
+)
+ 
+
+
+```
+
+```{r}
+s_moderators %>% filter(moderator_types == "Participants_Characteristics") %>% 
+  ggplot(aes(x = coefficient_name, y = estimate)) + 
+  geom_point(size = 2) + 
+  geom_linerange(aes(ymin = ci.lb, ymax = ci.ub)) + 
+  geom_hline(aes(yintercept = 0), linetype = 2) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r linguisti_stimuli_moderator}
+s_moderators %>% filter(moderator_types == "Linguistic_Stimuli") %>% 
+  ggplot(aes(x = coefficient_name, y = estimate)) + 
+  geom_point(size = 2) + 
+  geom_linerange(aes(ymin = ci.lb, ymax = ci.ub)) + 
+  geom_hline(aes(yintercept = 0), linetype = 2) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r visual_stimuli_moderators}
+s_moderators %>% filter(moderator_types == "Visual_Stimuli") %>% 
+  ggplot(aes(x = coefficient_name, y = estimate)) + 
+  geom_point(size = 2) + 
+  geom_linerange(aes(ymin = ci.lb, ymax = ci.ub)) + 
+  geom_hline(aes(yintercept = 0), linetype = 2) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+```{r test_procedure_moderators}
+s_moderators %>% filter(moderator_types == "Test_Procedure") %>% 
+  ggplot(aes(x = coefficient_name, y = estimate)) + 
+  geom_point(size = 2) + 
+  geom_linerange(aes(ymin = ci.lb, ymax = ci.ub)) + 
+  geom_hline(aes(yintercept = 0), linetype = 2) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+```{r width = 20, height = 20}
+
+s_moderators %>% 
+  ggplot(aes(x = coefficient_name, y = estimate, color = moderator_types)) + 
+  geom_point(size = 2) + 
+  geom_linerange(aes(ymin = ci.lb, ymax = ci.ub)) + 
+  geom_hline(aes(yintercept = 0), linetype = 2) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+  
+
+```
+
+
+
+# Reasonalbe Moderators (??)
+
+```{r}
+null <- rma.mv(d_calc~1, V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(null)
+```
+
+```{r}
+m_sink <- rma.mv(d_calc ~ mean_age + sentence_structure + agent_argument_type_clean + agent_argument_number + n_repetitions_sentence + test_method + character_identification + practice_phase + test_mass_or_distributed , V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_sink)
+```
+
+
+```{r}
+m_sink_2 <- rma.mv(d_calc ~ mean_age + sentence_structure  + n_repetitions_sentence + test_method + character_identification + practice_phase + test_mass_or_distributed , V = d_var_calc,
+                            random = ~ 1 | short_cite, data = ma_data)
+summary(m_sink_2)
+```
+
+
