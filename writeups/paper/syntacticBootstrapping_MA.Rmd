@@ -84,8 +84,11 @@ knitr::opts_chunk$set(warning = FALSE,
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
 RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 
-ma_data <- read_csv(DATA_PATH)   
+ma_data <- read_csv(DATA_PATH) %>% filter(paradigm_type == "action_matching")
 ```
+
+
+
 
 ```{r }
 
@@ -289,6 +292,7 @@ Finally, procedure moderators included the types of response elicited from the p
   
 ## Data Preprocessing 
 
+
 ```{r data_preprocessing}
 num_has_raw <- ma_data %>% filter(!is.na(x_2_raw)) %>% count()
 ```
@@ -299,15 +303,462 @@ num_has_raw <- ma_data %>% filter(!is.na(x_2_raw)) %>% count()
 
 # Results
 
+### Preliminary Analysis 
+
+```{r}
+
+# take from the ME paper 
+get_MA_params <- function(age_moderated, df) {
+  
+  this_data <- df
+  n = nrow(this_data)
+  
+  if (age_moderated){
+      model <- rma.mv(d_calc ~ log(mean_age), V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant,
+                      method = "REML",
+                      data = this_data)
+      
+      this_age_estimate <- model$b[2]
+      this_age_estimate.cil <- model$ci.lb[2]
+      this_age_estimate.cih <- model$ci.ub[2]
+      this_age_z <- model$zval[2]
+      this_age_p <- model$pval[2]
+
+  } else {
+      model <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant,
+                      method = "REML",
+                      data = this_data)
+      
+      this_age_estimate <- NA
+      this_age_estimate.cil <- NA
+      this_age_estimate.cih <- NA
+      this_age_z <- NA
+      this_age_p <- NA
+    
+  }
+  
+  params <- data.frame(age_moderated = age_moderated,
+                       n = n,
+                       estimate = model$b[1],
+                       estimate.cil = model$ci.lb[1],
+                       estimate.cih = model$ci.ub[1],
+                       z = model$zval[1],
+                       p = model$pval[1],
+                       age_estimate = this_age_estimate,
+                       age_estimate.cil = this_age_estimate.cil, 
+                       age_estimate.cih = this_age_estimate.cih,
+                       age_z = this_age_z,
+                       age_p = this_age_p,
+                       Q = model$QE,
+                       Qp = model$QEp)
+}
+
+null_model<- get_MA_params(FALSE, ma_data)
+age_model <- get_MA_params(TRUE, ma_data)
+all_models <- bind_rows(null_model,age_model)
+
+
+mod_print <- all_models %>%
+             mutate(esimate_print =  round(estimate, 2),
+                    CI_print = paste0(" [", 
+                                      round(estimate.cil, 2),
+                                     ", ",
+                                     round(estimate.cih, 2),
+                                     "]"),
+                   estimate_print_full = paste(esimate_print, CI_print),
+                   z_print = round(z, 2),
+                   p_print = round(p, 2),
+                   p_print = ifelse(p_print <.001, "<.001", paste0("= ", p_print)),
+                   age_estimate_print = round(age_estimate, 2),
+                   age_CI_print = paste0(" [", 
+                                      round(age_estimate.cil, 2),
+                                     ", ",
+                                     round(age_estimate.cih, 2),
+                                     "]"),
+                   age_estimate_print_full = paste(age_estimate_print, age_CI_print),
+
+                   age_z_print =  round(age_z, 2),
+                   age_p_print =  round(age_p, 2),
+                   age_p_print = ifelse(age_p_print < .001, "<.001", 
+                                        paste0("= ", age_p_print)),
+                   Q_print = round(Q, 2),
+                   Qp_print = round(Qp, 2),
+                   Qp_print = ifelse(Qp_print < .001, "<.001", paste0("= ", Qp_print)))
+mod_print
+```
+
+
+
+
+
+```{r fig.pos = "!t", fig.cap = "wow" , fig.height = 22, fig.width = 20 }
+
+
+
+
+individual_data <- ma_data %>% 
+  select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
+  mutate(cil = d_calc - 1.96 * d_var_calc, 
+         cil = case_when(
+          (cil < -8) ~ -8,  # truncate error bar for visibility reason 
+          TRUE ~ cil
+         ),
+         ciu = d_calc + 1.96 * d_var_calc, 
+         meta = "no", 
+         label_color = "black",
+         print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = "")
+         )
+
+cumulative <- mod_print %>% 
+  filter(age_moderated == FALSE) %>% 
+  select (estimate, estimate.cil, estimate.cih) %>% 
+  mutate(short_cite = "Meta-Analytic Effect Size",
+         plot_label = "Meta-Analytic Effect Size",
+         d_calc = estimate, 
+         d_var_calc = NA, 
+         n_1 = 99, 
+         expt_num = "", 
+         expt_condition = "",
+         cil = estimate.cil, 
+         ciu = estimate.cih, 
+         sentence_structure = "cumulative",
+        print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""),
+         meta = "yes", 
+        label_color = "red"
+         )
+
+
+
+forest_data <- bind_rows(individual_data, cumulative) 
+forest_data$sentence_structure <- as.factor(forest_data$sentence_structure)
+forest_data$meta <- as.factor(forest_data$meta)
+forest_data <- forest_data %>% 
+  rowid_to_column() %>% 
+  mutate(
+    rowid = if_else(rowid == 0, 99, as.double(rowid)) #to always put the MA ES at bottom
+  ) %>% 
+  group_by(sentence_structure) %>% arrange(-rowid, .by_group = TRUE)
+forest_data$plot_label <- factor(forest_data$plot_label, levels = forest_data$plot_label)
+
+
+
+# set the neighbourhood levels in the order the occur in the data frame
+label_colors <- forest_data$label_color[order(forest_data$plot_label)]
+
+forest_data %>%  # First sort by val. This sort the dataframe but NOT the factor levels
+  ggplot(aes(x = plot_label, y = d_calc)) + 
+  geom_point(data = forest_data,
+             aes(size=n_1, shape = sentence_structure, color = sentence_structure)) + 
+  scale_color_manual(breaks = c("cumulative", "intransitive","transitive"),
+                     values = c("red", "black", "black"))+ 
+  scale_size(guide = 'none') + 
+  scale_shape_manual(breaks = c("cumulative", "intransitive","transitive"),
+                     values=c(18,16, 17)) +
+  #guides(color = guide_legend(override.aes = list(shape = 18, shape = 16, shape = 17))) + 
+  geom_linerange(aes(ymin = cil, ymax = ciu), show.legend = FALSE) + 
+  geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = cil),
+               linejoin = "round", 
+               lineend = "round", 
+               size = 0.1,
+               arrow = arrow(length = unit(0.1, "inches")),
+               data = filter(forest_data,cil == -8))+
+  geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2) + 
+  geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
+             color = "red", linetype = 2) + 
+  geom_text(aes(label = print_full, x = plot_label, y = 7), 
+            size = 3.5, colour = label_colors) + 
+  scale_y_continuous(breaks = seq(-10, 5, 1))+ 
+  coord_cartesian(clip = 'on') + 
+  coord_flip() + 
+  ylab("Cohen's d") +
+  labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
+  theme(text = element_text(size=18),
+        legend.position="bottom",   
+        plot.margin = unit(c(1,2,16,1), "lines"),
+        legend.title = element_blank(),
+        panel.background = element_blank(),
+       #panel.background = element_rect(fill = "white", colour = "grey50"),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(colour = label_colors)) 
+```
+
+
+
+Our first goal is to assess the robustness of the phenomenon.  The final analysis includent `r n_effect_sizes` independent effect sizes from `r n_papers` papers and contained testing results from `r unique_infants` unique infants. The weighted mean effect size in Cohen's d was `r filter(mod_print, age_moderated == FALSE)$estimate_print`, which was significantly different from 0  (95% CI: `r filter(mod_print, age_moderated == FALSE)$CI_print`; *p*: `r filter(mod_print, age_moderated == FALSE)$p_print`). By convention this value can be classified as a small-to-medium effect size. The range of effects sizes across different studies was shown in the forest plot (fig??). The heteorogeneity tests was significant (*Q* = `r filter(mod_print, age_moderated == FALSE)$Q_print`; *p* `r filter(mod_print, age_moderated == FALSE)$Qp_print`), which suggests that there were unexplained variance in the sample. In summary, we found that the infants reported in this literature performed significantly differently from chance, such that they would look or point longer at the visual stimuli corresponding to the linguistic stimuli they heard. But there were also unexplained variances, which means that the size of the learning effect was moderated by additional factors such as the characteristics of the stimuli. These unexplained variances will be further explored in the following sections on the moderators of the effect.		
+
+
 ```{r child = "sections/section1.Rmd"}
 ```
 
+
+```{r null_model}
+null_model <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant,
+                      method = "REML",
+                      data = ma_data)
+null_intercept <- (null_model$beta)[1]
+
+
+null_intercept
+```
+
+
+
+
+
+
+<!-- ```{r p_curve} -->
+<!-- #source(here("exploratory_analyses/01_es_analyses/scripts/06_pcurve.R")) -->
+<!-- OUTPATH_p <- here("exploratory_analyses/01_es_analyses/scripts/p_value.txt") -->
+<!-- OUTPATH_analysis <- here("exploratory_analyses/01_es_analyses/scripts/") -->
+
+
+<!-- ma_data %>% mutate( -->
+<!--   t = d_calc * sqrt(n_1), -->
+<!--   calc_p = 2*pt(-abs(t), df =n_1-1), -->
+<!--   t_results = paste("t(",as.character(n_1),")=",as.character(t),sep = ""))%>%  -->
+<!--   filter(paradigm_type == "action_matching") %>%  -->
+<!--   select(t_results) %>%  -->
+<!--   write.table(file = OUTPATH_p, sep = "\t", -->
+<!--              quote = FALSE,row.names = FALSE,col.names=FALSE)  -->
+
+<!-- pcurve_app(OUTPATH_p, OUTPATH_analysis) -->
+
+<!-- #  -->
+<!-- # %>% filter(calc_p < 0.05) %>%  -->
+<!-- #   select(t, calc_p) %>% ggplot(aes(x = calc_p)) + geom_density() -->
+
+
+<!-- ``` -->
+
+
+```{r fig.pos = "T!", fig.width=8, fig.height=5.5, fig.cap = "Funnel plots. Each point corresponds to an effect size estimate. The gray dashed line represnets the effect size of zero, the red dash lined represents the mean effect size, and the white funnel represents a 95% confidence interval around this mean."}
+
+
+
+ma_funnel <- ma_data %>% mutate(
+  se = sqrt(d_var_calc),
+  es = d_calc,
+  center = mean(d_calc),
+  lower_lim = max(se) + .05 * max(se)
+)
+
+funnel_shape_wide <- ma_funnel %>%
+                select(center, lower_lim) %>%
+                summarise(x1 = (center-lower_lim * CRIT_95)[1],
+                          x2 = center[1],
+                          x3 = center[1] + lower_lim[1] * CRIT_95,
+                          y1 = -lower_lim[1],
+                          y2 =  0,
+                          y3 = -lower_lim[1])
+
+funnel95_data_x = funnel_shape_wide  %>%
+                  select(dplyr::contains("x")) %>%
+                  gather("coordx", "x", 1:3) %>%
+                  arrange(coordx) %>%
+                  select(-coordx)
+
+funnel95_data_Y = funnel_shape_wide  %>%
+                  select(dplyr::contains("y")) %>%
+                  gather("coordy", "y", 1:3) %>%
+                  arrange(coordy) %>%
+                  select(-coordy)
+
+funnel95.data = bind_cols(funnel95_data_x, funnel95_data_Y)
+
+ggplot(ma_funnel, aes(x = es, y = -se)) +
+  xlab("Effect Size (Cohen's d)")  +
+  ylab("Standard Error\n")  +
+  geom_polygon(aes(x = x, y = y),
+               data = funnel95.data,
+               fill = "white") +
+  geom_vline(aes(xintercept=x2),
+             linetype = "dashed", color = "red", size = .8, data = funnel_shape_wide) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey44",  size = .8) +
+  scale_y_continuous(labels = function(x){abs(x)}) +
+  geom_point(size = 2) +
+  theme(text = element_text(size=20),
+        panel.grid.major = element_line(colour = "grey", size = 0.2),
+        panel.grid.minor = element_line(colour = "grey", size = 0.5),
+        strip.text.x = element_text(size = 9),
+        strip.background = element_rect(fill="grey"))
+
+```
+```{r}
+funnel95.data
+funnel95_data_x
+all_funnel
+funnel_shape_wide
+```
+
+```{r}
+rma(d_calc, d_var_calc, data=ma_data)
+rma(d_calc~sentence_structure, d_var_calc, data=ma_data)
+rma.mv(d_calc~sentence_structure, d_var_calc, random = ~ 1 | short_cite, data=ma_data)
+
+```
+
+
+```{r}
+
+res_ss <- rma.uni(d_calc~sentence_structure, d_var_calc, data=ma_data)
+funnel(res_ss)
+reg_model_ss <- rma(ma_data$d_calc~ma_data$sentence_structure, ma_data$d_var_calc)
+regtest(reg_model_ss, model="rma", predictor="sei", ret.fit=FALSE) # access zval and pval from here
+
+
+res_ssb <- rma.mv(d_calc~sentence_structure, d_var_calc, random = ~ 1 | short_cite, data=ma_data)
+funnel(res_ssb)
+reg_model_ssb <- rma.mv(d_calc~sentence_structure,random = ~ 1 | unique_id, V = d_var_calc, data = ma_data)
+#regtest.rma(reg_model_ssb)
+#regtest(reg_model_ssb, model="rma", predictor="sei", ret.fit=FALSE) # access zval and pval from here
+
+res_age <- rma(d_calc~mean_age, d_var_calc, data=ma_data)
+funnel(res_age)
+reg_model_age <- rma(ma_data$d_calc~ma_data$mean_age, ma_data$d_var_calc)
+regtest(reg_model_age, model = "rma", predictor="sei", ret.fit=FALSE)
+
+res <- rma(d_calc, d_var_calc, data=ma_data)
+funnel(res,level=c(90, 95, 99), shade=c("white", "gray55", "gray75"), refline=0, legend=TRUE)
+reg_ <- rma(ma_data$d_calc~ma_data$sentence_structure, ma_data$d_var_calc)
+regtest(reg_model_ss, model="rma", predictor="sei", ret.fit=FALSE) # access zval and pval from her
+
+
+res <- rma(d_calc, d_var_calc, data=filter(ma_data, d_calc>-5))
+funnel(res,level=c(90, 95, 99), shade=c("white", "gray55", "gray75"), refline=0, legend=TRUE)
+reg_ <- rma(ma_data$d_calc~ma_data$sentence_structure, ma_data$d_var_calc)
+regtest(reg_model_ss, model="rma", predictor="sei", ret.fit=FALSE) # access zval and pval from her
+```
+
+
+
+
+```{r}
+
+CRIT_95 = 1.96 
+
+res <- rma(d_calc~sentence_structure, d_var_calc, data=ma_data)
+funnel(res)
+reg_model_ss <- rma(ma_data$d_calc~ma_data$sentence_structure, ma_data$d_var_calc)
+regtest(reg_model_ss, model="rma", predictor="sei", ret.fit=FALSE) # access zval and pval from here
+
+
+residuals <- residuals.rma(res)
+
+ma_rs <-  ma_data %>% mutate(res = residuals)
+coef(res)
+
+ss_moderated <- data.frame(rstandard(res)) %>% 
+                mutate(
+                  es = resid,
+                  se = se,
+                  type = "moderated",
+                  center = mean(resid),
+                  lower_lim = max(se) + .05 * max(se), 
+                 ) %>% 
+                select(es, se, type, center, lower_lim, color_type)
+
+ma_funnel <- ma_data %>% 
+  mutate(
+    se = sqrt(d_var_calc),
+    es = d_calc,
+    center = mean(d_calc),
+    lower_lim = max(se) + .05 * max(se),
+    type = "non_moderated",
+    ) %>%  
+  select(es, se, type, center, lower_lim, color_type)
+
+ma_funnel_colored <- ma_data %>% 
+  mutate(
+    se = sqrt(d_var_calc),
+    es = d_calc,
+    center = mean(d_calc),
+    lower_lim = max(se) + .05 * max(se),
+    type = "non_moderated, colored"
+    )) %>%  
+  select(es, se, type, center, lower_lim, color_type)
+
+
+
+all_funnel <- bind_rows(ss_moderated, ma_funnel, ma_funnel_colored)
+
+
+funnel_shape_wide <- all_funnel %>%
+                group_by(type) %>% 
+                summarise(x1 = (center-lower_lim * CRIT_95)[1],
+                          x2 = center[1],
+                          x3 = center[1] + lower_lim[1] * CRIT_95,
+                          y1 = -lower_lim[1],
+                          y2 =  0,
+                          y3 = -lower_lim[1])
+
+funnel95_data_x = funnel_shape_wide  %>%
+                  group_by(type) %>% 
+                  select(dplyr::contains("x")) %>%
+                  gather("coordx", "x", 2:4) %>%
+                  arrange(coordx) %>%
+                  select(-coordx)
+
+funnel95_data_Y = funnel_shape_wide  %>%
+                  group_by(type) %>% 
+                  select(dplyr::contains("y")) %>%
+                  gather("coordy", "y", 2:4) %>%
+                  arrange(coordy) %>%
+                  select(-coordy)
+
+funnel95.data = bind_cols(funnel95_data_x, funnel95_data_Y)
+all_funnel
+ggplot(all_funnel, aes(x = es, y = -se)) +
+  xlab("Effect Size (Cohen's d)")  +
+  ylab("Standard Error\n")  +
+  geom_polygon(aes(x = x, y = y),
+               data = funnel95.data,
+               fill = "white") +
+  geom_vline(aes(xintercept=x2),
+             linetype = "dashed", color = "red", size = .8, data = funnel_shape_wide) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey44",  size = .8) +
+  scale_y_continuous(labels = function(x){abs(x)}) +
+  geom_point(data = all_funnel, size = 0.5, aes(color = color_type)) +
+  facet_wrap(~type) + 
+  theme(text = element_text(size=10),
+        panel.grid.major = element_line(colour = "grey", size = 0.2),
+        panel.grid.minor = element_line(colour = "grey", size = 0.5),
+        strip.text.x = element_text(size = 9),
+        strip.background = element_rect(fill="grey"))
+
+
+```
+
+
+```{r reg test}
+reg_model <- rma(ma_data$d_calc, ma_data$d_var_calc)
+reg_result <- regtest(reg_model, model="rma", predictor="sei", ret.fit=FALSE) # access zval and pval from here
+reg_z <- reg_result$zval
+reg_p <- reg_result$pval
+reg_result
+```
+
+<!-- ```{r fail_safe_number} -->
+<!-- fsn <- fsn(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc, type="Orwin", alpha=.05, target = 0.0001) -->
+<!-- fsn <- fsn(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc, type="Orwin", alpha=.05, target = 0.0001) -->
+
+
+<!-- fsn(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc, type="Orwin", alpha=.05, target = 0.0) -->
+<!-- fsn(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc, type="Orwin", alpha=.05, target = 0.01) -->
+<!-- fsn(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc, type="Rosenthal", alpha=.05, target = 0.01) -->
+<!-- fsn(ma_data_funnel$d_calc, ma_data_funnel$d_var_calc, type="Rosenberg", alpha=.05, target = 0.01) -->
+
+
+<!-- ``` -->
 # General Discussion
 
 
 \newpage
 
 # References
+
 
 ---
 nocite: |

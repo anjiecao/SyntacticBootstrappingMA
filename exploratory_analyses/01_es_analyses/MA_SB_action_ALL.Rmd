@@ -74,7 +74,7 @@ ma_data %>%
 ```
 ## Forest plot 
 ```{r}
-ma_model <- rma(ma_data$d_calc, ma_data$d_var_calc)
+ma_model <- rma.uni(ma_data$d_calc, ma_data$d_var_calc)
 ma_model
 forest(ma_model,
        header = T,

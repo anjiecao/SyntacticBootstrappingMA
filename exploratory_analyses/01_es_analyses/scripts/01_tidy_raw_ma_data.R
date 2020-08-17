@@ -14,7 +14,7 @@ OUTPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 read_raw_data_and_clean <- function(sheet_id, sheet_name, outpath){
 
   ma_data <- read_sheet(sheet_id, sheet_name,
-                        col_types = "cccccccccccccdddddddddccdddccccccccccccccddddccdc")
+                        col_types = "ccccccccccccccdddddddddccdddccccccccccccccddddccdc")
   tidy_es <- ma_data %>%
     filter(paper_eligibility == "include") %>%
     select(-exclusion_reason) %>%

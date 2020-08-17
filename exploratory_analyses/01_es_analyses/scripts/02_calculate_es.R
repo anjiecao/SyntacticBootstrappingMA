@@ -131,6 +131,7 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
   mutate(patient_argument_type_clean = if_else (is.na(patient_argument_type), 
                                                 "intransitive",
                                                 patient_argument_type_clean)) %>% 
+  filter(paradigm_type!= "agent_matching") %>% 
   select(-id) 
     # use line breaks to make code more readable
   # & (sentence_structure == "intransitive")
