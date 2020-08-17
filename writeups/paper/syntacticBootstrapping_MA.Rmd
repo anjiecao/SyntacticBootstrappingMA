@@ -79,6 +79,11 @@ knitr::opts_chunk$set(warning = FALSE,
                       fig.pos = "t!")
 ```
 
+```{r constant}
+alpha <- .05
+CRIT_95 <- 1.96
+CRIT_99 <- 2.58
+```
 
 ```{r read in data}
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
@@ -167,7 +172,25 @@ final_inclusion <- read_csv(RAW_DATA_PATH) %>%
 screen_exclusions <- total_records_screened - full_text_assesed_for_eligibility
 full_text_assesed_exclusion <- full_text_assesed_for_eligibility -
   final_inclusion
+
+
 ```
+
+
+```{r}
+prisma(found = records_identified_google_scholar + records_identified_forward_search, 
+       found_other = records_identified_review_reference + records_identified_experts_in_the_field,
+        no_dupes = total_records_screened, 
+        screened = total_records_screened, 
+        screen_exclusions = total_records_screened - full_text_assesed_for_eligibility, 
+        full_text = full_text_assesed_for_eligibility,
+        full_text_exclusions = full_text_assesed_exclusion, 
+        #qualitative = final_inclusion,
+        quantitative = final_inclusion
+        )
+```
+
+
 
 
 <!-- you can italicize parameterize like "N" with "$N$" --> 
@@ -391,6 +414,30 @@ mod_print
 
 
 
+```{r compare nested and non_nested}
+
+rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant,
+                      method = "REML",
+                      data = ma_data)
+
+rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite,
+                      method = "REML",
+                      data = ma_data)
+  
+  
+rma.mv(d_calc~sentence_structure, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant,
+                      method = "REML",
+                      data = ma_data)
+
+rma.mv(d_calc~sentence_structure, V = d_var_calc,
+                      random = ~ 1 | short_cite,
+                      method = "REML",
+                      data = ma_data)
+
+```
 
 
 ```{r fig.pos = "!t", fig.cap = "wow" , fig.height = 22, fig.width = 20 }
@@ -400,12 +447,14 @@ mod_print
 
 individual_data <- ma_data %>% 
   select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
-  mutate(cil = d_calc - 1.96 * d_var_calc, 
+  mutate(cil = d_calc -
+               qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc),
          cil = case_when(
           (cil < -8) ~ -8,  # truncate error bar for visibility reason 
           TRUE ~ cil
          ),
-         ciu = d_calc + 1.96 * d_var_calc, 
+         ciu = d_calc +
+               qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc), 
          meta = "no", 
          label_color = "black",
          print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = "")
@@ -457,7 +506,7 @@ forest_data %>%  # First sort by val. This sort the dataframe but NOT the factor
   scale_shape_manual(breaks = c("cumulative", "intransitive","transitive"),
                      values=c(18,16, 17)) +
   #guides(color = guide_legend(override.aes = list(shape = 18, shape = 16, shape = 17))) + 
-  geom_linerange(aes(ymin = cil, ymax = ciu), show.legend = FALSE) + 
+  geom_linerange(aes(ymin = cil, ymax = ciu, color = sentence_structure), show.legend = FALSE) + 
   geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = cil),
                linejoin = "round", 
                lineend = "round", 

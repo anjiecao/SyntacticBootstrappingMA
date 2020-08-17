@@ -1,0 +1,83 @@
+---
+title: "nested vs non-nested"
+output: 
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE, 
+                      cache = FALSE,
+                      #echo = FALSE,
+                      fig.pos = "t!")
+```
+
+```{r}
+library(papaja)
+library(rmarkdown)
+library(tidyverse) 
+library(here)
+library(glue)
+library(metafor)
+library(knitr)
+library(gridExtra)
+library(here)
+library(heatmaply)
+library(MuMIn)
+library(glmulti)
+library(PRISMAstatement)
+
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
+
+ma_data <- read_csv(DATA_PATH) %>% filter(paradigm_type == "action_matching")
+```
+
+# null non-nested: 
+```{r}
+
+rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite,
+                      method = "REML",
+                      data = ma_data)
+  
+  
+```
+
+# null neseted
+```{r}
+rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant,
+                      method = "REML",
+                      data = ma_data)
+
+```
+
+# sentence structure non-nested 
+```{r}
+
+
+rma.mv(d_calc~sentence_structure, V = d_var_calc,
+                      random = ~ 1 | short_cite,
+                      method = "REML",
+                      data = ma_data)
+```
+
+# sentence structure nested
+```{r}
+rma.mv(d_calc~sentence_structure, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant,
+                      method = "REML",
+                      data = ma_data)
+
+```
+
+
+
+
+
+
+
+
+
