@@ -5,7 +5,7 @@
 # https://cran.r-project.org/web/packages/PRISMAstatement/vignettes/PRISMA.html
 
 paren <- function(n)
-  paste("(n = ", as.character(n), ")")
+  paste0("(n = ", as.character(n), ")")
 
 pnl <- function(...)
   paste(..., sep = "\n")
@@ -37,50 +37,37 @@ prisma_pdf <- function(x, filename = "prisma.pdf") {
 
 prisma2 <- function(found,
                     found_other,
+                    no_dupes,
                     screened,
                     screen_exclusions,
                     full_text,
                     full_text_exclusions,
-                    quantitative = NULL,
-                    labels = NULL,
-                    extra_dupes_box = FALSE,
-                    ...,
-                    dpi = 72,
-                    font_size = 10) {
+                    quantitative) {
   DiagrammeR::grViz(
     prisma_graph2(found = found,
                   found_other = found_other,
+                  no_dupes = no_dupes,
                   screened = screened,
                   screen_exclusions = screen_exclusions,
                   full_text = full_text,
                   full_text_exclusions = full_text_exclusions,
-                  quantitative = quantitative,
-                  labels = labels,
-                  extra_dupes_box = extra_dupes_box,
-                  dpi = dpi,
-                  font_size = font_size,
-                  ...)
-  )
+                  quantitative = quantitative)
+    )
 }
 
-prisma_graph2 <- function (found, found_other, screened, screen_exclusions,
-          full_text, full_text_exclusions, quantitative = NULL,
-          labels = NULL, extra_dupes_box = FALSE, ..., dpi = 72, font_size = 10) {
+prisma_graph2 <- function (found, found_other, no_dupes, screened, screen_exclusions,
+          full_text, full_text_exclusions, quantitative){
 
-  if (screened - screen_exclusions != full_text)
-    warning("After screening exclusions, a different number of remaining ",
-            "full-text articles is stated.")
-
-  #dupes <- found + found_other - no_dupes
-  labels_orig <- list(
+  font_size = 12
+  dpi = 72
+  labels <- list(
     found = pnl("Records identified through",
                 "database searching",
                 paren(found)),
     found_other = pnl("Additional records identified",
                       "through other sources",
                       paren(found_other)),
-   # no_dupes = pnl("Records after duplicates removed", paren(no_dupes)),
-   # dupes = pnl("Duplicates excluded", paren(dupes)),
+    no_dupes = pnl("Records after duplicates removed", paren(no_dupes)),
     screened = pnl("Records screened", paren(screened)),
     screen_exclusions = pnl("Records excluded,",  "with reasons", paren(screen_exclusions)),
     full_text = pnl("Full-text articles assessed",
@@ -94,8 +81,6 @@ prisma_graph2 <- function (found, found_other, screened, screen_exclusions,
                        "meta-analysis",
                        paren(quantitative))
   )
-  for (l in names(labels)) labels_orig[[l]] <- labels[[l]]
-  labels <- labels_orig
 
 
   dot_template <- 'digraph prisma {
@@ -107,21 +92,28 @@ prisma_graph2 <- function (found, found_other, screened, screen_exclusions,
     b -> incex;
     a [label="%s"]
     b [label="%s"]
-    incex -> {ex; ft}
     incex [label="%s"];
+
+    incex -> dup;
+    dup [label="%s"];
+    dup -> {ex; temp}
+
+    temp [label="%s"];
     ex [label="%s"];
-    {rank=same; incex ex}
-    ft -> {quant; ftex};
-    ft [label="%s"];
-    {rank=same; ft ftex}
-    ftex [label="%s"];
-    quant [label="%s"];
+    {rank=same; dup temp}
+    {rank=same; ex ex2}
+    ex2 [label="%s"];
+    ex -> {ex2, ex3}
+    ex3 [label="%s"];
+
   }'
+
   sprintf(dot_template,
           font_size,
           dpi,
           labels$found,
           labels$found_other,
+          labels$no_dupes,
           labels$screened,
           labels$screen_exclusions,
           labels$full_text,
@@ -131,13 +123,13 @@ prisma_graph2 <- function (found, found_other, screened, screen_exclusions,
 
 
 
-png("prismatest.png")
-prisma2(found = 500,
-               found_other = 10,
-               screened = 503,
-               screen_exclusions = 400,
-               full_text = 103,
-               full_text_exclusions = NA,
-               quantitative = NA,
-               width = 800, height = 800)
-dev.off()
+prisma2(found = 5, # how many unique papers
+         found_other = 5,  # how many papers did you find through other sources?
+         no_dupes = 5,
+         screened = 5, # how many of those papers did you screen by looking at the title/abstract?
+         screen_exclusions = 5, # how many of those papers that you screened did you exclude?
+         full_text = 5, # how many papers did you look at the full text for?
+         full_text_exclusions = 5, # how many papers did you exclude after looking at the ful text?
+         quantitative = 5 # how many papers went in your final meta-analysis
+ )
+

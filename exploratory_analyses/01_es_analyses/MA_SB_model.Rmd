@@ -31,7 +31,6 @@ knitr::opts_chunk$set(warning = FALSE)
 ```
 
 ```{r}
-
 ma_data <- read_csv(DATA_PATH)  %>%
   filter(!is.na(mean_age))
 

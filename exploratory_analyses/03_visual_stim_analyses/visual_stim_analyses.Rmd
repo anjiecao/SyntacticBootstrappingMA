@@ -1,0 +1,61 @@
+---
+title: "Visual Stimuli Analyses"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: no
+---
+
+
+```{r setup, include = F}
+library(tidyverse)
+library(metafor)
+library(knitr)
+library(ggimage)
+library(here) # here package manages paths in a sane way
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.height=6, fig.path='Figs/',
+                     warning=FALSE, message=FALSE)
+theme_set(theme_classic()) # sets global plot theme
+```
+
+
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
+
+ma_data <- read_csv(DATA_PATH) %>% 
+  mutate(row_id = 1:n()) %>%
+  rowwise() %>%
+  mutate(stim_path = paste(unique_id, expt_num, sentence_structure,sep = "_"),
+         stim_path = paste0(here("resources/stimuli_forplot/"), stim_path, ".png"),
+         stim_path = str_replace(stim_path, "yuan2012_3_", "yuan2012_3simple_"))
+
+
+base_model <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data)
+
+age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data )
+```
+
+```{r, fig.width = 10}
+ma_data_with_predictions <- predict(age_model) %>%
+  as.data.frame() %>%
+  bind_cols(ma_data)
+
+ggplot(ma_data_with_predictions, aes(x = mean_age, y = d_calc)) +
+  geom_image(aes(image = stim_path)) +
+  geom_smooth(method = "lm") +
+  #geom_smooth(method = "lm", data = ma_data_with_predictions, aes(x = mean_age, y = pred)) +
+  ylab("Effect Size (d)") +
+  xlab("Mean age (days)")
+```

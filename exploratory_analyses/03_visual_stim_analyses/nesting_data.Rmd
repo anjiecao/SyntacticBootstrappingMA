@@ -1,0 +1,97 @@
+---
+title: "Nested vs. Unnested mixed effect models"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: yes
+---
+
+
+```{r setup, include = F}
+library(tidyverse)
+library(metafor)
+library(knitr)
+library(here) # here package manages paths in a sane way
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.height=6, fig.path='Figs/',
+                     warning=FALSE, message=FALSE)
+theme_set(theme_classic()) # sets global plot theme
+```
+
+
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+
+ma_data <- read_csv(DATA_PATH) %>% 
+  filter(paradigm_type == "action_matching") %>%
+  select(3,6,9, 11:16:61) %>%
+  mutate(row_id = 1:n())
+
+ma_data_no_naigles <- ma_data %>%
+  filter(same_infant != "naigles2011")
+
+```
+
+Here's what the data look like:
+```{r}
+DT::datatable(ma_data_no_naigles)
+```
+
+
+Here are models with random effects by study (`unique_id`) and effect size (`row_id`). They give prett
+
+```{r}
+rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | unique_id,
+                      method = "REML",
+                      data = ma_data_no_naigles)
+
+rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | unique_id/row_id,
+                      method = "REML",
+                      data = ma_data_no_naigles)
+```
+
+This is a consequential decision because it affects one of our key moderators: 
+
+```{r}
+rma.mv(d_calc ~ sentence_structure, V = d_var_calc,
+                      random = ~ 1 | unique_id,
+                      method = "REML",
+                      data = ma_data_no_naigles)
+
+rma.mv(d_calc~ sentence_structure + mean_age, V = d_var_calc,
+                      random = ~ 1 | unique_id/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data_no_naigles)
+
+rma.mv(d_calc~ sentence_structure, V = d_var_calc,
+                      random = ~ 1 | unique_id/same_infant,
+                      method = "REML",
+                      data = ma_data_no_naigles)
+```
+
+
+
+```{r}
+rma.mv(d_calc ~ sentence_structure, V = d_var_calc,
+                      random = ~ 1 | unique_id,
+                      method = "REML",
+                      data = ma_data)
+
+rma.mv(d_calc~ sentence_structure, V = d_var_calc,
+                      random = ~ 1 | unique_id/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data)
+
+rma.mv(d_calc~ sentence_structure, V = d_var_calc,
+                      random = ~ 1 | unique_id/same_infant,
+                      method = "REML",
+                      data = ma_data)
+``
+

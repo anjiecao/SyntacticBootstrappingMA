@@ -89,7 +89,8 @@ CRIT_99 <- 2.58
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
 RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 
-ma_data <- read_csv(DATA_PATH) %>% filter(paradigm_type == "action_matching")
+ma_data <- read_csv(DATA_PATH) %>% 
+  filter(paradigm_type == "action_matching")
 ```
 
 

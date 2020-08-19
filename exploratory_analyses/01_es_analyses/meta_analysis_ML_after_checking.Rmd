@@ -1,0 +1,167 @@
+---
+title: "Syntactic Boostrapping MA"
+subtitle: "Data V2"
+author: "Anjie Cao and Molly Lewis"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: yes
+---
+
+
+```{r setup, include = F}
+library(tidyverse)
+library(metafor)
+library(knitr)
+library(gridExtra)
+library(here) # here package manages paths in a sane way
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.height=6, fig.path='Figs/',
+                     warning=FALSE, message=FALSE)
+theme_set(theme_classic()) # sets global plot theme
+```
+
+
+
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
+
+ma_data <- read_csv(DATA_PATH) %>%
+  mutate(row_id = 1:n()) %>%
+  mutate(agent_argument_type2 = case_when(str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+                                          TRUE ~ "noun"),
+         transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                            TRUE ~ "indirect_caused_action"))
+```
+
+# Base model
+```{r}
+base_model <-  rma.mv(d_calc, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+base_model
+
+forest(base_model)
+funnel(base_model)
+```
+
+# Theoretical moderators
+
+## Age
+```{r}
+age_model <-  rma.mv(d_calc ~ mean_age, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+age_model
+age_model
+
+ggplot(ma_data, aes(x = mean_age, y = d_calc)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+
+
+## Vocabulary
+
+```{r}
+vocab_model <-  rma.mv(d_calc ~ productive_vocab_median , d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+vocab_model
+
+
+```
+
+
+## Sentence Structure
+```{r}
+structure_model <-  rma.mv(d_calc ~ sentence_structure, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+structure_model
+
+```
+
+
+## Agent argument type
+```{r}
+agent_argument_type_model <-  rma.mv(d_calc ~ agent_argument_type2, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+agent_argument_type_model
+
+```
+
+## Sink
+```{r}
+rma.mv(d_calc ~ agent_argument_type2 +sentence_structure + mean_age, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+## Transitive event type
+```{r}
+rma.mv(d_calc ~ transitive_event_type2, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data %>% filter(sentence_structure == "transitive"))
+```
+
+## Intransitive event type
+```{r}
+rma.mv(d_calc ~ intransitive_event_type , d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data %>% filter(sentence_structure == "intransitive"))
+```
+
+## Methodological moderators
+
+# Stimuli Modality
+```{r}
+rma.mv(d_calc ~ stimuli_modality, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+# Stimuli Actor
+```{r}
+rma.mv(d_calc ~ stimuli_actor, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+# Mass vs distributed
+```{r}
+rma.mv(d_calc ~ test_mass_or_distributed, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+# n_repetitions_sentence
+Check this measure 
+```{r}
+rma.mv(d_calc ~ n_repetitions_sentence, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+# practice_phase
+```{r}
+rma.mv(d_calc ~ practice_phase, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+# character_identification
+```{r}
+rma.mv(d_calc ~ character_identification, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+# test_method
+```{r}
+rma.mv(d_calc ~ test_method, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+
+# Sink - choose moderators with model selcetion method?
+```{r}
+rma.mv(d_calc ~   test_mass_or_distributed   +
+                  #practice_phase + 
+                  character_identification + 
+                  test_method +
+                  stimuli_modality,
+                  V = d_var_calc, 
+       random = ~ 1 | short_cite/same_infant/row_id, data = ma_data)
+```
+
+
+# mega sink doesn't add much
+```{r}
+rma.mv(d_calc ~   test_mass_or_distributed   +
+                  practice_phase + 
+                  character_identification + 
+                  test_method +
+                  agent_argument_type2 +
+                  sentence_structure + 
+                  mean_age,
+                  V = d_var_calc, 
+       random = ~ 1 | short_cite/same_infant/row_id, data = ma_data)
+```
