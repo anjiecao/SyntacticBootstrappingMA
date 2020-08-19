@@ -11,7 +11,7 @@
 
 <meta name="author" content="Anjie Cao and Molly Lewis" />
 
-<meta name="date" content="2020-08-18" />
+<meta name="date" content="2020-08-19" />
 
 <title>Syntactic Boostrapping MA</title>
 
@@ -1584,7 +1584,7 @@ div.tocify {
 <h1 class="title toc-ignore">Syntactic Boostrapping MA</h1>
 <h3 class="subtitle">Data V2</h3>
 <h4 class="author">Anjie Cao and Molly Lewis</h4>
-<h4 class="date">2020-08-18</h4>
+<h4 class="date">2020-08-19</h4>
 
 </div>
 
@@ -1876,12 +1876,11 @@ agent_argument_type_model</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
-<div id="methodological-moderators" class="section level2">
-<h2>Methodological moderators</h2>
 </div>
-</div>
-<div id="stimuli-modality" class="section level1">
-<h1>Stimuli Modality</h1>
+<div id="methodological-moderators" class="section level1">
+<h1>Methodological moderators</h1>
+<div id="stimuli-modality" class="section level2">
+<h2>Stimuli Modality</h2>
 <pre class="r"><code>rma.mv(d_calc ~ stimuli_modality, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)</code></pre>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 53; method: REML)
@@ -1908,8 +1907,8 @@ agent_argument_type_model</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
-<div id="stimuli-actor" class="section level1">
-<h1>Stimuli Actor</h1>
+<div id="stimuli-actor" class="section level2">
+<h2>Stimuli Actor</h2>
 <pre class="r"><code>rma.mv(d_calc ~ stimuli_actor, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)</code></pre>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 53; method: REML)
@@ -1936,8 +1935,8 @@ agent_argument_type_model</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
-<div id="mass-vs-distributed" class="section level1">
-<h1>Mass vs distributed</h1>
+<div id="mass-vs-distributed" class="section level2">
+<h2>Mass vs distributed</h2>
 <pre class="r"><code>rma.mv(d_calc ~ test_mass_or_distributed, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)</code></pre>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 53; method: REML)
@@ -1967,8 +1966,8 @@ agent_argument_type_model</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
-<div id="n_repetitions_sentence" class="section level1">
-<h1>n_repetitions_sentence</h1>
+<div id="n_repetitions_sentence" class="section level2">
+<h2>n_repetitions_sentence</h2>
 <p>Check this measure</p>
 <pre class="r"><code>rma.mv(d_calc ~ n_repetitions_sentence, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)</code></pre>
 <pre><code>## 
@@ -1996,8 +1995,8 @@ agent_argument_type_model</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
-<div id="practice_phase" class="section level1">
-<h1>practice_phase</h1>
+<div id="practice_phase" class="section level2">
+<h2>practice_phase</h2>
 <pre class="r"><code>rma.mv(d_calc ~ practice_phase, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)</code></pre>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 53; method: REML)
@@ -2024,8 +2023,8 @@ agent_argument_type_model</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
-<div id="character_identification" class="section level1">
-<h1>character_identification</h1>
+<div id="character_identification" class="section level2">
+<h2>character_identification</h2>
 <pre class="r"><code>rma.mv(d_calc ~ character_identification, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)</code></pre>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 53; method: REML)
@@ -2055,8 +2054,8 @@ agent_argument_type_model</code></pre>
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
-<div id="test_method" class="section level1">
-<h1>test_method</h1>
+<div id="test_method" class="section level2">
+<h2>test_method</h2>
 <pre class="r"><code>rma.mv(d_calc ~ test_method, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)</code></pre>
 <pre><code>## 
 ## Multivariate Meta-Analysis Model (k = 53; method: REML)
@@ -2082,6 +2081,7 @@ agent_argument_type_model</code></pre>
 ## 
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
 </div>
 <div id="sink---choose-moderators-with-model-selcetion-method" class="section level1">
 <h1>Sink - choose moderators with model selcetion method?</h1>

@@ -46,6 +46,13 @@ base_model
 
 forest(base_model)
 funnel(base_model)
+base_model2 <-  rma(d_calc, d_var_calc, data=ma_data)
+
+
+age_model <-  rma(d_calc, d_var_calc, data=ma_data)
+
+regtest(age_model)
+
 ```
 
 # Theoretical moderators
@@ -102,40 +109,40 @@ rma.mv(d_calc ~ transitive_event_type2, d_var_calc, random = ~ 1 | short_cite/sa
 rma.mv(d_calc ~ intransitive_event_type , d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data %>% filter(sentence_structure == "intransitive"))
 ```
 
-## Methodological moderators
+# Methodological moderators
 
-# Stimuli Modality
+## Stimuli Modality
 ```{r}
 rma.mv(d_calc ~ stimuli_modality, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
 ```
 
-# Stimuli Actor
+## Stimuli Actor
 ```{r}
 rma.mv(d_calc ~ stimuli_actor, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
 ```
 
-# Mass vs distributed
+## Mass vs distributed
 ```{r}
 rma.mv(d_calc ~ test_mass_or_distributed, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
 ```
 
-# n_repetitions_sentence
+## n_repetitions_sentence
 Check this measure 
 ```{r}
 rma.mv(d_calc ~ n_repetitions_sentence, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
 ```
 
-# practice_phase
+## practice_phase
 ```{r}
 rma.mv(d_calc ~ practice_phase, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
 ```
 
-# character_identification
+## character_identification
 ```{r}
 rma.mv(d_calc ~ character_identification, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
 ```
 
-# test_method
+## test_method
 ```{r}
 rma.mv(d_calc ~ test_method, d_var_calc, random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
 ```
