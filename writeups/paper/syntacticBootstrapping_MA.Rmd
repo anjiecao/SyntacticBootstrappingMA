@@ -1,16 +1,16 @@
 ---
-title             : "A meta-analysis of the syntactic bootsrapping phenomenon in word learning"
+title             : "A meta-analysis of the syntactic bootstrapping phenomenon in word learning"
 shorttitle        : "Syntactic Boostrapping MA"
 
 author:  
   - name          : "Anjie Cao"
     affiliation   : "1"
     corresponding : yes    # Define only one corresponding author
-    address       : "what is this"
-    email         : ""
+    address       : "what is this" # <- you're physical address at Stanford (something something Jordan Hall - it's a weird relic of when people actually sent stuff in snail mail)
+    email         : "acao@andrew.cmu.edu" # <- probably want your new stanford email
   - name          : "Molly Y. Lewis"
     affiliation   : "2"
-    email         : "okie"
+    email         : ""
 affiliation:
   - id            : "1"
     institution   : "Department of Psychology, Stanford University"
@@ -23,7 +23,7 @@ author_note: |
 abstract: |
   so abstract!
   
-keywords          : "keyword1"
+keywords          : "language acquisition, syntactic bootstrapping, meta-analysis"
 wordcount         : ""
 
 bibliography      : ["references.bib"]
@@ -61,13 +61,8 @@ library(here)
 library(glue)
 library(metafor)
 library(knitr)
-library(gridExtra)
-library(here)
-library(heatmaply)
-library(MuMIn)
-library(glmulti)
-library(PRISMAstatement)
-#source("/Users/caoanjie/Desktop/Summer2020/SyntacticBootstrapping/exploratory_analyses/01_es_analyses/scripts/04_prisma_diagram.R") 
+
+source(here("writeups/paper/scripts/prisma_diagram.R"))
 ```
 
 
@@ -77,6 +72,7 @@ knitr::opts_chunk$set(warning = FALSE,
                       cache = FALSE,
                       echo = FALSE,
                       fig.pos = "t!")
+theme_set(theme_classic())
 ```
 
 ```{r constant}
@@ -91,34 +87,6 @@ RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 
 ma_data <- read_csv(DATA_PATH) %>% 
   filter(paradigm_type == "action_matching")
-```
-
-
-
-
-```{r }
-
-# prisma(found = records_identified_google_scholar + records_identified_forward_search,
-#        found_other = 123,
-#        no_dupes = 776, 
-#        screened = 776, 
-#        screen_exclusions = 13, 
-#        full_text = 763,
-#        full_text_exclusions = 17, 
-#        qualitative = 746, 
-#        quantitative = 319)
-
-
-# my_prisma_plot <- prisma2(found = records_identified_google_scholar + records_identified_forward_search, # how many unique papers
-#         found_other = records_identified_forward_search,  # how many papers did you find through other sources?
-#         screened = total_records_screened, # how many of those papers did you screen by looking at the title/abstract?
-#         screen_exclusions = screen_exclusions, # how many of those papers that you screened did you exclude?
-#         full_text = full_text_assesed_for_eligibility, # how many papers did you look at the full text for?
-#         full_text_exclusions = full_text_assesed_exclusion, # how many papers did you exclude after looking at the ful text?
-#         quantitative = final_inclusion, # how many papers went in your final meta-analysis
-#         width = 800, height = 800)
-# 
-# my_prisma_plot
 ```
 
 # Introductions 
@@ -138,13 +106,11 @@ Besides the number of words in the verbs’ arguments, the semantic content is a
 
 To further shed light on these conflicting findings, we decided to conduct a meta-analysis on syntactic bootstrapping literature. Our first goal is to estimate the robustness of this phenomenon by calculating the meta-analytic effect size. Knowing the effect size is consequential to theory building [@lewis2016quantitative; @bergmann2018promoting]. Many past meta-analyses have tapped into other domains of early language development such as phonotactic learning [@cristia2018can], word segmentation [@bergmann2016development], and mutual exclusivity [@lewis2020role]. To our knowledge, this is the first meta-analysis examining the development of syntactic abilities in early childhood and its influence on word learning. Our second goal is to examine the potential moderators of the effect. Understanding the moderators can be valuable for both theoretical reasons and practical reasons. Due to the limited sample sizes, individual infant experiments often have insufficient statistical power, which can make detecting relevant moderators difficult [@oakes2017sample]. The variations among different testing procedures also made it difficult to reconcile the conflicting findings, because the differences in the observed effect can be caused by a combination of methodological factors, rather than reflecting the differences in the measured constructs. The meta-analytic approach has the opportunity to reveal some of the underlying interactions between different factors, which can inform future researchers about their experimental designs. Last but not least, our fourth goal is to evaluate how the effect changes with age. Most of the syntactic-bootstrapping studies used a cross-sectional design. Despite the virtue of being rigorously controlled, the “time-slice” nature of this design made it difficult to reconstruct a continuous developmental trajectory. The meta-analysis can provide unique insights into how children’s abilities to incorporate syntactic information into verbs learning to develop in the first three years of life. 
 
-
-
 # Methods
 
 ## Literature Search  
 
-```{r literature search, search procedure}
+```{r literature search - search procedure}
 records_identified_google_scholar <- 2330
 records_identified_forward_search <- 1009
 records_identified_review_reference <- 155
@@ -169,33 +135,27 @@ final_inclusion <- read_csv(RAW_DATA_PATH) %>%
   distinct(unique_id) %>%
   count()
 
-
 screen_exclusions <- total_records_screened - full_text_assesed_for_eligibility
 full_text_assesed_exclusion <- full_text_assesed_for_eligibility -
   final_inclusion
-
-
 ```
 
-
-```{r}
-prisma(found = records_identified_google_scholar + records_identified_forward_search, 
-       found_other = records_identified_review_reference + records_identified_experts_in_the_field,
+```{r prisma, fig.cap = "PRISMA plot showing..."}
+prisma2(found = format(records_identified_google_scholar + records_identified_forward_search, big.mark = ","), 
+        found_other = records_identified_review_reference + records_identified_experts_in_the_field,
         no_dupes = total_records_screened, 
         screened = total_records_screened, 
         screen_exclusions = total_records_screened - full_text_assesed_for_eligibility, 
         full_text = full_text_assesed_for_eligibility,
         full_text_exclusions = full_text_assesed_exclusion, 
-        #qualitative = final_inclusion,
-        quantitative = final_inclusion
-        )
+        quantitative = final_inclusion,
+        font_size = 10,
+        dpi = 50
+      )
 ```
 
-
-
-
-<!-- you can italicize parameterize like "N" with "$N$" --> 
-We conducted our literature search following the  Preferred Reporting Items for Systematic Reviews and Meta-Analyses checklist [PRISMA; @moher2009]. We identified relevant papers by conducting a keyword search in Google Scholar with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper [@naigles1990children] (total records identified: $N$ =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020). We screened the first 60 pages (N = 600) of the keyword search results and the first 10 pages (N = 100) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Additional papers were identified by consulting the references section of the most recent literature review (N = `r records_identified_review_reference`) [@fisher2020developmental] and the experts in the field (N = `r records_identified_experts_in_the_field`). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
+<!-- italicize in text numbers with $N$; can reference figures in text with chunk name, e.g. Figure\ \@ref(fig:prisma) -->
+We conducted our literature search following the  Preferred Reporting Items for Systematic Reviews and Meta-Analyses checklist [PRISMA; @moher2009]. We identified relevant papers by conducting a keyword search in Google Scholar with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper [@naigles1990children] (total records identified: $N$ =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020; Figure\ \@ref(fig:prisma)). We screened the first 60 pages (N = 600) of the keyword search results and the first 10 pages (N = 100) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Additional papers were identified by consulting the references section of the most recent literature review (N = `r records_identified_review_reference`) [@fisher2020developmental] and the experts in the field (N = `r records_identified_experts_in_the_field`). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
 
 We restricted our final sample to papers that satisfied the following conditions: First, the experimental paradigm involved a two-alternative forced-choice task, in which the participants were instructed to identify the scene that matched the linguistic stimuli. Second, the visual stimuli were displayed on a monitor. We included videos that were either recordings of actors or animated clips. Third, the linguistic stimuli included at least one novel verb embedded in a syntactically informative frame. For example, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame that is informative about the meaning of the novel verb "kradding", while "Look, Kradding!" does not and therefore would be excluded. Finally, we resricted our sample to English-speaking, typically-developing children.
   
@@ -220,7 +180,9 @@ non_unique_infants <- ma_data %>%
   summarize(sum_infants = sum(n_1))
 
 different_infants <- unique_infants + non_unique_infants
-mean_age_day <- ma_data %>% filter(!is.na(mean_age)) %>% summarize(mean_age =  format(round(mean(mean_age), 2)))
+mean_age_day <- ma_data %>% 
+  filter(!is.na(mean_age)) %>%
+  summarize(mean_age =  format(round(mean(mean_age), 2)))
 
 ```
   
@@ -232,26 +194,44 @@ mean_age_day <- ma_data %>% filter(!is.na(mean_age)) %>% summarize(mean_age =  f
 For each paper, we entered the paper metadata (e.g., citation), information to calculate effect sizes, and moderators. We entered a separate effect size for each experimental condition and age group in paper. Most papers therefore contained multiple effect sizes.
 
 ```{r data_source_summary}
-data_source_summary <- ma_data %>% group_by(data_source_clean) %>% count()
-num_author_contact <- data_source_summary %>% filter(data_source_clean == "author_contact") %>% pull(n)
-num_plot <- data_source_summary %>% filter(data_source_clean == "plot") %>% pull(n)
-num_table <- data_source_summary %>% filter(data_source_clean == "table") %>% pull(n)
-num_text <- data_source_summary %>% filter(data_source_clean == "text") %>% pull(n)
+data_source_summary <- ma_data %>% 
+  group_by(data_source_clean) %>% 
+  count()
 
+num_author_contact <- data_source_summary %>% 
+  filter(data_source_clean == "author_contact") %>% 
+  pull(n)
+
+num_plot <- data_source_summary %>% 
+  filter(data_source_clean == "plot") %>% 
+  pull(n)
+
+num_table <- data_source_summary %>% 
+  filter(data_source_clean == "table") %>% 
+  pull(n)
+
+num_text <- data_source_summary %>% 
+  filter(data_source_clean == "text") %>% 
+  pull(n)
 ```
 
 In order to calculate the effect sizes, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the three ways: a) directly retrieved from the results section or the data-presenting tables (N = `r num_table + num_text`); b) recovered from the plots by measuring the height of the bars and the error bars (N =`r num_plot`); c) contacted the original authors (N = `r num_author_contact`). For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scenes by the sum of mean looking time toward the matching scenes and the mean looking time toward the non-matching scenes (i.e., excluding the look away time from the denominator). The standard deviations were also scaled by being divided by the sum. <!-- what do you mean by scaled here?-->
 
-
 ```{r categorize_by_proto}
-num_proto_approach <- ma_data %>% filter (inclusion_certainty == 2) %>% count()
-num_atypical_approach <- ma_data %>% filter (inclusion_certainty == 1) %>% count()
+num_proto_approach <- ma_data %>% 
+  filter (inclusion_certainty == 2) %>% 
+  count()
+
+num_atypical_approach <- ma_data %>% 
+  filter (inclusion_certainty == 1) %>%
+  count()
 ```
 
 We classified our final samples of effect sizes (N = `r n_effect_sizes`) into two categories: the prototypical ones (N = `r num_proto_approach`) and atypical ones (N = `r num_atypical_approach`). Prototypical studies were the ones in which the set-up and the procedures were most similar to the seminal paper [@naigles1990children]. The atypical studies were experiments that met all of the inclusion criteria, but deviated from the prototypical designs in some non-trivial ways (The stimuli involved more complex syntactic structure or event structure: N = `r n_effect_sizes - 12`; The testing procedure included a contrast phase: N = 10; The experiment was conducted through online platform: N = 2). To preserve the homogeneity of the experiments without reducing the power of our analysis, we conducted our statistical analysis both on the entire sample and specifically on the prototypical studies.
 
 ```{r vocb_available}
-num_vocabulary_available <- ma_data %>% filter(!is.na(productive_vocab_median)) %>% count()
+num_vocabulary_available <- ma_data %>%
+  filter(!is.na(productive_vocab_median)) %>% count()
 ```
 
 For all experimental conditions, we coded three types of moderators: participant moderators,  stimuli moderators, and  procedure moderators. The information was either retrieved from the methods section of the paper or obtained via contacting authors. 
@@ -277,7 +257,6 @@ num_patient_varying <- num_patient_sum %>% filter(patient_argument_type_clean ==
 
 num_test_agent <- ma_data %>% filter(test_type == "agent") %>% count()
 num_test_action <- ma_data %>% filter(test_type == "action") %>% count()
-
 ```
 
 We coded features of the linguistic stimuli during both training and testing. The training linguistic stimuli were categorized as transitive (N = `r num_intransitive`), if the novel verbs were embedded in a sentence with two or more noun arguments, and  intransitive (N = `r num_intransitive`) if the novel verbs were embedded in a sentence with one noun argument. We also coded the types of words used in the agent argument (One noun: N = `r num_agent_noun`; One pronoun: N = `r num_agent_pronoun`; Two nouns: N = `r num_agent_two_noun`; Noun phrase: N = `r num_agent_noun_phrase`; Varying across sentences: N = `r num_agent_varying`) and the patient argument(One noun: N = `r num_patient_noun`; One pronoun: N = `r num_patient_pronoun`; Noun phrase: N = `r num_patient_noun_phrase`; Varying across sentences: N = `r num_patient_varying`). We coded the  testing linguistic stimuli for whether infants were prompted to identify the action (e.g. "Where's lorping? Find lorping!", N = `r num_test_agent`) or the actors (e.g. "Which one (verbed) the other one....point!", N = `r num_test_action`). 
@@ -293,8 +272,6 @@ num_video_non_person <- ma_data %>% filter(stimuli_modality == "video") %>% filt
 num_video_simultaneous <- ma_data %>% filter(presentation_type == "simultaneous") %>% count()
 num_video_immediate_after <- ma_data %>% filter(presentation_type == "immediate_after") %>% count()
 num_video_asynchronous <- ma_data %>% filter(presentation_type == "asynchronous") %>% count()
-
-
 ```
 
 For visual stimuli, we coded the types of media used (video or animation) and the types of protagonists in the events (person or non-person). `r num_modality_video` conditions used video recordings of human actors (N = `r num_video_person`) or human actors in animal suits (N = `r num_video_non_person`). The other `r num_modality_animation` conditions used clips of animation with non-person figures as the protagonists of the events. We also coded how the onset of the linguistic stimuli aligned with the visual stimuli. The procedure was coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action (N = `r num_video_simultaneous`). It was coded as "immediately after" if it was presented along with an attention-getter or a blank screen, immediately followed by the relevant action (N = `r num_video_immediate_after`). Finally, some experimental conditions first presented the linguistic stimuli paired with irrelevant visual scenes (e.g. a person on the phone talking). The relevant visual stimuli were not shown until the training phase is over. For experimental conditions using this alignment, they were coded as "asynchronous"(N = `r num_video_asynchronous`).
@@ -316,7 +293,6 @@ Finally, procedure moderators included the types of response elicited from the p
   
 ## Data Preprocessing 
 
-
 ```{r data_preprocessing}
 num_has_raw <- ma_data %>% filter(!is.na(x_2_raw)) %>% count()
 ```
@@ -328,10 +304,8 @@ num_has_raw <- ma_data %>% filter(!is.na(x_2_raw)) %>% count()
 # Results
 
 ### Preliminary Analysis 
-
 ```{r}
-
-# take from the ME paper 
+# taken from the ME paper 
 get_MA_params <- function(age_moderated, df) {
   
   this_data <- df
@@ -414,9 +388,7 @@ mod_print
 ```
 
 
-
 ```{r compare nested and non_nested}
-
 rma.mv(d_calc, V = d_var_calc,
                       random = ~ 1 | short_cite/same_infant,
                       method = "REML",
@@ -442,10 +414,6 @@ rma.mv(d_calc~sentence_structure, V = d_var_calc,
 
 
 ```{r fig.pos = "!t", fig.cap = "wow" , fig.height = 22, fig.width = 20 }
-
-
-
-
 individual_data <- ma_data %>% 
   select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
   mutate(cil = d_calc -
@@ -476,10 +444,7 @@ cumulative <- mod_print %>%
          sentence_structure = "cumulative",
         print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""),
          meta = "yes", 
-        label_color = "red"
-         )
-
-
+        label_color = "red")
 
 forest_data <- bind_rows(individual_data, cumulative) 
 forest_data$sentence_structure <- as.factor(forest_data$sentence_structure)
@@ -534,8 +499,6 @@ forest_data %>%  # First sort by val. This sort the dataframe but NOT the factor
         axis.text.y = element_text(colour = label_colors)) 
 ```
 
-
-
 Our first goal is to assess the robustness of the phenomenon.  The final analysis includent `r n_effect_sizes` independent effect sizes from `r n_papers` papers and contained testing results from `r unique_infants` unique infants. The weighted mean effect size in Cohen's d was `r filter(mod_print, age_moderated == FALSE)$estimate_print`, which was significantly different from 0  (95% CI: `r filter(mod_print, age_moderated == FALSE)$CI_print`; *p*: `r filter(mod_print, age_moderated == FALSE)$p_print`). By convention this value can be classified as a small-to-medium effect size. The range of effects sizes across different studies was shown in the forest plot (fig??). The heteorogeneity tests was significant (*Q* = `r filter(mod_print, age_moderated == FALSE)$Q_print`; *p* `r filter(mod_print, age_moderated == FALSE)$Qp_print`), which suggests that there were unexplained variance in the sample. In summary, we found that the infants reported in this literature performed significantly differently from chance, such that they would look or point longer at the visual stimuli corresponding to the linguistic stimuli they heard. But there were also unexplained variances, which means that the size of the learning effect was moderated by additional factors such as the characteristics of the stimuli. These unexplained variances will be further explored in the following sections on the moderators of the effect.		
 
 
@@ -585,9 +548,6 @@ null_intercept
 
 
 ```{r fig.pos = "T!", fig.width=8, fig.height=5.5, fig.cap = "Funnel plots. Each point corresponds to an effect size estimate. The gray dashed line represnets the effect size of zero, the red dash lined represents the mean effect size, and the white funnel represents a 95% confidence interval around this mean."}
-
-
-
 ma_funnel <- ma_data %>% mutate(
   se = sqrt(d_var_calc),
   es = d_calc,
@@ -636,7 +596,8 @@ ggplot(ma_funnel, aes(x = es, y = -se)) +
         strip.background = element_rect(fill="grey"))
 
 ```
-```{r}
+
+```{r, eval = F}
 funnel95.data
 funnel95_data_x
 all_funnel
@@ -684,9 +645,7 @@ regtest(reg_model_ss, model="rma", predictor="sei", ret.fit=FALSE) # access zval
 
 
 
-
-```{r}
-
+```{r, eval = F}
 CRIT_95 = 1.96 
 
 res <- rma(d_calc~sentence_structure, d_var_calc, data=ma_data)
@@ -716,7 +675,7 @@ ma_funnel <- ma_data %>%
     es = d_calc,
     center = mean(d_calc),
     lower_lim = max(se) + .05 * max(se),
-    type = "non_moderated",
+    type = "non_moderated"
     ) %>%  
   select(es, se, type, center, lower_lim, color_type)
 
@@ -726,11 +685,8 @@ ma_funnel_colored <- ma_data %>%
     es = d_calc,
     center = mean(d_calc),
     lower_lim = max(se) + .05 * max(se),
-    type = "non_moderated, colored"
-    )) %>%  
+    type = "non_moderated, colored") %>%  
   select(es, se, type, center, lower_lim, color_type)
-
-
 
 all_funnel <- bind_rows(ss_moderated, ma_funnel, ma_funnel_colored)
 
@@ -760,6 +716,7 @@ funnel95_data_Y = funnel_shape_wide  %>%
 
 funnel95.data = bind_cols(funnel95_data_x, funnel95_data_Y)
 all_funnel
+
 ggplot(all_funnel, aes(x = es, y = -se)) +
   xlab("Effect Size (Cohen's d)")  +
   ylab("Standard Error\n")  +
@@ -803,6 +760,10 @@ reg_result
 
 <!-- ``` -->
 # General Discussion
+
+* Explanations for lack of age effect: variability in design as a function of age, change in input, etc. [Meta point: measuring developmental change requires constancy in task]
+* compare to other effect sizes in language acquisition 
+* Transitivity effect is robust - implications for this? Cross-linguistic implications?
 
 
 \newpage

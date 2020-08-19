@@ -46,7 +46,7 @@ ma_data_with_es <- ma_data %>%
 # clean up factor level issues
 tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing variables
   clean_names() %>%
-  select(-long_cite) %>%
+  #select(-long_cite) %>%
   filter(!is.na(d_calc) & paper_eligibility == "include") %>% # tidy column names
   mutate(id = row_number(),
         practice_phase = case_when(practice_phase == "NA" ~ "no",
@@ -58,7 +58,7 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
          presentation_type = case_when(presentation_type == "immediate-after" ~ "immediate_after",
                                        presentation_type == "Immediate-after" ~ "immediate_after",
                                        TRUE ~ presentation_type),
-         stimuli_actor = case_when(stimuli_actor == "non-person" ~ "non_person",
+        stimuli_actor = case_when(stimuli_actor == "non-person" ~ "non_person",
                                   TRUE ~ stimuli_actor),
          patient_argument_type = case_when(patient_argument_type == "N/A" ~ "NA",
                                            TRUE ~ patient_argument_type),

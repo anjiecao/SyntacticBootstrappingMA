@@ -5,7 +5,7 @@
 # https://cran.r-project.org/web/packages/PRISMAstatement/vignettes/PRISMA.html
 
 paren <- function(n)
-  paste0("(n = ", as.character(n), ")")
+  paste0("(N = ", as.character(n), ")")
 
 pnl <- function(...)
   paste(..., sep = "\n")
@@ -42,7 +42,9 @@ prisma2 <- function(found,
                     screen_exclusions,
                     full_text,
                     full_text_exclusions,
-                    quantitative) {
+                    quantitative,
+                    font_size,
+                    dpi) {
   DiagrammeR::grViz(
     prisma_graph2(found = found,
                   found_other = found_other,
@@ -51,15 +53,15 @@ prisma2 <- function(found,
                   screen_exclusions = screen_exclusions,
                   full_text = full_text,
                   full_text_exclusions = full_text_exclusions,
-                  quantitative = quantitative)
+                  quantitative = quantitative,
+                  font_size = font_size,
+                  dpi = dpi)
     )
 }
 
 prisma_graph2 <- function (found, found_other, no_dupes, screened, screen_exclusions,
-          full_text, full_text_exclusions, quantitative){
+          full_text, full_text_exclusions, quantitative, font_size, dpi){
 
-  font_size = 12
-  dpi = 72
   labels <- list(
     found = pnl("Records identified through",
                 "database searching",
@@ -120,16 +122,4 @@ prisma_graph2 <- function (found, found_other, no_dupes, screened, screen_exclus
           labels$full_text_exclusions,
           labels$quantitative)
 }
-
-
-
-prisma2(found = 5, # how many unique papers
-         found_other = 5,  # how many papers did you find through other sources?
-         no_dupes = 5,
-         screened = 5, # how many of those papers did you screen by looking at the title/abstract?
-         screen_exclusions = 5, # how many of those papers that you screened did you exclude?
-         full_text = 5, # how many papers did you look at the full text for?
-         full_text_exclusions = 5, # how many papers did you exclude after looking at the ful text?
-         quantitative = 5 # how many papers went in your final meta-analysis
- )
 
