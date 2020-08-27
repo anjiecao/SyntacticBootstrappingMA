@@ -51,7 +51,7 @@ ma_data <- read_csv(DATA_PATH)
 ma_data_t<- ma_data %>% mutate(
   t = d_calc * sqrt(n_1),
   calc_p = 2*pt(-abs(t), df =n_1-1),
-  t_results = paste("t(",as.character(n_1),")=",as.character(t),sep = "")) %>% filter(paradigm_type == "action_matching")
+  t_results = paste("t(",as.character(n_1),")=",as.character(t),sep = ""))
 
 
 
@@ -64,6 +64,12 @@ pc <- ma_data_t %>%
          df1 = 1) %>%  
   do(p_curve(.))
 ```
+
+
+```{r}
+ma_data_t %>% select(t_results) %>% write.table("p!!!!.txt",quote=FALSE,row.names = FALSE, col.names = TRUE)
+```
+
 
 Plot p-curves. 
 

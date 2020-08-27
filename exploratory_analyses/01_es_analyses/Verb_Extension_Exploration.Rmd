@@ -1,0 +1,767 @@
+---
+title: "Verb_Extension_Explore"
+author: "Anjie Cao and Molly Lewis"
+date: "8/24/2020"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE, 
+                      cache = FALSE,
+                      #echo = FALSE,
+                      fig.pos = "t!")
+```
+
+```{r cars}
+library(papaja)
+library(rmarkdown)
+library(tidyverse) 
+library(here)
+library(glue)
+library(metafor)
+library(knitr)
+library(gridExtra)
+library(here)
+library(heatmaply)
+library(MuMIn)
+library(glmulti)
+library(PRISMAstatement)
+library(PublicationBias)
+
+DATA_PATH <- here("data/processed/verbextension_tidy_data.csv") 
+
+ma_data <- read_csv(DATA_PATH) %>% mutate(row_id = 1:n())
+ma_data_exclude_outlier <- read_csv(DATA_PATH) %>% mutate(row_id = 1:n()) %>% filter(plot_label != "Abbot-Smith, Imai, Durrant,& Nurmsoo (2017) - 2h") #%>% filter(plot_label != "Abbot-Smith, Imai, Durrant,& Nurmsoo (2017) - 2f")
+
+```
+
+
+
+
+
+# All Data
+
+## Forest Plot 
+```{r}
+
+get_MA_params <- function(moderator, df) {
+  
+  this_data <- df
+  n = nrow(this_data)
+  
+  if (moderator == TRUE){
+      model <- rma.mv(d_calc ~ log(mean_age), V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/x_1,
+                      method = "REML",
+                      data = this_data)
+      
+      this_moderator_estimate <- model$b[2]
+      this_moderator_estimate.cil <- model$ci.lb[2]
+      this_moderator_estimate.cih <- model$ci.ub[2]
+      this_moderator_z <- model$zval[2]
+      this_moderator_p <- model$pval[2]
+
+  } else{
+      model <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/x_1,
+                      method = "REML",
+                      data = this_data)
+      
+      this_moderator_estimate <- NA
+      this_moderator_estimate.cil <- NA
+      this_moderator_estimate.cih <- NA
+      this_moderator_z <- NA
+      this_moderator_p <- NA
+    
+  }
+  
+   params <- data.frame(this_moderator = moderator,
+                       n = n,
+                       estimate = model$b[1],
+                       estimate.cil = model$ci.lb[1],
+                       estimate.cih = model$ci.ub[1],
+                       z = model$zval[1],
+                       p = model$pval[1],
+                       mod_estimate = this_moderator_estimate,
+                       mod_estimate.cil = this_moderator_estimate.cil, 
+                       mod_estimate.cih = this_moderator_estimate.cih,
+                       moderator_z = this_moderator_z,
+                       moderator_p = this_moderator_p,
+                       Q = model$QE,
+                       Qp = model$QEp)
+  
+  }
+
+null_model<- get_MA_params(FALSE, ma_data)
+#null_model
+age_model <- get_MA_params(TRUE, ma_data)
+all_models <- bind_rows(null_model,age_model)
+
+
+mod_print <- all_models %>%
+             mutate(esimate_print =  round(estimate, 2),
+                    CI_print = paste0(" [", 
+                                      round(estimate.cil, 2),
+                                     ", ",
+                                     round(estimate.cih, 2),
+                                     "]"),
+                   estimate_print_full = paste(esimate_print, CI_print),
+                   z_print = round(z, 2),
+                   p_print = round(p, 2),
+                   p_print = ifelse(p_print <.001, "<.001", paste0("= ", p_print)),
+                   mod_estimate_print = round(mod_estimate, 2),
+                   mod_CI_print = paste0(" [", 
+                                      round(mod_estimate.cil, 2),
+                                     ", ",
+                                     round(mod_estimate.cih, 2),
+                                     "]"),
+                   mod_estimate_print_full = paste(mod_estimate_print, mod_CI_print),
+
+                   mod_z_print =  round(moderator_z, 2),
+                   mod_p_print =  round(moderator_p, 2),
+                   mod_p_print = ifelse(mod_p_print < .001, "<.001", 
+                                        paste0("= ", mod_p_print)),
+                   Q_print = round(Q, 2),
+                   Qp_print = round(Qp, 2),
+                   Qp_print = ifelse(Qp_print < .001, "<.001", paste0("= ", Qp_print)))
+```
+
+```{r fig.height = 22, fig.width = 20 }
+alpha = 0.05
+individual_data <- ma_data %>% 
+  select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
+  mutate(cil = d_calc - (qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc)),
+         cil = case_when(
+          (cil < -8) ~ -8,  # truncate error bar for visibility reason 
+          TRUE ~ cil
+         ),
+         ciu = d_calc +
+               qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc), 
+         meta = "no", 
+         label_color = "black",
+         print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = "")
+         )
+
+cumulative <- mod_print %>% 
+  filter(this_moderator == FALSE) %>% 
+  select (estimate, estimate.cil, estimate.cih) %>% 
+  mutate(short_cite = "Meta-Analytic Effect Size",
+         plot_label = "Meta-Analytic Effect Size",
+         d_calc = estimate, 
+         d_var_calc = NA, 
+         n_1 = 99, 
+         expt_num = "", 
+         expt_condition = "",
+         cil = estimate.cil, 
+         ciu = estimate.cih, 
+         sentence_structure = "cumulative",
+        print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""),
+         meta = "yes", 
+        label_color = "red")
+
+forest_data <- bind_rows(individual_data, cumulative) 
+forest_data$sentence_structure <- as.factor(forest_data$sentence_structure)
+forest_data$meta <- as.factor(forest_data$meta)
+forest_data <- forest_data %>% 
+  rowid_to_column() %>% 
+  mutate(
+    rowid = if_else(rowid == 0, 99, as.double(rowid)) #to always put the MA ES at bottom
+  ) %>% 
+  group_by(sentence_structure) %>% arrange(-rowid, .by_group = TRUE)
+forest_data$plot_label <- factor(forest_data$plot_label, levels = forest_data$plot_label)
+
+
+
+# set the neighbourhood levels in the order the occur in the data frame
+label_colors <- forest_data$label_color[order(forest_data$plot_label)]
+
+forest_data %>%  # First sort by val. This sort the dataframe but NOT the factor levels
+  ggplot(aes(x = plot_label, y = d_calc)) + 
+  geom_point(data = forest_data,
+             aes(size=n_1, shape = sentence_structure, color = sentence_structure)) + 
+  scale_color_manual(breaks = c("cumulative", "intransitive","transitive"),
+                     values = c("red", "black", "black"))+ 
+  scale_size(guide = 'none') + 
+  scale_shape_manual(breaks = c("cumulative", "intransitive","transitive"),
+                     values=c(18,16, 17)) +
+  #guides(color = guide_legend(override.aes = list(shape = 18, shape = 16, shape = 17))) + 
+  geom_linerange(aes(ymin = cil, ymax = ciu, color = sentence_structure), show.legend = FALSE) + 
+  geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = cil),
+               linejoin = "round", 
+               lineend = "round", 
+               size = 0.1,
+               arrow = arrow(length = unit(0.1, "inches")),
+               data = filter(forest_data,cil == -8))+
+  geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2) + 
+  geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
+             color = "red", linetype = 2) + 
+  geom_text(aes(label = print_full, x = plot_label, y = 7), 
+            size = 3.5, colour = label_colors) + 
+  scale_y_continuous(breaks = seq(-10, 5, 1))+ 
+  coord_cartesian(clip = 'on') + 
+  coord_flip() + 
+  ylab("Cohen's d") +
+  labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
+  theme(text = element_text(size=18),
+        legend.position="bottom",   
+        plot.margin = unit(c(1,2,16,1), "lines"),
+        legend.title = element_blank(),
+        panel.background = element_blank(),
+       #panel.background = element_rect(fill = "white", colour = "grey50"),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(colour = label_colors)) 
+```
+
+
+
+## Regression Test 
+### Funnel Plot 
+```{r}
+base_model_no_mv <-  rma(d_calc,  d_var_calc, data=ma_data)
+funnel(base_model_no_mv)
+```
+
+### Base Model Regression Test 
+```{r}
+base_model_no_mv <-  rma(d_calc,  d_var_calc, data=ma_data)
+regtest(base_model_no_mv, predictor = 'sei', ret.fit = T)
+```
+
+### Multi-level Model Regression Test 
+```{r}
+rma.mv(d_calc ~ sqrt(d_var_calc),  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+```
+
+
+
+## PublicationBias Package  
+### P-val Plot 
+```{r}
+pval_plot(ma_data$d_calc,
+ma_data$d_var_calc, alpha.select = 0.05) 
+```
+### Eta analysis {.tabset}
+
+#### eta curve
+```{r}
+eta <- data.frame()
+
+for (i in 1:20){
+  df <- corrected_meta(
+      ma_data$d_calc,
+      ma_data$d_var_calc,
+      eta= i,
+      clustervar = 1:length(ma_data$d_calc),
+      model = "robust",
+      selection.tails = 1, # if changed to 2, the curve is flat
+      favor.positive = TRUE,# if changed to False, the curve is flat
+      alpha.select = 0.05,
+      CI.level = 0.95,
+      small = TRUE)
+  eta <- bind_rows(eta, df)
+  
+}
+eta %>% ggplot(aes(x = eta, y = pval)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = 0.05, color = "red", type = 2) + 
+  labs(title = "eta vs pval")
+```
+#### plot 
+
+```{r}
+eta.list = as.list( c( 200, 150, 100, 50, 40, 30, 20, rev( seq(1,15,1) ) ) )
+res.list = lapply(eta.list, function(x){
+cat("\n Working on eta = ", x)
+return(corrected_meta(
+      ma_data$d_calc,
+      ma_data$d_var_calc,
+      eta= x,
+      clustervar = 1:length(ma_data$d_calc),
+      model = "robust",
+      selection.tails = 1,
+      favor.positive = TRUE,
+      alpha.select = 0.05,
+      CI.level = 0.95,
+      small = TRUE) )
+})
+
+
+res.df = as.data.frame(do.call("rbind",res.list)) 
+
+ggplot( data = res.df, aes( x = eta, y = est ) ) +
+geom_ribbon( data = res.df, aes( x = eta, ymin = lo, ymax = hi ), fill = "gray" ) +
+geom_line( lwd = 1.2 ) +
+xlab( bquote( eta ) ) +
+ylab( bquote( hat(mu)[eta] ) ) +
+theme_classic()
+```
+
+### significance_funnel
+```{r}
+significance_funnel(
+ma_data$d_calc,
+ma_data$d_var_calc,
+xmin = min(ma_data$d_calc),
+xmax = max(ma_data$d_calc),
+ymin = 0,
+ymax = max(sqrt(ma_data$d_var_calc)),
+xlab = "Point estimate",
+ylab = "Estimated standard error",
+favor.positive = TRUE,
+est.all = NA,
+est.N = NA,
+alpha.select = 0.05,
+plot.pooled = TRUE
+)
+```
+
+### Estimate the S_val
+```{r}
+sval <- data.frame()
+
+for (i in seq(0, 0.1, by = 0.02)){
+  s <- svalue(
+          ma_data$d_calc,
+          ma_data$d_var_calc,
+          q = i,
+          clustervar = 1:length(ma_data$d_calc),
+          model = "robust",
+          alpha.select = 0.05,
+          eta.grid.hi = 200,
+          favor.positive = TRUE,
+          CI.level = 0.95,
+          small = TRUE,
+          return.worst.meta = FALSE
+          )
+  s <- s %>% mutate(q_val = i)
+
+  sval <- bind_rows(sval, s) 
+}
+
+sval
+```
+
+## null and age model 
+```{r}
+null <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data)
+age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data)
+age
+
+ma_data %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Verb Extension effect size vs. Age (months)") 
+```
+
+
+
+# Excluding Outlier 
+```{r}
+overall_mean <- mean(ma_data$d_calc)
+overall_sd <- sd(ma_data$d_calc)
+
+ma_data %>% 
+  filter(d_calc > overall_mean + (2*(overall_sd)) | d_calc < overall_mean - (2*(overall_sd)) ) %>% 
+  select(plot_label)
+```
+
+## No outlier Forest Plot 
+```{r}
+
+get_MA_params <- function(moderator, df) {
+  
+  this_data <- df
+  n = nrow(this_data)
+  
+  if (moderator == TRUE){
+      model <- rma.mv(d_calc ~ log(mean_age), V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/x_1,
+                      method = "REML",
+                      data = this_data)
+      
+      this_moderator_estimate <- model$b[2]
+      this_moderator_estimate.cil <- model$ci.lb[2]
+      this_moderator_estimate.cih <- model$ci.ub[2]
+      this_moderator_z <- model$zval[2]
+      this_moderator_p <- model$pval[2]
+
+  } else{
+      model <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/x_1,
+                      method = "REML",
+                      data = this_data)
+      
+      this_moderator_estimate <- NA
+      this_moderator_estimate.cil <- NA
+      this_moderator_estimate.cih <- NA
+      this_moderator_z <- NA
+      this_moderator_p <- NA
+    
+  }
+  
+   params <- data.frame(this_moderator = moderator,
+                       n = n,
+                       estimate = model$b[1],
+                       estimate.cil = model$ci.lb[1],
+                       estimate.cih = model$ci.ub[1],
+                       z = model$zval[1],
+                       p = model$pval[1],
+                       mod_estimate = this_moderator_estimate,
+                       mod_estimate.cil = this_moderator_estimate.cil, 
+                       mod_estimate.cih = this_moderator_estimate.cih,
+                       moderator_z = this_moderator_z,
+                       moderator_p = this_moderator_p,
+                       Q = model$QE,
+                       Qp = model$QEp)
+  
+  }
+
+null_model<- get_MA_params(FALSE, ma_data_exclude_outlier)
+#null_model
+age_model <- get_MA_params(TRUE, ma_data_exclude_outlier)
+all_models <- bind_rows(null_model,age_model)
+
+
+mod_print <- all_models %>%
+             mutate(esimate_print =  round(estimate, 2),
+                    CI_print = paste0(" [", 
+                                      round(estimate.cil, 2),
+                                     ", ",
+                                     round(estimate.cih, 2),
+                                     "]"),
+                   estimate_print_full = paste(esimate_print, CI_print),
+                   z_print = round(z, 2),
+                   p_print = round(p, 2),
+                   p_print = ifelse(p_print <.001, "<.001", paste0("= ", p_print)),
+                   mod_estimate_print = round(mod_estimate, 2),
+                   mod_CI_print = paste0(" [", 
+                                      round(mod_estimate.cil, 2),
+                                     ", ",
+                                     round(mod_estimate.cih, 2),
+                                     "]"),
+                   mod_estimate_print_full = paste(mod_estimate_print, mod_CI_print),
+
+                   mod_z_print =  round(moderator_z, 2),
+                   mod_p_print =  round(moderator_p, 2),
+                   mod_p_print = ifelse(mod_p_print < .001, "<.001", 
+                                        paste0("= ", mod_p_print)),
+                   Q_print = round(Q, 2),
+                   Qp_print = round(Qp, 2),
+                   Qp_print = ifelse(Qp_print < .001, "<.001", paste0("= ", Qp_print)))
+```
+
+```{r fig.height = 22, fig.width = 20 }
+alpha = 0.05
+individual_data <- ma_data_exclude_outlier %>% 
+  select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
+  mutate(cil = d_calc - (qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc)),
+         cil = case_when(
+          (cil < -8) ~ -8,  # truncate error bar for visibility reason 
+          TRUE ~ cil
+         ),
+         ciu = d_calc +
+               qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc), 
+         meta = "no", 
+         label_color = "black",
+         print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = "")
+         )
+
+cumulative <- mod_print %>% 
+  filter(this_moderator == FALSE) %>% 
+  select (estimate, estimate.cil, estimate.cih) %>% 
+  mutate(short_cite = "Meta-Analytic Effect Size",
+         plot_label = "Meta-Analytic Effect Size",
+         d_calc = estimate, 
+         d_var_calc = NA, 
+         n_1 = 99, 
+         expt_num = "", 
+         expt_condition = "",
+         cil = estimate.cil, 
+         ciu = estimate.cih, 
+         sentence_structure = "cumulative",
+        print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""),
+         meta = "yes", 
+        label_color = "red")
+
+forest_data <- bind_rows(individual_data, cumulative) 
+forest_data$sentence_structure <- as.factor(forest_data$sentence_structure)
+forest_data$meta <- as.factor(forest_data$meta)
+forest_data <- forest_data %>% 
+  rowid_to_column() %>% 
+  mutate(
+    rowid = if_else(rowid == 0, 99, as.double(rowid)) #to always put the MA ES at bottom
+  ) %>% 
+  group_by(sentence_structure) %>% arrange(-rowid, .by_group = TRUE)
+forest_data$plot_label <- factor(forest_data$plot_label, levels = forest_data$plot_label)
+
+
+
+# set the neighbourhood levels in the order the occur in the data frame
+label_colors <- forest_data$label_color[order(forest_data$plot_label)]
+
+forest_data %>%  # First sort by val. This sort the dataframe but NOT the factor levels
+  ggplot(aes(x = plot_label, y = d_calc)) + 
+  geom_point(data = forest_data,
+             aes(size=n_1, shape = sentence_structure, color = sentence_structure)) + 
+  scale_color_manual(breaks = c("cumulative", "intransitive","transitive"),
+                     values = c("red", "black", "black"))+ 
+  scale_size(guide = 'none') + 
+  scale_shape_manual(breaks = c("cumulative", "intransitive","transitive"),
+                     values=c(18,16, 17)) +
+  #guides(color = guide_legend(override.aes = list(shape = 18, shape = 16, shape = 17))) + 
+  geom_linerange(aes(ymin = cil, ymax = ciu, color = sentence_structure), show.legend = FALSE) + 
+  geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = cil),
+               linejoin = "round", 
+               lineend = "round", 
+               size = 0.1,
+               arrow = arrow(length = unit(0.1, "inches")),
+               data = filter(forest_data,cil == -8))+
+  geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2) + 
+  geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
+             color = "red", linetype = 2) + 
+  geom_text(aes(label = print_full, x = plot_label, y = 7), 
+            size = 3.5, colour = label_colors) + 
+  scale_y_continuous(breaks = seq(-10, 5, 1))+ 
+  coord_cartesian(clip = 'on') + 
+  coord_flip() + 
+  ylab("Cohen's d") +
+  labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
+  theme(text = element_text(size=18),
+        legend.position="bottom",   
+        plot.margin = unit(c(1,2,16,1), "lines"),
+        legend.title = element_blank(),
+        panel.background = element_blank(),
+       #panel.background = element_rect(fill = "white", colour = "grey50"),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(colour = label_colors)) 
+```
+
+
+## No outlier Regression Test 
+### Funnel Plot No outlier
+```{r}
+base_model <-  rma(d_calc,  d_var_calc,  
+                         data=ma_data_exclude_outlier)
+
+funnel(base_model)
+```
+
+### No outlier Base Model Reg test 
+```{r}
+regtest(base_model, predictor = 'sei', ret.fit = T)
+```
+
+
+### No outlier Multi-level Model Regression Test
+```{r}
+rma.mv(d_calc ~ sqrt(d_var_calc),  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_exclude_outlier)
+```
+### No outlier Multi-level Model Regression Test with Age 
+```{r}
+rma.mv(d_calc ~ sqrt(d_var_calc) + mean_age,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_exclude_outlier)
+```
+
+
+
+
+## No outlier PublicationBias Package  
+### No outlier P-val Plot 
+```{r}
+pval_plot(ma_data_exclude_outlier$d_calc,
+ma_data$d_var_calc, alpha.select = 0.05) 
+```
+### Eta analysis {.tabset}
+
+#### eta curve
+```{r}
+eta <- data.frame()
+
+for (i in 1:20){
+  df <- corrected_meta(
+      ma_data_exclude_outlier$d_calc,
+      ma_data_exclude_outlier$d_var_calc,
+      eta= i,
+      clustervar = 1:length(ma_data_exclude_outlier$d_calc),
+      model = "robust",
+      selection.tails = 1, # if changed to 2, the curve is flat
+      favor.positive = TRUE,# if changed to False, the curve is flat
+      alpha.select = 0.05,
+      CI.level = 0.95,
+      small = TRUE)
+  eta <- bind_rows(eta, df)
+  
+}
+eta %>% ggplot(aes(x = eta, y = pval)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = 0.05, color = "red", type = 2) + 
+  labs(title = "eta vs pval")
+```
+#### plot 
+
+```{r}
+eta.list = as.list( c( 200, 150, 100, 50, 40, 30, 20, rev( seq(1,15,1) ) ) )
+res.list = lapply(eta.list, function(x){
+cat("\n Working on eta = ", x)
+return(corrected_meta(
+      ma_data_exclude_outlier$d_calc,
+      ma_data_exclude_outlier$d_var_calc,
+      eta= x,
+      clustervar = 1:length(ma_data_exclude_outlier$d_calc),
+      model = "robust",
+      selection.tails = 1,
+      favor.positive = TRUE,
+      alpha.select = 0.05,
+      CI.level = 0.95,
+      small = TRUE) )
+})
+
+
+res.df = as.data.frame(do.call("rbind",res.list)) 
+
+ggplot( data = res.df, aes( x = eta, y = est ) ) +
+geom_ribbon( data = res.df, aes( x = eta, ymin = lo, ymax = hi ), fill = "gray" ) +
+geom_line( lwd = 1.2 ) +
+xlab( bquote( eta ) ) +
+ylab( bquote( hat(mu)[eta] ) ) +
+theme_classic()
+```
+
+### significance_funnel
+```{r}
+significance_funnel(
+ma_data_exclude_outlier$d_calc,
+ma_data_exclude_outlier$d_var_calc,
+xmin = min(ma_data_exclude_outlier$d_calc),
+xmax = max(ma_data_exclude_outlier$d_calc),
+ymin = 0,
+ymax = max(sqrt(ma_data_exclude_outlier$d_var_calc)),
+xlab = "Point estimate",
+ylab = "Estimated standard error",
+favor.positive = TRUE,
+est.all = NA,
+est.N = NA,
+alpha.select = 0.05,
+plot.pooled = TRUE
+)
+```
+
+### Estimate the S_val
+```{r}
+sval <- data.frame()
+
+for (i in seq(0, 0.1, by = 0.02)){
+  s <- svalue(
+          ma_data_exclude_outlier$d_calc,
+          ma_data_exclude_outlier$d_var_calc,
+          q = i,
+          clustervar = 1:length(ma_data_exclude_outlier$d_calc),
+          model = "robust",
+          alpha.select = 0.05,
+          eta.grid.hi = 200,
+          favor.positive = TRUE,
+          CI.level = 0.95,
+          small = TRUE,
+          return.worst.meta = FALSE
+          )
+  s <- s %>% mutate(q_val = i)
+
+  sval <- bind_rows(sval, s) 
+}
+
+sval
+```
+
+
+
+## Null and age model 
+```{r}
+null <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data_exclude_outlier)
+age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data_exclude_outlier)
+age
+
+ma_data_exclude_outlier %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, size = n_1)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Verb Extension effect size vs. Age (months)") 
+```
+
+# explore stimuli contrast
+```{r}
+
+sc <- rma.mv(d_calc ~ stimuli_contrast, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data_exclude_outlier)
+
+sc
+
+ma_data_exclude_outlier %>% 
+  mutate(age_months = mean_age/30.44) %>% 
+  ggplot(aes(x = age_months, y = d_calc, color = stimuli_contrast)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  ylab("Effect Size") +
+  xlab("Age (months)") +
+  ggtitle("Verb Extension effect size vs. Age (months)") 
+```
+```{r}
+ma_data_object_change <- ma_data %>% 
+                           filter(stimuli_contrast == "object_change") 
+
+oc_only <- rma.mv(d_calc, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data_object_change)
+
+oc_age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                      random = ~ 1 | short_cite/same_infant/row_id,
+                      method = "REML",
+                      data = ma_data_object_change)
+
+summary(oc_only)
+summary(oc_age)
+```
+
+## reg test with object_change, null model  
+publication bias yes: 
+```{r}
+rma.mv(d_calc ~ sqrt(d_var_calc),  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_object_change)
+```
+## reg test with object_change, with age 
+
+```{r}
+rma.mv(d_calc ~ sqrt(d_var_calc) + mean_age,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_object_change)
+```

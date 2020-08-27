@@ -5,19 +5,19 @@ library(googlesheets4) # package for reading data in spreadsheet directly into R
 library(here) # pakcage for managing paths
 
 
-#MA_DATA_GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
-#SHEET_NAME <- "MA data"
+MA_DATA_GOOGLE_SHEET_ID <- "1kSL5lpmHcaw9lOp2dhJ_RH15REFe7oZVwMO1vJc930o"
+SHEET_NAME <- "MA data"
 #OUTPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
-
-MA_DATA_GOOGLE_SHEET_ID <- "1oD7gRlWjRUIR3Ngqdku11MTEJ92xh5X9xgAe5nxpphM"
-SHEET_NAME <- "double_check_molly"
-OUTPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
+OUTPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
+#MA_DATA_GOOGLE_SHEET_ID <- "1oD7gRlWjRUIR3Ngqdku11MTEJ92xh5X9xgAe5nxpphM"
+#SHEET_NAME <- "double_check_molly"
+#OUTPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
 
 read_raw_data_and_clean <- function(sheet_id, sheet_name, outpath){
 
   ma_data <- read_sheet(sheet_id, sheet_name,
-                        col_types = "cccccccccccccccdddddddddccdddccccccccccccccddddccdc")
-
+                        col_types = "ccccccccccccccddddddddddccdddccccccccccccccddddccdc")
+  #col_types = "cccccccccccccccdddddddddccdddccccccccccccccddddccdc"
                         #col_types = "ccccccccccccccdddddddddccdddccccccccccccccddddccdc")
   tidy_es <- ma_data %>%
     filter(paper_eligibility == "include") %>%

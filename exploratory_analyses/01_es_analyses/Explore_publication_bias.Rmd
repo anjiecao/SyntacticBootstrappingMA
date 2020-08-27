@@ -1,0 +1,212 @@
+---
+title: "Explore_Publication_Bias"
+author: "Anjie Cao and Molly Lewis"
+date: "8/21/2020"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE, 
+                      cache = FALSE,
+                      #echo = FALSE,
+                      fig.pos = "t!")
+```
+
+```{r cars}
+library(papaja)
+library(rmarkdown)
+library(tidyverse) 
+library(here)
+library(glue)
+library(metafor)
+library(knitr)
+library(gridExtra)
+library(here)
+library(heatmaply)
+library(MuMIn)
+library(glmulti)
+library(PRISMAstatement)
+library(PublicationBias)
+
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
+
+ma_data <- read_csv(DATA_PATH) %>% mutate(row_id = 1:n())
+
+```
+
+# ETA
+> For a chosen ratio of publication probabilities, eta, estimates a publication bias-corrected pooled
+point estimate and confidence interval per Mathur & VanderWeele (2020). Model options include
+fixed-effects (a.k.a. "common-effect"), robust independent, and robust clustered specifications
+
+> The ratio eta represents the number of times more likely affirmative studies (i.e., those with a
+"statistically significant" and positive estimate) are to be published than nonaffirmative studies (i.e.,
+those with a "nonsignificant" or negative estimate).
+
+```{r}
+eta <- data.frame()
+
+for (i in 1:20){
+  df <- corrected_meta(
+      ma_data$d_calc,
+      ma_data$d_var_calc,
+      eta= i,
+      clustervar = 1:length(ma_data$d_calc),
+      model = "robust",
+      selection.tails = 2,
+      favor.positive = TRUE,
+      alpha.select = 0.05,
+      CI.level = 0.95,
+      small = TRUE)
+  eta <- bind_rows(eta, df)
+  
+}
+
+```
+
+
+
+It seems that only when affirmative studies were 15 times more likely to be published than the non-affirmative studies will we end up with a est = 0 
+
+
+```{r}
+eta %>% ggplot(aes(x = eta, y = pval)) + 
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = 0.05, color = "red", type = 2) + 
+  labs(title = "eta vs pval")
+
+eta %>% ggplot(aes(x = eta, y = est)) + 
+  geom_point() + 
+  geom_line() + 
+  labs(title = "eta vs est")
+```
+
+
+Really don't know what this plot is telling me but it's from the R document. Only understand it's trying different eta in a fancier way.
+
+```{r}
+eta.list = as.list( c( 200, 150, 100, 50, 40, 30, 20, rev( seq(1,15,1) ) ) )
+res.list = lapply(eta.list, function(x){
+cat("\n Working on eta = ", x)
+return(corrected_meta(
+      ma_data$d_calc,
+      ma_data$d_var_calc,
+      eta= x,
+      clustervar = 1:length(ma_data$d_calc),
+      model = "robust",
+      selection.tails = 1,
+      favor.positive = TRUE,
+      alpha.select = 0.05,
+      CI.level = 0.95,
+      small = TRUE) )
+})
+
+
+res.df = as.data.frame(do.call("rbind",res.list)) 
+
+ggplot( data = res.df, aes( x = eta, y = est ) ) +
+geom_ribbon( data = res.df, aes( x = eta, ymin = lo, ymax = hi ), fill = "gray" ) +
+geom_line( lwd = 1.2 ) +
+xlab( bquote( eta ) ) +
+ylab( bquote( hat(mu)[eta] ) ) +
+theme_classic()
+```
+
+
+# pval_plot 
+
+> Plots the one-tailed p-values. The leftmost red line indicates the cutoff for one-tailed p-values less
+than 0.025 (corresponding to "affirmative" studies; i.e., those with a positive point estimate and a
+two-tailed p-value less than 0.05). The rightmost red line indicates one-tailed p-values greater than
+0.975 (i.e., studies with a negative point estimate and a two-tailed p-value less than 0.05). If there is
+a substantial point mass of p-values to the right of the rightmost red line, this suggests that selection
+may be two-tailed rather than one-tailed. **
+
+this doesn't look good, "If publication bias favors “significant” results regardless of sign, one would expect to see an increased density of one-tailed p-values not only below 0.025 but also above 0.975 (because the latter corresponds to two-tailed p-values less than 0.05 with negative point estimates)"
+
+```{r}
+pval_plot(ma_data$d_calc,
+ma_data$d_var_calc, alpha.select = 0.05) 
+```
+
+# significance_funnel
+
+> Creates a modified funnel plot that distinguishes between affirmative and nonaffirmative studies,
+helping to detect the extent to which the nonaffirmative studies’ point estimates are systematically
+smaller than the entire set of point estimates. The estimate among only nonaffirmative studies (gray
+diamond) represents a corrected estimate under worst-case publication bias. If the gray diamond
+represents a negligible effect size or if it is much smaller than the pooled estimate among all studies
+(black diamond), this suggests that the meta-analysis may not be robust to extreme publication
+bias. Numerical sensitivity analyses (via PublicationBias::svalue) should still be carried out
+for more precise quantitative conclusion
+
+doesn't look too bad? 
+
+```{r}
+significance_funnel(
+ma_data$d_calc,
+ma_data$d_var_calc,
+xmin = min(ma_data$d_calc),
+xmax = max(ma_data$d_calc),
+ymin = 0,
+ymax = max(sqrt(ma_data$d_var_calc)),
+xlab = "Point estimate",
+ylab = "Estimated standard error",
+favor.positive = TRUE,
+est.all = NA,
+est.N = NA,
+alpha.select = 0.05,
+plot.pooled = TRUE
+)
+```
+
+# sval 
+> Estimates the S-value, defined as the severity of publication bias (i.e., the ratio by which affirmative
+studies are more likely to be published than nonaffirmative studies) that would be required to shift
+the pooled point estimate or its confidence interval limit to the value q.
+
+> The function returns: 
+- the amount of publication bias required to attenuate the pooled point estimate
+to q (sval.est), 
+- the amount of publication bias required to attenuate the confidence interval limit
+of the pooled point estimate to q (sval.ci), 
+- the number of affirmative and nonaffirmative studies
+after any needed recoding of signs (k.affirmative and k.nonaffirmative), and an indicator for
+whether the point estimates’ signs were recoded (signs.recoded).
+
+Doesn't seem to be too bad? Impossible to attenuate the pooled point estimate to 0, and for 15+ publication bias severity to render the interval limit?  
+cf. example on pg 24
+
+```{r}
+sval <- data.frame()
+
+for (i in seq(0, 0.1, by = 0.02)){
+  s <- svalue(
+          ma_data$d_calc,
+          ma_data$d_var_calc,
+          q = i,
+          clustervar = 1:length(ma_data$d_calc),
+          model = "robust",
+          alpha.select = 0.05,
+          eta.grid.hi = 200,
+          favor.positive = TRUE,
+          CI.level = 0.95,
+          small = TRUE,
+          return.worst.meta = FALSE
+          )
+  s <- s %>% mutate(q_val = i)
+
+  sval <- bind_rows(sval, s) 
+}
+
+sval
+
+```

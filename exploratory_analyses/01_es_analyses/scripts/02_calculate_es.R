@@ -5,8 +5,10 @@ library(janitor)
 library(gsubfn)
 
 
-INPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
-OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv")
+#INPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
+#OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv")
+INPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
+OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv")
 
 # ES function - adopted from compute_es (within-one case)
 get_es <- function(df){
@@ -31,7 +33,7 @@ get_es <- function(df){
 
 
 # read in raw data
-ma_data <- read_csv(INPATH)
+ma_data <- read_csv(INPATH, col_types = "cccccccccccccddddddddddccdddccccccccccccccddddccdc")
 
 # add effect sizes
 ma_data_with_es <- ma_data %>%
@@ -96,6 +98,11 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           agent_argument_type == "two_nouns_and_pronoun" ~ "varying",
           TRUE ~ "1"
         ),
+        agent_argument_type2 = case_when(
+          str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+          TRUE ~ "noun"),
+        transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                           TRUE ~ "indirect_caused_action"),
         transitive_event_type = case_when(
           transitive_event_type == "direct_ caused_movement"~ "direct_caused_action",
           transitive_event_type == "direct_caused_movement"~ "direct_caused_action",

@@ -42,9 +42,9 @@ theme_set(theme_classic()) # sets global plot theme
 ```
 
 ```{r}
-DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make all variables (i.e. things that might change) as capital letters at the top of the scripts
+DATA_PATH <- "/Users/caoanjie/Desktop/Summer2020/SyntacticBootstrapping/data/processed/syntactic_bootstrapping_tidy_data.csv" # make all variables (i.e. things that might change) as capital letters at the top of the scripts
 
-ma_data <- read_csv(DATA_PATH) %>% filter(paradigm_type == "action_matching")
+ma_data <- read_csv(DATA_PATH) 
 
 ```
 
@@ -362,6 +362,11 @@ m_vocab <- rma.mv(d_calc ~ productive_vocab_median, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data_vocab)
 summary(m_vocab)
 ```
+```{r}
+ma_data %>% select(mean_age) %>% summarize(min = min(mean_age/30.44), max = max(mean_age/30.44))
+```
+
+
 
 ```{r simple_model_vocab_a}
 m_vocab_with_age <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
