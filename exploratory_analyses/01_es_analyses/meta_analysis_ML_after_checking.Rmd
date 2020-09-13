@@ -29,7 +29,10 @@ theme_set(theme_classic()) # sets global plot theme
 
 
 ```{r}
-DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
+#DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+
+
 
 ma_data <- read_csv(DATA_PATH) %>%
   mutate(row_id = 1:n()) %>%

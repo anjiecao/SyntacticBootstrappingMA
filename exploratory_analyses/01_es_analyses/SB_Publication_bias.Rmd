@@ -231,7 +231,7 @@ rma.mv(d_calc ~ sqrt(d_var_calc),  d_var_calc,
 ## Multi-level Model with Moderators Regression Test
 When including theoretically relevant moderators, it is still shows significant asymmetry. 
 ```{r}
-rma.mv(d_calc ~   sqrt(d_var_calc) + mean_age + transitive_event_type2 + agent_argument_type2 + 
+rma.mv(d_calc ~   sqrt(d_var_calc) + mean_age +  agent_argument_type + 
          test_mass_or_distributed + test_method + n_repetitions_video,  random = ~ 1 | short_cite/same_infant/row_id, d_var_calc, data = ma_data)
 ```
 
@@ -267,6 +267,9 @@ for (i in 1:20){
   eta <- bind_rows(eta, df)
   
 }
+
+eta
+
 eta %>% ggplot(aes(x = eta, y = pval)) + 
   geom_point() + 
   geom_line() + 
@@ -343,8 +346,8 @@ for (i in seq(0, 0.1, by = 0.02)){
           return.worst.meta = FALSE
           )
   s <- s %>% mutate(q_val = i)
-
-  sval <- bind_rows(sval, s) 
+  print(s)
+  #sval <- bind_rows(sval, s) 
 }
 
 sval

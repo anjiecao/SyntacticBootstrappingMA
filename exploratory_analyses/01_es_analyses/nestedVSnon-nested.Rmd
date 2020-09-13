@@ -13,6 +13,66 @@ knitr::opts_chunk$set(warning = FALSE,
                       fig.pos = "t!")
 ```
 
+```{r}
+library(arsenal)
+library(here)
+
+df_raw_molly <- read.csv(here("data/raw/syntactic_bootstrapping_raw_data_molly.csv"))
+df_raw <- read.csv(here("data/raw/syntactic_bootstrapping_raw_data.csv"))
+diffs(comparedf(df_raw,df_raw_molly,by = "SD_1"))
+```
+
+
+```{r}
+Molly_DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
+Anjie_DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv")
+
+ma_data_Molly <- read_csv(Molly_DATA_PATH) %>%
+  mutate(row_id = 1:n()) %>%
+  mutate(agent_argument_type2 = case_when(str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+                                          TRUE ~ "noun"),
+         transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                            TRUE ~ "indirect_caused_action"))
+
+ma_data_Anjie <- read_csv(Anjie_DATA_PATH) %>%
+  mutate(row_id = 1:n()) %>%
+  mutate(agent_argument_type2 = case_when(str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+                                          TRUE ~ "noun"),
+         transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                            TRUE ~ "indirect_caused_action"))
+```
+
+```{r}
+base_model_mv_molly <-  rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_Molly)
+
+
+base_model_mv_anjie <-  rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_Anjie)
+
+summary(base_model_mv_molly)
+summary(base_model_mv_anjie)
+```
+
+```{r}
+bm_molly <- rma.uni(d_calc,  d_var_calc,data = ma_data_Molly)
+bm_anjie <- rma.uni(d_calc,  d_var_calc,data = ma_data_Anjie)
+
+trimfill(bm_molly)
+trimfill(bm_anjie)
+```
+```{r}
+library(arsenal)
+summary(comparedf(data.frame(ma_data_Molly$d_var_calc), data.frame(ma_data_Anjie$d_var_calc)))
+```
+
+
+```{r}
+summary(comparedf(data.frame(ma_data_Molly$d_calc), data.frame(ma_data_Anjie$d_calc)))
+
+```
+
+
 
 
 ```{r}
@@ -251,8 +311,8 @@ get_MA_params <- function(moderator, df) {
       this_moderator_estimate.cih <- model$ci.ub[2]
       this_moderator_z <- model$zval[2]
       this_moderator_p <- model$pval[2]
-  }else if (moderator == "agent_argument_type_clean"){
-    model <- rma.mv(d_calc~agent_argument_type_clean, V = d_var_calc,
+  }else if (moderator == "agent_argument_type"){
+    model <- rma.mv(d_calc~agent_argument_type, V = d_var_calc,
                       random = ~ 1 | short_cite/same_infant/x_1,
                       method = "REML",
                       data = this_data)
@@ -263,8 +323,8 @@ get_MA_params <- function(moderator, df) {
       this_moderator_z <- model$zval[2]
       this_moderator_p <- model$pval[2]
     
-  }else if (moderator == "patient_argument_type_clean"){
-    model <- rma.mv(d_calc~patient_argument_type_clean, V = d_var_calc,
+  }else if (moderator == "patient_argument_type"){
+    model <- rma.mv(d_calc~patient_argument_type, V = d_var_calc,
                       random = ~ 1 | short_cite/same_infant/x_1,
                       method = "REML",
                       data = this_data)
@@ -475,7 +535,7 @@ get_MA_params <- function(moderator, df) {
 }
 
 
-v <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type_clean", "patient_argument_type_clean","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+v <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 
 
 all_models <- map_df(v,ma_data, .f = get_MA_params)

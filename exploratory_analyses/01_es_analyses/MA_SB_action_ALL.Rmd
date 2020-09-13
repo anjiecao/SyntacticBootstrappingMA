@@ -44,7 +44,11 @@ theme_set(theme_classic()) # sets global plot theme
 ```{r}
 DATA_PATH <- "/Users/caoanjie/Desktop/Summer2020/SyntacticBootstrapping/data/processed/syntactic_bootstrapping_tidy_data.csv" # make all variables (i.e. things that might change) as capital letters at the top of the scripts
 
-ma_data <- read_csv(DATA_PATH) 
+ma_data <- read_csv(DATA_PATH) %>% mutate(row_id = 1:n()) %>%
+  mutate(agent_argument_type2 = case_when(str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+                                          TRUE ~ "noun"),
+         transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                            TRUE ~ "indirect_caused_action"))
 
 ```
 
@@ -60,6 +64,8 @@ n_effect_sizes <- ma_data %>%
 n_papers <- ma_data %>%
   distinct(unique_id) %>%
   nrow()
+
+n_effect_sizes
 
 ```
 
@@ -478,6 +484,14 @@ summary(m_age_sentence_vocab)
 ## Agent Arguement Type {.tabset}
 
 ```{r}
+m_AAT <- rma.mv(d_calc ~  agent_argument_type2, V = d_var_calc,
+                            random = ~ 1 | short_cite / unique_infant, data = ma_data)
+
+summary(m_AAT)
+```
+
+
+```{r}
 m_AAT <- rma.mv(d_calc ~  agent_argument_type_clean, V = d_var_calc,
                             random = ~ 1 | short_cite, data = ma_data)
 m_AAT_young <- rma.mv(d_calc ~  agent_argument_type_clean, V = d_var_calc,
@@ -486,6 +500,12 @@ summary(m_AAT)
 summary(m_AAT_young)
 
 ```
+
+```{r}
+ma_data %>% 
+```
+
+
 
 ### all 
 ```{r plot_age_aat}

@@ -1,0 +1,129 @@
+---
+title: "Data_Cross_Check"
+author: "Anjie Cao and Molly Lewis"
+date: "8/31/2020"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: hide 
+    number_sections: no
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+library(arsenal)
+library(here)
+library(tidyverse)
+library(metafor)
+```
+
+```{r}
+Molly_DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
+Anjie_DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv")
+
+ma_data_Molly <- read_csv(Molly_DATA_PATH) %>%
+  mutate(row_id = 1:n()) %>%
+  mutate(agent_argument_type2 = case_when(str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+                                          TRUE ~ "noun"),
+         transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                            TRUE ~ "indirect_caused_action"))
+
+ma_data_Anjie <- read_csv(Anjie_DATA_PATH) %>%
+  mutate(row_id = 1:n()) %>%
+  mutate(agent_argument_type2 = case_when(str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+                                          TRUE ~ "noun"),
+         transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                            TRUE ~ "indirect_caused_action"))
+
+
+```
+
+# Basic Check 
+
+## d_calc
+```{r}
+summary(comparedf(data.frame(ma_data_Molly$d_calc), data.frame(ma_data_Anjie$d_var_calc)))
+```
+
+## d_var_calc
+```{r}
+summary(comparedf(data.frame(ma_data_Molly$d_var_calc), data.frame(ma_data_Anjie$d_var_calc)))
+```
+
+## x_1
+
+```{r}
+x_1_molly <- round(ma_data_Molly$x_1, digits = 2)
+x_1_anjie <- round(ma_data_Anjie$x_1, digits = 2)
+setdiff(x_1_anjie, x_1_molly)
+```
+
+## sd_1
+```{r}
+sd_1_molly <- round(ma_data_Molly$sd_1, digits = 2)
+sd_1_anjie <- round(ma_data_Anjie$sd_1, digits = 2)
+setdiff(sd_1_anjie, sd_1_molly)
+setdiff(sd_1_molly, sd_1_anjie)
+
+```
+
+## d_calc 
+negligible? 
+```{r}
+d_calc_molly <- round(ma_data_Molly$d_calc, digits = 2)
+d_calc_anjie <- round(ma_data_Anjie$d_calc, digits = 2)
+setdiff(d_calc_anjie, d_calc_molly)
+setdiff(d_calc_molly,d_calc_anjie) 
+
+```
+
+## d_var_calc
+```{r}
+d_var_calc_molly <- round(ma_data_Molly$d_var_calc, digits = 2)
+d_var_calc_anjie <- round(ma_data_Anjie$d_var_calc, digits = 2)
+setdiff(d_var_calc_molly,d_var_calc_anjie)
+```
+
+
+
+
+
+# Model Check 
+Small discrepancies but acceptable?
+
+## Base Model 
+```{r}
+base_mv_molly <-  rma.uni(d_calc,  d_var_calc,  
+                       data=ma_data_Molly)
+
+
+base_mv_anjie <-  rma.uni(d_calc,  d_var_calc,  
+                        data=ma_data_Anjie)
+
+summary(base_mv_molly)
+summary(base_mv_anjie)
+```
+
+
+## Multilevel Model 
+```{r}
+multi_mv_molly <-  rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_Molly)
+
+
+multi__mv_anjie <-  rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data_Anjie)
+
+summary(multi_mv_molly)
+summary(multi__mv_anjie)
+```
+
+
+# Trim and Fill Check 
+```{r}
+trimfill(base_mv_molly)
+trimfill(base_mv_anjie)
+
+```
+
+

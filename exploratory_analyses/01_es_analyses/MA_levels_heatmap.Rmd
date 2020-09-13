@@ -30,17 +30,13 @@ theme_set(theme_classic()) # sets global plot theme
 ```{r}
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") # make all variables (i.e. things that might change) as capital letters at the top of the scripts
 
-ma_data <- read_csv(DATA_PATH)   %>%
-  filter(language == "English",
-         population_type == "typically_developing", 
-         stimuli_modality == "video",
-         !is.na(mean_age))
+ma_data <- read_csv(DATA_PATH)  
 ```
 
 
 ```{r, fig.height = 9, fig.width = 10}
-ALL_CATEGORICAL_VARS <- c("test_type","presentation_type",
-                      "agent_argument_type", "patient_argument_type", 
+ALL_CATEGORICAL_VARS <- c("presentation_type",
+                      #"agent_argument_type", 
                      "stimuli_modality", "stimuli_actor", "character_identification",   "practice_phase", "test_mass_or_distributed")
 
 
@@ -70,16 +66,25 @@ all_pair_counts <- list(ALL_CATEGORICAL_VARS,
   filter(v1_long != v2_long)
 
 
-  all_counts_wide <- all_pair_counts %>%
+all_counts_wide <- all_pair_counts %>%
     pivot_wider(names_from = v2_long, values_from = n) 
   
 
-  all_counts_wide_matrix <- all_counts_wide %>%
+all_counts_wide_matrix <- all_counts_wide %>%
     select(-v1_long) %>%
     as.matrix()
   
   row.names(all_counts_wide_matrix) <-   all_counts_wide$v1_long
+
+all_counts_wide_matrix[is.na(all_counts_wide_matrix)] <- 0
+temp_df <- data.frame(all_counts_wide_matrix)
+names(temp_df) <- gsub("[.]", names(temp_df), replace = "/")
+all_counts_wide_matrix <- temp_df %>% as.matrix()
+  
+
   heatmaply(all_counts_wide_matrix,
             fontsize_row = 8,
             fontsize_col = 8)
 ```
+
+

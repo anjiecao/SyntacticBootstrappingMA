@@ -4,11 +4,14 @@ library(here)
 library(janitor)
 library(gsubfn)
 
-
-#INPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
-#OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv")
+##Molly's
+# INPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
+# OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv")
+# COLTYPE <- "cccccccccccccddddddddddccdddccccccccccccccddddccdc"
 INPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv")
+COLTYPE <- "ccccccccccccccddddddddddccdddccccccccccccccddddccdc"
+  
 
 # ES function - adopted from compute_es (within-one case)
 get_es <- function(df){
@@ -33,7 +36,7 @@ get_es <- function(df){
 
 
 # read in raw data
-ma_data <- read_csv(INPATH, col_types = "cccccccccccccddddddddddccdddccccccccccccccddddccdc")
+ma_data <- read_csv(INPATH, col_types = COLTYPE)
 
 # add effect sizes
 ma_data_with_es <- ma_data %>%
@@ -48,7 +51,7 @@ ma_data_with_es <- ma_data %>%
 # clean up factor level issues
 tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing variables
   clean_names() %>%
-  select(-long_cite) %>%
+  #select(-long_cite) %>%
   filter(!is.na(d_calc) & paper_eligibility == "include") %>% # tidy column names
   mutate(id = row_number(),
         practice_phase = case_when(practice_phase == "NA" ~ "no",
@@ -62,8 +65,7 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
                                        TRUE ~ presentation_type),
          stimuli_actor = case_when(stimuli_actor == "non-person" ~ "non_person",
                                   TRUE ~ stimuli_actor),
-         patient_argument_type = case_when(patient_argument_type == "N/A" ~ "NA",
-                                           TRUE ~ patient_argument_type),
+         
          population_type = case_when(population_type == "typical_developing" ~  "typically_developing",
                                      TRUE ~ population_type),
          agent_argument_type = case_when(agent_argument_type == "pronoun_and_noun" | agent_argument_type == "pronoung_and_noun" ~ "noun_and_pronoun",
@@ -80,15 +82,15 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
              grepl("point", dependent_measure, fixed = TRUE) ~ "point",
              grepl("look", dependent_measure, fixed = TRUE) ~ "look",
              TRUE ~ dependent_measure),
-         agent_argument_type_clean = case_when(
-          agent_argument_type == "2noun" ~ "noun_phrase",
-          agent_argument_type == "2nouns" ~ "noun_phrase",
-          agent_argument_type == "two_nouns" ~ "noun_phrase",
-          agent_argument_type == "noun_with_adjectives" ~ "noun_phrase",
-          agent_argument_type == "noun_and_pronoun" ~ "varying_agent",
-          agent_argument_type == "two_nouns_and_pronoun" ~ "varying_agent",
-          TRUE ~ agent_argument_type
-        ),
+        #  agent_argument_type_clean = case_when(
+        #   agent_argument_type == "2noun" ~ "noun_phrase",
+        #   agent_argument_type == "2nouns" ~ "noun_phrase",
+        #   agent_argument_type == "two_nouns" ~ "noun_phrase",
+        #   agent_argument_type == "noun_with_adjectives" ~ "noun_phrase",
+        #   agent_argument_type == "noun_and_pronoun" ~ "varying_agent",
+        #   agent_argument_type == "two_nouns_and_pronoun" ~ "varying_agent",
+        #   TRUE ~ agent_argument_type
+        # ),
         agent_argument_number = case_when(
           agent_argument_type == "2noun" ~ "2",
           agent_argument_type == "2nouns" ~ "2",
@@ -98,11 +100,20 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           agent_argument_type == "two_nouns_and_pronoun" ~ "varying",
           TRUE ~ "1"
         ),
-        agent_argument_type2 = case_when(
+        agent_argument_type = case_when(
           str_detect(agent_argument_type, "pronoun") ~ "pronoun",
           TRUE ~ "noun"),
-        transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
-                                           TRUE ~ "indirect_caused_action"),
+        
+        patient_argument_type = case_when(
+          patient_argument_type ==  "noun_and_dropping" ~ "noun",
+          patient_argument_type == "pronoun_and_noun" ~ "pronoun",
+          TRUE ~ patient_argument_type,
+        ),
+        
+        patient_argument_type = case_when(patient_argument_type == "N/A" ~ "NA",
+                                          sentence_structure == "intransitive" ~ "INTRANSITIVE",
+                                          TRUE ~ patient_argument_type),
+        
         transitive_event_type = case_when(
           transitive_event_type == "direct_ caused_movement"~ "direct_caused_action",
           transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
@@ -110,12 +121,11 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           transitive_event_type == "indirect_cause_action"~ "indirect_caused_action",
           TRUE ~ transitive_event_type
         ),
+        
+        transitive_event_type = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                           TRUE ~ "indirect_caused_action"),
 
-        patient_argument_type_clean = case_when(
-          patient_argument_type ==  "noun_and_dropping" ~ "varying_patient",
-          patient_argument_type == "pronoun_and_noun" ~ "varying_patient",
-          TRUE ~ patient_argument_type,
-        ),
+        
 
         visual_stimuli_pair = paste(transitive_event_type, intransitive_event_type, sep = '_'),
 
@@ -124,22 +134,21 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           TRUE ~ "no"
         ),
         data_source_clean = case_when(
-          grepl("text", data_source, fixed = TRUE) ~ "text",
+          grepl("text", data_source, fixed = TRUE) ~ "text/table",
           grepl("author", data_source, fixed = TRUE) ~ "author_contact",
-          grepl("table", data_source, fixed = TRUE) ~ "table",
+          grepl("table", data_source, fixed = TRUE) ~ "text/table",
+          grepl("imputed",data_source, fixed = TRUE) ~ "imputed",
           TRUE ~ "plot"
         ),
         paradigm_type = case_when(
           (transitive_event_type == "AGENT") ~ "agent_matching",
           TRUE ~ "action_matching"
         ),
-        publication_year = parse_number(unique_id)
+        publication_year = parse_number(unique_id),
         ) %>%
-  mutate(patient_argument_type_clean = if_else (is.na(patient_argument_type),
-                                                "intransitive",
-                                                patient_argument_type_clean)) %>%
+
   filter(paradigm_type!= "agent_matching") %>%
-  select(-id)
+  select(-id, -paradigm_type)
     # use line breaks to make code more readable
   # & (sentence_structure == "intransitive")
 
