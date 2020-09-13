@@ -1,0 +1,91 @@
+---
+title: "Exploration of publication bias in SB MA "
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc_float: yes
+    code_folding: show 
+    number_sections: no
+    toc: no
+---
+
+
+```{r setup, include = F}
+library(tidyverse)
+library(metafor)
+library(knitr)
+library(gridExtra)
+library(here) # here package manages paths in a sane way
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.height=6, fig.path='Figs/',
+                     warning=FALSE, message=FALSE)
+theme_set(theme_classic()) # sets global plot theme
+```
+
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
+
+ma_data <- read_csv(DATA_PATH) %>%
+  mutate(row_id = 1:n()) %>%
+  mutate(agent_argument_type2 = case_when(str_detect(agent_argument_type, "pronoun") ~ "pronoun",
+                                          TRUE ~ "noun"),
+         transitive_event_type2 = case_when(transitive_event_type == "direct_caused_action" ~ "direct_caused_action",
+                                            TRUE ~ "indirect_caused_action"))
+```
+
+## Funnel plot/Egger's test
+Funnel plot of multi-level model with no moderators:
+```{r}
+base_model_mv <-  rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data)
+
+funnel(base_model_mv)
+```
+
+Visually, it looks like there may be some asymmetry. We can formally test for asymmetry with Egger's test. Eggers test is a regression predicting d_calc with some measure of effect size variance, often standard error. Here's what it looks like in the non-multi-level model:
+
+```{r}
+base_model_no_mv <-  rma(d_calc,  d_var_calc, data=ma_data)
+regtest(base_model_no_mv, predictor = 'sei')
+regtest(base_model_no_mv, predictor = 'sei', ret.fit = T)
+```
+
+This is equivalent to the following: 
+```{r}
+rma(d_calc ~ sqrt(d_var_calc),  d_var_calc, data = ma_data)
+```
+
+We can visualize the relationship by plotting d_calc vs. sei
+```{r}
+ggplot(ma_data, aes(x = sqrt(d_var_calc), y = d_calc)) +
+  geom_point() +
+  geom_hline(aes(yintercept = 0)) +
+  geom_smooth(method = "lm") +
+  xlim(0, .7)
+```
+
+... We see a strong linear relationship between effect size variance and the size of the effect: Bigger effect sizes have bigger variance. There should be no relationship in the absence of publication bias. 
+
+Now, let's do Egger's test with the multi-level model:
+
+```{r}
+rma.mv(d_calc ~ sqrt(d_var_calc),  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data = ma_data)
+```
+
+Strong evidence for publication bias. There's still evidence even when you control for a number of potential moderators: 
+
+```{r}
+rma.mv(d_calc ~ sqrt(d_var_calc) + mean_age + transitive_event_type2 + agent_argument_type2 + 
+         test_mass_or_distributed + test_method + n_repetitions_video,  random = ~ 1 | short_cite/same_infant/row_id, d_var_calc, data = ma_data)
+```
+
+## Trim-fill
+```{r}
+trim_fill_base <- trimfill(base_model_no_mv)
+trim_fill_base
+
+funnel(trim_fill_base, legend=TRUE)
+```
