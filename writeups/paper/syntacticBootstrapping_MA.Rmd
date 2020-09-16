@@ -65,7 +65,6 @@ library(knitr)
 library(PublicationBias)
 
 source(here("writeups/paper/scripts/prisma_diagram.R"))
-source(here("writeups/paper/scripts/paper_helpers.R"))
 source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
 source(here("writeups/paper/scripts/funnel_plot_helper.R"))
@@ -395,7 +394,7 @@ inter_sum %>%
   geom_line(aes(group = agent_argument_type)) +
   geom_point()
 
-
+interaction_mod
 ```
 
 How would the verbs’ syntactic environment and the semantic environment influence the learning outcome? To answer this question, we considered two moderators: the sentence structure and the types of words in the agent argument. The moderator sentence structure has two levels: transitive sentence and intransitive sentence. We fit a mixed effect model with the sentence structure as the single predictor. Our model suggests that children tested in the transitive conditions tend to have larger effect size than those tested under the intransitive conditions ($\beta$ = `r filter(mod_print, moderator == "sentence_structure")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "sentence_structure")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "sentence_structure")$mod_z_print`, *p* `r filter(mod_print, moderator == "sentence_structure")$mod_p_print`). The moderator agent argument structure also has two levels: pronoun and noun. Using a similar model, we found that the agent argument structure is not a significant predictor of the effect size ($\beta$ = `r filter(mod_print, moderator == "agent_argument_type")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "agent_argument_type")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "agent_argument_type")$mod_z_print`, *p* `r filter(mod_print, moderator == "agent_argument_type")$mod_p_print`). We also considered an interaction model with both moderators presented. The interaction term was [wow it's actually significant] ($\beta$ = `r`, *SE* = `r`, *z* = `r`, *p* = `r`). 
