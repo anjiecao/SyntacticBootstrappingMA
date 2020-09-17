@@ -376,8 +376,18 @@ cor_p <- ifelse(round(age_vocab_cor$p.value, digits = 2)<0.0001, "< 0.0001", as.
 Children do not perform better in the syntactic bootstrapping task as they get more experience. Although age and median productive vocabulary size correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`), neither one was a significant predictor of the effect size in the mixed-effect linear regression model (Age: $\beta$ = `r filter(mod_print, moderator == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age")$mod_p_print` ; Vocabulary Size: $\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`).  
 
 ### Role of sentence structure 
+```{r}
+ss_summary <- ma_data %>% 
+  group_by(sentence_structure) %>% 
+  summarise(
+    mean = mean(d_calc), 
+    sd = sd(d_calc)
+  )
 
-How would the verbs’ syntactic environment and the semantic environment influence the learning outcome? To answer this question, we considered two moderators: the sentence structure and the types of words in the agent argument. The moderator sentence structure has two levels: transitive sentence and intransitive sentence. We fit a mixed effect model with the sentence structure as the single predictor. Our model suggests that children tested in the transitive conditions tend to have larger effect size than those tested under the intransitive conditions ($\beta$ = `r filter(mod_print, moderator == "sentence_structure")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "sentence_structure")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "sentence_structure")$mod_z_print`, *p* `r filter(mod_print, moderator == "sentence_structure")$mod_p_print`). 
+```
+
+
+How would the verbs’ syntactic environment and the semantic environment influence the learning outcome? To answer this question, we considered two moderators: the sentence structure and the types of words in the agent argument. The moderator sentence structure has two levels: transitive sentence and intransitive sentence. We fit a mixed effect model with the sentence structure as the single predictor. Our model suggests that sentence structure is a significant predictor ($\beta$ = `r filter(mod_print, moderator == "sentence_structure")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "sentence_structure")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "sentence_structure")$mod_z_print`, *p* `r filter(mod_print, moderator == "sentence_structure")$mod_p_print`). Children tested in the transitive conditions (*M* = `r filter(ss_summary, sentence_structure == "transitive")$mean`, *SD* = `r filter(ss_summary, sentence_structure == "transitive")$sd`) tend to have larger effect size than those tested under the intransitive conditions (*M* = `r filter(ss_summary, sentence_structure == "intransitive")$mean`, *SD* = `r filter(ss_summary, sentence_structure == "intransitive")$sd`). 
 
 ### Role of word types 
 

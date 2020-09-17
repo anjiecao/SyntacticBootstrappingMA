@@ -361,12 +361,14 @@ generate_mega_model_df <- function(model){
     mutate(
       mod_estimate = v1, 
       mod_SE = model_se, 
-      moderator_z <- model_zval, 
-      moderator_p <- model_pval, 
+      moderator_z=model_zval, 
+      moderator_p = model_pval, 
       Q = model$QE,
       Qp = model$QEp, 
       mod_estimate_print = round(mod_estimate, 2),
       mod_SE_print = round(mod_SE, 2), 
+      mod_ci_lb_print = round(model_ci_lb, 2), 
+      mod_ci_ub_print = round(model_ci_ub, 2),
       mod_CI_print = paste0(" [", 
                             round(model_ci_lb, 2),
                             ", ",
@@ -381,6 +383,31 @@ generate_mega_model_df <- function(model){
       Q_print = round(Q, 2),
       Qp_print = round(Qp, 2),
       Qp_print = ifelse(Qp_print < .001, "<.001", paste0("= ", Qp_print))
+    ) %>% 
+    mutate(
+      mod_estimate_print = case_when(
+        mod_estimate_print == 0 ~ round(mod_estimate, 3), 
+        TRUE ~ mod_estimate_print
+      ),
+      mod_SE_print = case_when(
+        mod_SE_print == 0 ~ round(mod_SE, 3), 
+        TRUE ~ mod_SE_print
+      ), 
+      mod_ci_lb_print = case_when(
+        mod_ci_lb_print == 0 ~ round(model_ci_lb, 3), 
+        TRUE ~ mod_ci_lb_print
+      ), 
+      mod_ci_ub_print = case_when(
+        mod_ci_ub_print == 0 ~ round(model_ci_ub, 3), 
+        TRUE ~ mod_ci_ub_print
+      ), 
+      mod_CI_print = paste0(" [", 
+                            mod_ci_lb_print,
+                            ", ",
+                            mod_ci_ub_print,
+                            "]"), 
+      mod_estimate_print_full = paste(mod_estimate_print, mod_CI_print)
+      
     ) %>% 
     select(-v1)
   
