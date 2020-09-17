@@ -1,12 +1,12 @@
 ---
 title             : "A meta-analysis of the syntactic bootstrapping phenomenon in word learning"
-shorttitle        : "Syntactic Boostrapping MA"
+shorttitle        : "Syntactic Bootstrapping MA"
 
 author:  
   - name          : "Anjie Cao"
     affiliation   : "1"
     corresponding : yes    # Define only one corresponding author
-    address       : "what is this" # <- you're physical address at Stanford (something something Jordan Hall - it's a weird relic of when people actually sent stuff in snail mail)
+    address       : "what is this" # <- your physical address at Stanford (something something Jordan Hall - it's a weird relic of when people actually sent stuff in snail mail)
     email         : "acao@andrew.cmu.edu" # <- probably want your new stanford email
   - name          : "Molly Y. Lewis"
     affiliation   : "2"
@@ -65,7 +65,6 @@ library(knitr)
 library(PublicationBias)
 
 source(here("writeups/paper/scripts/prisma_diagram.R"))
-source(here("writeups/paper/scripts/paper_helpers.R"))
 source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
 source(here("writeups/paper/scripts/funnel_plot_helper.R"))
@@ -245,7 +244,6 @@ num_vocabulary_available <- ma_data %>%
 
 
 At the participant level, we coded infants' mean age in days (*N* = `r n_effect_sizes`) and the median productive vocabulary measured by MacArthur-Bates Communicative Development Inventories (CDI) Words and Sentences [@fenson2000short] (*N* = `r  num_vocabulary_available`). 
-
 
 
 ```{r categorize_by_linguistic_stimuli}
