@@ -343,4 +343,51 @@ generate_moderator_df <- function(moderator,data){
   
 }
 
+generate_mega_model_df <- function(model){
+  
+  
+  
+  mod_estimate <- as.data.frame(model$b) %>% rownames_to_column(var = "moderator_name")
+  mod_SE <- as.data.frame(model$se) 
+  mod_estimate_cil <- as.data.frame(model$ci.lb)
+  mod_estimate_cih <- as.data.frame(model$ci.ub)
+  mod_estimate_z <- as.data.frame(model$zval) 
+  mod_estimate_p <- as.data.frame(model$pval)
+  
+  mega_mod <- bind_cols(mod_estimate, mod_SE, mod_estimate_cil, mod_estimate_cih, mod_estimate_z, mod_estimate_p)
+  
+  mega_mod <- mega_mod %>% 
+    clean_names() %>% 
+    mutate(
+      mod_estimate = v1, 
+      mod_SE = model_se, 
+      moderator_z <- model_zval, 
+      moderator_p <- model_pval, 
+      Q = model$QE,
+      Qp = model$QEp, 
+      mod_estimate_print = round(mod_estimate, 2),
+      mod_SE_print = round(mod_SE, 2), 
+      mod_CI_print = paste0(" [", 
+                            round(model_ci_lb, 2),
+                            ", ",
+                            round(model_ci_ub, 2),
+                            "]"),
+      mod_estimate_print_full = paste(mod_estimate_print, mod_CI_print),
+      
+      mod_z_print =  round(moderator_z, 2),
+      mod_p_print =  round(moderator_p, 2),
+      mod_p_print = ifelse(mod_p_print < .001, "<.001", 
+                           paste0("= ", mod_p_print)),
+      Q_print = round(Q, 2),
+      Qp_print = round(Qp, 2),
+      Qp_print = ifelse(Qp_print < .001, "<.001", paste0("= ", Qp_print))
+    ) %>% 
+    select(-v1)
+  
+  
+  
+  
+  return(mega_mod)
+}
+
 
