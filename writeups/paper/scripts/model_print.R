@@ -416,5 +416,3 @@ generate_mega_model_df <- function(model){
   
   return(mega_mod)
 }
-
-
