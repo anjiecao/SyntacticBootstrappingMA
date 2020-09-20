@@ -1,5 +1,6 @@
 library(tidyverse)
-
+library(insight)
+library(janitor)
 # This script will run single-moderator models and generate a dataframe to be used in results section 
 get_MA_params <- function(moderator, df) {
   
@@ -205,12 +206,20 @@ get_MA_params <- function(moderator, df) {
                     method = "REML",
                     data = this_data)
     
+    this_moderator_level_name <- 
     this_moderator_estimate <- model$b[2]
     this_moderator_SE <- model$se[2]
     this_moderator_estimate.cil <- model$ci.lb[2]
     this_moderator_estimate.cih <- model$ci.ub[2]
     this_moderator_z <- model$zval[2]
     this_moderator_p <- model$pval[2]
+    
+    this_moderator_additional_estimate <- model$b[2]
+    this_moderator_additional_SE <- model$se[2]
+    this_moderator_additional_estimate.cil <- model$ci.lb[2]
+    this_moderator_additional_estimate.cih <- model$ci.ub[2]
+    this_moderator_additional_z <- model$zval[2]
+    this_moderator_additional_p <- model$pval[2]
     
   }else if (moderator == "character_identification"){
     model <- rma.mv(d_calc~character_identification, V = d_var_calc,
@@ -357,7 +366,7 @@ generate_mega_model_df <- function(model){
   mega_mod <- bind_cols(mod_estimate, mod_SE, mod_estimate_cil, mod_estimate_cih, mod_estimate_z, mod_estimate_p)
   
   mega_mod <- mega_mod %>% 
-    clean_names() %>% 
+    janitor::clean_names() %>% 
     mutate(
       mod_estimate = v1, 
       mod_SE = model_se, 

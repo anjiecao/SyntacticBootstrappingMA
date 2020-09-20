@@ -1,0 +1,198 @@
+---
+title: "model plot"
+author: "anjie"
+date: "9/20/2020"
+output: 
+  html_document:
+    number_sections: no
+    toc_float: yes
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(rmarkdown)
+library(tidyverse) 
+library(here)
+library(metafor)
+library(knitr)
+library(janitor)
+library(insight)
+
+source(here("writeups/paper/scripts/model_print.R"))
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+
+
+```
+
+# Get single predictor model 
+```{r}
+ma_data <- read_csv(DATA_PATH)
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+mod_print <- generate_moderator_df(MODERATORS, ma_data)
+
+
+```
+## for theoretical moderators 
+```{r message=FALSE}
+THEORETICAL_MODERATORS <- c("mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type")
+
+theoretical_df <- mod_print %>%
+  filter(this_moderator %in% THEORETICAL_MODERATORS) %>% 
+  select(this_moderator, mod_estimate, mod_estimate.cih, mod_estimate.cil) %>% 
+  mutate(model = "single", 
+         type = "theoretical")
+
+
+```
+
+## for methodological moderators 
+```{r message=FALSE}
+METHODOLOGICAL_MODERATORS <- c("character_identification", "practice_phase", "test_mass_or_distributed","n_repetitions_sentence") # special treatment w/ presentation type because it has three levels
+
+methodological_df <-  mod_print %>%
+  filter(this_moderator %in% METHODOLOGICAL_MODERATORS) %>% 
+  select(this_moderator, mod_estimate, mod_estimate.cih, mod_estimate.cil) %>% 
+  mutate(model = "single", 
+         type = "methodological")
+
+# special treatment for presentation_type 
+synchronicity_model <- rma.mv(d_calc ~ presentation_type, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = ma_data) 
+
+moderator <- find_parameters(synchronicity_model) %>% as.data.frame()
+
+this_moderator_estimate <- synchronicity_model$b
+this_moderator_SE <- synchronicity_model$se
+this_moderator_estimate.cil <- synchronicity_model$ci.lb
+this_moderator_estimate.cih <- synchronicity_model$ci.ub
+this_moderator_z <- synchronicity_model$zval
+this_moderator_p <- synchronicity_model$pval
+
+synchronicity_info <- bind_cols(moderator, this_moderator_estimate, this_moderator_SE, 
+          this_moderator_estimate.cil, this_moderator_estimate.cih, 
+          this_moderator_z, this_moderator_p)
+
+colnames(synchronicity_info) <- c("this_moderator", "mod_estimate", "this_moderator_SE", "mod_estimate.cil", "mod_estimate.cih", "this_moderator_z", "this_moderator_p")
+
+synchronicity_info <- synchronicity_info %>% 
+  filter(this_moderator != "(Intercept)") %>% 
+  select(this_moderator, mod_estimate, mod_estimate.cih, mod_estimate.cil) %>% 
+  mutate(model = "single", 
+         type = "methodological")
+
+methodological_df <-  mod_print %>%
+  filter(this_moderator %in% METHODOLOGICAL_MODERATORS) %>% 
+  select(this_moderator, mod_estimate, mod_estimate.cih, mod_estimate.cil) %>% 
+  mutate(model = "single", 
+         type = "methodological") %>% 
+  bind_rows(synchronicity_info)
+```
+
+
+# Get mega model info
+## for theoretical moderators
+```{r message=FALSE}
+theoretical_mod <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age + productive_vocab_median, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = ma_data) 
+
+theoretical_mod_print <- generate_mega_model_df(theoretical_mod)
+
+theoretical_mega_df <- theoretical_mod_print %>% 
+  filter(moderator_name != "intrcpt") %>% 
+  mutate(
+    this_moderator = case_when(
+      moderator_name == "sentence_structuretransitive" ~ "sentence_structure", 
+      moderator_name == "agent_argument_typepronoun" ~ "agent_argument_type", 
+      TRUE ~ moderator_name
+    ),
+    mod_estimate.cih = model_ci_ub, 
+    mod_estimate.cil = model_ci_lb
+  )  %>% 
+  select(this_moderator, mod_estimate, mod_estimate.cih, mod_estimate.cil) %>% 
+  mutate(model = "full", 
+          type = "theoretical")
+
+```
+
+## for methodological moderators
+```{r message=FALSE}
+
+methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase + presentation_type + test_mass_or_distributed + n_repetitions_sentence,
+                             V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = ma_data)
+
+
+
+methodological_mod_print <- generate_mega_model_df(methodological_mod)
+
+methodological_mega_df <- methodological_mod_print %>% 
+  filter(moderator_name != "intrcpt") %>% 
+  mutate(
+    this_moderator = case_when(
+      moderator_name == "character_identificationyes" ~ "character_identification", 
+      moderator_name == "practice_phaseyes" ~ "practice_phase",
+      moderator_name == "test_mass_or_distributedmass" ~ "test_mass_or_distributed",
+      TRUE ~ moderator_name
+    ),
+    mod_estimate.cih = model_ci_ub, 
+    mod_estimate.cil = model_ci_lb
+  )  %>% 
+  select(this_moderator, mod_estimate, mod_estimate.cih, mod_estimate.cil) %>% 
+  mutate(model = "full", 
+         type = "methodological")
+```
+
+# Combine df 
+
+```{r message=FALSE}
+methodological_all_df <- bind_rows(methodological_df, methodological_mega_df)
+theoretical_all_df <- bind_rows(theoretical_df, theoretical_mega_df)
+```
+
+# Generate plot for theoretical moderators 
+```{r message=FALSE}
+theoretical_all_df %>% 
+  ggplot(aes(x = fct_reorder(this_moderator, -mod_estimate), color = model, 
+             y = mod_estimate, 
+             ymin = mod_estimate.cil, 
+             ymax = mod_estimate.cih, 
+             group = model)) + 
+  geom_pointrange(size = 0.5) + 
+  scale_color_manual(values = c("grey", "red")) + 
+  geom_line(data = theoretical_all_df %>% filter(model == "full"), 
+            aes(x = fct_reorder(this_moderator, -mod_estimate),
+                y = mod_estimate, 
+                group = model), 
+            color = "grey", 
+            size = 0.5) + 
+  coord_flip()
+```
+
+# Generate plot for methodological moderators 
+
+```{r message=FALSE}
+methodological_all_df %>% 
+    ggplot(aes(x = fct_reorder(this_moderator, -mod_estimate), color = model, 
+             y = mod_estimate, 
+             ymin = mod_estimate.cil, 
+             ymax = mod_estimate.cih, 
+             group = model)) + 
+  geom_pointrange(size = 0.5) + 
+  scale_color_manual(values = c("grey", "red")) + 
+  geom_line(data = methodological_all_df %>% filter(model == "full"), 
+            aes(x = fct_reorder(this_moderator, -mod_estimate),
+                y = mod_estimate, 
+                group = model), 
+            color = "grey", 
+            size = 0.5) + 
+  coord_flip()
+```
+

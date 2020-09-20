@@ -64,6 +64,7 @@ library(metafor)
 library(knitr)
 library(PublicationBias)
 library(janitor)
+library(insight)
 
 source(here("writeups/paper/scripts/prisma_diagram.R"))
 source(here("writeups/paper/scripts/model_print.R"))
@@ -420,6 +421,31 @@ Some studies added additional phases such as character identification phase or p
 
 ### Role of synchronicity.
 
+```{r}
+# currently special treatment because it has three levels 
+synchronicity_model <- rma.mv(d_calc ~ presentation_type, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = ma_data) 
+
+moderator <- find_parameters(synchronicity_model) %>% as.data.frame()
+
+this_moderator_estimate <- model$b
+this_moderator_SE <- synchronicity_model$se
+this_moderator_estimate.cil <- model$ci.lb
+this_moderator_estimate.cih <- model$ci.ub
+this_moderator_z <- model$zval
+this_moderator_p <- model$pval
+
+synchronicity_info <- bind_cols(moderator, this_moderator_estimate, this_moderator_SE, 
+          this_moderator_estimate.cil, this_moderator_estimate.cih, 
+          this_moderator_z, this_moderator_p)
+
+colnames(synchronicity_info) <- c("moderator", "this_moderator_estimate", "this_moderator_SE", "this_moderator_estimate.cil", "this_moderator_estimate.cih", "this_moderator_z", "this_moderator_p")
+synchronicity_info
+```
+
+<!-- revision needed!!! it has three levels!! -->
 Studies fall under three categories under the synchronicity between linguistic stimuli and visual stimuli: asynchronous, immediate-after and simultaneous. Asynchronous studies present the linguistic stimuli before the relevant visual stimuli. Immediate-after studies show the linguistc stimuli while the infants are exposed to attention-getter or blank-screen, and the visual stimuli were to follow immediately after. Simultaneous studies present the visual stimuli and the linguistic stimuli together. Our model result suggested that infants' learning outcomes were not influenced by the synchronicity between the stimuli. ($\beta$ = `r filter(mod_print, moderator == "presentation_type")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "presentation_type")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "presentation_type")$mod_z_print`, *p* `r filter(mod_print, moderator == "presentation_type")$mod_p_print`). 
 
 ### Role of the testing procedure structure 
@@ -440,6 +466,7 @@ methodological_mod_print <- generate_mega_model_df(methodological_mod)
 #methodological_mod_print
 #summary(methodological_mod)
 ```
+
 We fit a model that included all the theoretical moderators considered above: the presence of character identification phase, the presence of practice phase, the synchronicity between linguistic stimuli and visual stimuli, the structure of testing procedure and the number of repetitions per novel verb prior to the test. Like the methodological moderators models, the intercept became insignificant ($\beta$ = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_p_print`). Most of the moderators were still insignificant, with the exception of testing procedure structure. This moderator became marginally significant in the mega-model, suggesting that children tested in procedure with only one train-test pair performed better than those tested in procedure with multiple train-test pairs ($\beta$ = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_p_print`). The differences between predictors' performance in single-moderator model and mega-model can be seen in figure(???). 
 
 
