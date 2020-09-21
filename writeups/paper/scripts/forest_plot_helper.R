@@ -68,14 +68,14 @@ generate_forest_plot <- function(data){
     geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2) + 
     geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
                color = "red", linetype = 2) + 
-    geom_text(aes(label = print_full, x = plot_label, y = 7), 
-              size = 3.5, colour = label_colors) + 
+    geom_text(aes(label = print_full, x = plot_label, y = 8), 
+              size = 5, colour = label_colors) + 
     scale_y_continuous(breaks = seq(-10, 5, 1))+ 
     coord_cartesian(clip = 'on') + 
     coord_flip() + 
     ylab("Cohen's d") +
     labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
-    theme(text = element_text(size=18),
+    theme(text = element_text(size=22),
           legend.position="bottom",   
           plot.margin = unit(c(1,2,16,1), "lines"),
           legend.title = element_blank(),

@@ -196,3 +196,99 @@ methodological_all_df %>%
   coord_flip()
 ```
 
+# plot predicted values  
+```{r}
+vocab_model <- rma.mv(d_calc ~ productive_vocab_median, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = ma_data) 
+
+age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = filter(ma_data, !is.na(productive_vocab_median))) 
+
+both_model <- rma.mv(d_calc ~ mean_age + productive_vocab_median, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = filter(ma_data, !is.na(productive_vocab_median))) 
+
+
+predicted_val_vocab <- predict(vocab_model, addx = TRUE) %>% 
+  as.data.frame() %>% 
+  mutate(productive_vocab_median = X.productive_vocab_median, 
+         predicted_value = pred) %>% 
+  select(productive_vocab_median, predicted_value)
+
+# how do I know if these two dataframes are organized in the same order  
+predicted_val_age <- predict(age_model, addx = TRUE) %>% 
+  as.data.frame() %>% 
+  mutate(mean_age = X.mean_age, 
+         predicted_value = pred) %>% 
+  select(mean_age, predicted_value)
+
+predicted_val_both <- predict(both_model, addx = TRUE) %>% 
+  as.data.frame() %>% 
+  mutate(productive_vocab_median = X.productive_vocab_median, 
+         predicted_value = pred) %>% 
+  select(productive_vocab_median, predicted_value)
+
+
+```
+
+```{r}
+predicted_val_vocab %>% 
+  ggplot(aes(x = productive_vocab_median, y = predicted_value)) + 
+  geom_point()
+```
+
+## weird looking predicted values when using two moderators plot 
+```{r}
+predicted_val_both %>% 
+  ggplot(aes(x = productive_vocab_median, y = predicted_value)) + 
+  geom_point()
+```
+
+
+
+```{r}
+ma_data %>% 
+  ggplot(aes(x = productive_vocab_median, y = d_calc)) + 
+  geom_point() + 
+  geom_line(
+    data = predicted_val_vocab, 
+    aes(x = productive_vocab_median, y = predicted_value)) + 
+  geom_line(
+    data = predicted_val_both, 
+    aes(x = productive_vocab_median, y = predicted_value)) # werid looking line comes from the two predictors model 
+
+
+```
+
+# what's wrong with funnel plot? 
+Is there a difference between two types of funnel plot? 
+Fancier: 
+```{r}
+mixed_model <- rma.mv(d_calc ~ 1,  d_var_calc,  
+                   random = ~ 1 | short_cite/same_infant/x_1, 
+                   method = "REML", 
+                   data=ma_data)
+funnel(mixed_model)
+```
+basic: 
+```{r}
+basic_model <- rma(d_calc ~ 1,  d_var_calc,  
+                   data=ma_data)
+funnel(basic_model)
+```
+ok they defintiely look too similar, excerpt from r documents: 
+
+> For fixed- and random-effects models (i.e., models not involving moderators), the plot shows the individual observed effect sizes or outcomes on the x-axis against the corresponding standard errors (i.e., the square root of the sampling variances) on the y-axis.
+
+so maybe they are the same? Is there a way to take into account the random effects in the funnel? the `predict` function does give me what is needed: 
+```{r}
+predict(mixed_model)
+```
+
+
+

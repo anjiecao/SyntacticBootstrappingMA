@@ -7,6 +7,15 @@ generate_funnel_plot <- function(data){
 
   ma_data <- data   
 
+  # model <- rma.mv(d_calc ~ 1,  d_var_calc,  
+  #                 random = ~ 1 | short_cite/same_infant/x_1, 
+  #                 method = "REML", 
+  #                 data=ma_data)
+  # 
+  # predicted_val <- predict.rma(model)
+  
+  
+  
 ma_funnel <- ma_data %>% 
   mutate(
     se = sqrt(d_var_calc),
@@ -46,17 +55,17 @@ ggplot(ma_funnel, aes(x = es, y = -se)) +
   ylab("Standard Error\n")  +
   geom_polygon(aes(x = x, y = y),
                data = funnel95.data,
-               fill = "white") +
+               fill = "grey") +
   geom_vline(aes(xintercept=x2),
              linetype = "dashed", color = "red", size = .8, data = funnel_shape_wide) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey44",  size = .8) +
   scale_y_continuous(labels = function(x){abs(x)}) +
-  geom_point(data = ma_funnel, size = 0.5) +
+  geom_point(data = ma_funnel, size = 4) +
   theme(text = element_text(size=10),
-        panel.grid.major = element_line(colour = "grey", size = 0.2),
-        panel.grid.minor = element_line(colour = "grey", size = 0.5),
+        panel.grid.major = element_line(colour = "white", size = 0.2),
+        panel.grid.minor = element_line(colour = "white", size = 0.5),
         strip.text.x = element_text(size = 9),
-        strip.background = element_rect(fill="grey"))
+        strip.background = element_rect(fill="white"))
 
 
 }
