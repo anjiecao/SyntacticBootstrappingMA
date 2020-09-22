@@ -206,32 +206,57 @@ vocab_model <- rma.mv(d_calc ~ productive_vocab_median, V = d_var_calc,
 age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/x_1,
                      method = "REML",
-                     data = filter(ma_data, !is.na(productive_vocab_median))) 
+                     data = ma_data) 
 
-both_model <- rma.mv(d_calc ~ mean_age + productive_vocab_median, V = d_var_calc,
-                    random = ~ 1 | short_cite/same_infant/x_1,
-                     method = "REML",
-                     data = filter(ma_data, !is.na(productive_vocab_median))) 
 
 
 predicted_val_vocab <- predict(vocab_model, addx = TRUE) %>% 
   as.data.frame() %>% 
-  mutate(productive_vocab_median = X.productive_vocab_median, 
-         predicted_value = pred) %>% 
-  select(productive_vocab_median, predicted_value)
+  rownames_to_column("data_frame_id") %>%
+  select(data_frame_id, pred) %>%
+  left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
+              select(productive_vocab_median, d_calc, data_frame_id)) %>%
+  mutate(model_type = "vocab") %>%
+  rename(developmental_predictor = productive_vocab_median)
 
-# how do I know if these two dataframes are organized in the same order  
 predicted_val_age <- predict(age_model, addx = TRUE) %>% 
   as.data.frame() %>% 
-  mutate(mean_age = X.mean_age, 
-         predicted_value = pred) %>% 
-  select(mean_age, predicted_value)
+  rownames_to_column("data_frame_id") %>%
+  select(data_frame_id, pred) %>%
+  left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
+              select(mean_age, d_calc, data_frame_id)) %>%
+  mutate(model_type = "age") %>%
+  rename(developmental_predictor = mean_age)
 
-predicted_val_both <- predict(both_model, addx = TRUE) %>% 
-  as.data.frame() %>% 
-  mutate(productive_vocab_median = X.productive_vocab_median, 
-         predicted_value = pred) %>% 
-  select(productive_vocab_median, predicted_value)
+bind_rows(predicted_val_vocab, predicted_val_age) %>%
+  ggplot() +
+  geom_point(aes(x = developmental_predictor, y = d_calc)) +
+  geom_smooth(method = "lm",
+              aes(x = developmental_predictor, y = pred), se = T) +
+  facet_wrap(~ model_type, scales = "free_x") +
+  theme_bw()
+
+
+bind_rows(predicted_val_vocab, predicted_val_age) %>%
+  ggplot(aes(x = developmental_predictor, y = d_calc)) +
+  geom_smooth(method = "lm") +
+  facet_wrap(~ model_type, scales = "free_x") +
+  theme_bw()
+
+
+
+bind_rows(predicted_val_vocab, predicted_val_age) %>%
+  ggplot() +
+  geom_point(aes(x = developmental_predictor, y = d_calc))+
+  geom_smooth(method = "lm",
+              aes(x = developmental_predictor, y = pred)) +
+    geom_smooth(method = "lm",
+              aes(x = developmental_predictor, y = d_calc), color = "red") +
+  facet_wrap(~ model_type, scales = "free_x") +
+  theme_bw()
+
+
+
 
 
 ```
