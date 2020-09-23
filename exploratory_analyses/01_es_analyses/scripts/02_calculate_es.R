@@ -50,7 +50,7 @@ ma_data_with_es <- ma_data %>%
 
 # clean up factor level issues
 tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing variables
-  clean_names() %>%
+  janitor::clean_names() %>%
   #select(-long_cite) %>%
   filter(!is.na(d_calc) & paper_eligibility == "include") %>% # tidy column names
   mutate(id = row_number(),
@@ -60,9 +60,12 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
          character_identification = case_when(character_identification == "NA" ~ "no",
                                               is.na(character_identification) ~ "no",
                                               TRUE ~ character_identification),
-         presentation_type = case_when(presentation_type == "immediate-after" ~ "immediate_after",
-                                       presentation_type == "Immediate-after" ~ "immediate_after",
+         presentation_type = case_when(presentation_type == "immediate-after" ~ "immediate_after",#collapse the immediate_after with simultaneous
+                                       presentation_type == "immediate_after" ~ "immediate_after",
                                        TRUE ~ presentation_type),
+         presentation_type_collapsed = case_when(
+                        presentation_type == "immediate_after" ~ "simultaneous", 
+                        TRUE ~ presentation_type), 
          stimuli_actor = case_when(stimuli_actor == "non-person" ~ "non_person",
                                   TRUE ~ stimuli_actor),
          

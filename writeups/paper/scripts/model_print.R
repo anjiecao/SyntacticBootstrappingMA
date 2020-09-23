@@ -200,13 +200,12 @@ get_MA_params <- function(moderator, df) {
     this_moderator_z <- model$zval[2]
     this_moderator_p <- model$pval[2]
     
-  }else if (moderator == "presentation_type"){
-    model <- rma.mv(d_calc~presentation_type, V = d_var_calc,
+  }else if (moderator == "presentation_type_collapsed"){
+    model <- rma.mv(d_calc~presentation_type_collapsed, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/x_1,
                     method = "REML",
                     data = this_data)
     
-    this_moderator_level_name <- 
     this_moderator_estimate <- model$b[2]
     this_moderator_SE <- model$se[2]
     this_moderator_estimate.cil <- model$ci.lb[2]
@@ -214,13 +213,7 @@ get_MA_params <- function(moderator, df) {
     this_moderator_z <- model$zval[2]
     this_moderator_p <- model$pval[2]
     
-    this_moderator_additional_estimate <- model$b[2]
-    this_moderator_additional_SE <- model$se[2]
-    this_moderator_additional_estimate.cil <- model$ci.lb[2]
-    this_moderator_additional_estimate.cih <- model$ci.ub[2]
-    this_moderator_additional_z <- model$zval[2]
-    this_moderator_additional_p <- model$pval[2]
-    
+   
   }else if (moderator == "character_identification"){
     model <- rma.mv(d_calc~character_identification, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/x_1,

@@ -281,7 +281,9 @@ num_video_immediate_after <- ma_data %>% filter(presentation_type == "immediate_
 num_video_asynchronous <- ma_data %>% filter(presentation_type == "asynchronous") %>% count()
 ```
 
-For methodologically relevant moderators, we coded the types of media used (video or animation) and the types of protagonists in the events (person or non-person). `r num_modality_video` conditions used video recordings of human actors (N = `r num_video_person`) or human actors in animal suits (N = `r num_video_non_person`). The other `r num_modality_animation` conditions used clips of animation with non-person figures as the protagonists of the events. We also coded how the onset of the linguistic stimuli aligned with the visual stimuli. The procedure was coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action (N = `r num_video_simultaneous`). It was coded as "immediately after" if it was presented along with an attention-getter or a blank screen, immediately followed by the relevant action (N = `r num_video_immediate_after`). Finally, some experimental conditions first presented the linguistic stimuli paired with irrelevant visual scenes (e.g. a person on the phone talking). The relevant visual stimuli were not shown until the training phase is over. For experimental conditions using this alignment, they were coded as "asynchronous"(N = `r num_video_asynchronous`).
+For methodologically relevant moderators, we coded the types of media used (video or animation) and the types of protagonists in the events (person or non-person). `r num_modality_video` conditions used video recordings of human actors (*N* = `r num_video_person`) or human actors in animal suits (*N* = `r num_video_non_person`). The other `r num_modality_animation` conditions used clips of animation with non-person figures as the protagonists of the events. We also coded how the onset of the linguistic stimuli aligned with the visual stimuli. Initially, there were three levels coded: asynchornous, simultaneous, immediately after. Some experimental conditions first presented the linguistic stimuli paired with irrelevant visual scenes (e.g. a person on the phone talking). The relevant visual stimuli were not shown until the training phase is over. For experimental conditions using this alignment, they were coded as "asynchronous"(*N* = `r num_video_asynchronous`). The procedure was coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action (*N* = `r num_video_simultaneous`). It was coded as "immediately after" if it was presented along with an attention-getter or a blank screen, immediately followed by the relevant action (*N* = `r num_video_immediate_after`). Later in the analysis stage, we decided to collapse the latter two levels because they are more similar. Moreover, the number of effect sizes in simulatenous conditions was not sufficient to conduct well-powered analysis. 
+
+
 
 ```{r categorize_by_procedure}
 num_point <- ma_data %>% filter(test_method == "point") %>% count()
@@ -296,7 +298,7 @@ num_mass <- ma_data %>% filter(test_mass_or_distributed == "mass") %>% count()
 num_distributed <- ma_data %>% filter(test_mass_or_distributed == "distributed") %>% count()
 ```
 
-We also coded aspects of experimental procedures. First, the type of responses elicited from the participants: whether the infants were explicitly prompted to point or their eye gaze duration were measured as they heard the linguistic stimuli (Pointing: N = `r num_point`; Looking: N = `r num_look`). Second, two characteristics of the experimental procedures were coded as categorical variables: the inclusion of practice phase (Yes: N = `r num_practice_yes` ; No: N = `r num_practice_no`), the inclusion of character-identification phase (Yes: N = `r num_char_id_yes`; No: N = `r num_char_id_no`). Third, the distribution of the training and the testing trials (Mass: N = `r num_mass`; Distributed: N = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the very same verb. It was "distributed" if the infants were given multiple train and test pairs on multiple novel verbs. To better characterize the experience infants had prior to testing, we also coded how many train-test pair the infants were given (for mass procedure it was always 1), how many trials during the test phase infants were given, how many times the visual stimuli showing the relevant actions were presented, and how many times each novel verb was spoken in a syntactically-informative way. 
+We also coded aspects of experimental procedures. First, the type of responses elicited from the participants: whether the infants were explicitly prompted to point or their eye gaze duration were measured as they heard the linguistic stimuli (Pointing: *N* = `r num_point`; Looking: *N* = `r num_look`). Second, two characteristics of the experimental procedures were coded as categorical variables: the inclusion of practice phase (Yes: *N* = `r num_practice_yes` ; No: *N* = `r num_practice_no`), the inclusion of character-identification phase (Yes: *N* = `r num_char_id_yes`; No: *N* = `r num_char_id_no`). Third, the distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the very same verb. It was "distributed" if the infants were given multiple train and test pairs on multiple novel verbs. To better characterize the experience infants had prior to testing, we also coded how many train-test pair the infants were given (for mass procedure it was always 1), how many trials during the test phase infants were given, how many times the visual stimuli showing the relevant actions were presented, and how many times each novel verb was spoken in a syntactically-informative way. 
   
 ## Data Preprocessing 
 
@@ -304,13 +306,13 @@ We also coded aspects of experimental procedures. First, the type of responses e
 num_has_raw <- ma_data %>% filter(!is.na(x_2_raw)) %>% distinct(unique_id) %>%  count()
 ```
 
-We calculated the Cohen's d effect size for each experimental condition. Because we only included studies that used a two alternative forced-choice test method, we compared the mean proportion of correct response against chance level (0.5) for the group. Although some papers collected a baseline measure (N = `r num_has_raw`; e.g. [@arunachalam2013out; @arunachalam2019semantic; @naigles2011abstractness; @jyotishi; @naiglesUnpuba; @naiglesUnpubb]), most papers did not. In order to calculate a consistent effect size measure across all condition, we used chance level as a baseline for calculating effect size for all conditions (see SI for comparision of effect sizes using reported baseline versus chance). 
+We calculated the Cohen's d effect size for each experimental condition. Because we only included studies that used a two alternative forced-choice test method, we compare[*N* = `r num_has_raw`; e.g. @arunachalam2013out; @arunachalam2019semantic; @naigles2011abstractness; @jyotishi; @naiglesUnpuba; @naiglesUnpubb], most papers did not. In order to calculate a consistent effect size measure across all condition, we used chance level as a baseline for calculating effect size for all conditions (see SI for comparision of effect sizes using reported baseline versus chance). 
   
   All the effect sizes and the coded variables were then analyzed with the metafor package in R [@viechtbauer2010].
 
 # Results
 ```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type_collapsed","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 ```
 
@@ -421,32 +423,9 @@ Some studies added additional phases such as character identification phase or p
 
 ### Role of synchronicity.
 
-```{r}
-# currently special treatment because it has three levels 
-synchronicity_model <- rma.mv(d_calc ~ presentation_type, V = d_var_calc,
-                    random = ~ 1 | short_cite/same_infant/x_1,
-                     method = "REML",
-                     data = ma_data) 
 
-moderator <- find_parameters(synchronicity_model) %>% as.data.frame()
 
-this_moderator_estimate <- synchronicity_model$b
-this_moderator_SE <- synchronicity_model$se
-this_moderator_estimate.cil <- synchronicity_model$ci.lb
-this_moderator_estimate.cih <- synchronicity_model$ci.ub
-this_moderator_z <- synchronicity_model$zval
-this_moderator_p <- synchronicity_model$pval
-
-synchronicity_info <- bind_cols(moderator, this_moderator_estimate, this_moderator_SE, 
-          this_moderator_estimate.cil, this_moderator_estimate.cih, 
-          this_moderator_z, this_moderator_p)
-
-colnames(synchronicity_info) <- c("moderator", "this_moderator_estimate", "this_moderator_SE", "this_moderator_estimate.cil", "this_moderator_estimate.cih", "this_moderator_z", "this_moderator_p")
-#synchronicity_info
-```
-
-<!-- revision needed!!! it has three levels!! -->
-Studies fall under three categories under the synchronicity between linguistic stimuli and visual stimuli: asynchronous, immediate-after and simultaneous. Asynchronous studies present the linguistic stimuli before the relevant visual stimuli. Immediate-after studies show the linguistc stimuli while the infants are exposed to attention-getter or blank-screen, and the visual stimuli were to follow immediately after. Simultaneous studies present the visual stimuli and the linguistic stimuli together. Our model result suggested that infants' learning outcomes were not influenced by the synchronicity between the stimuli. ($\beta$ = `r filter(mod_print, moderator == "presentation_type")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "presentation_type")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "presentation_type")$mod_z_print`, *p* `r filter(mod_print, moderator == "presentation_type")$mod_p_print`). 
+Studies fall under three categories under the synchronicity between linguistic stimuli and visual stimuli: asynchronous, immediate-after and simultaneous. Asynchronous studies present the linguistic stimuli before the relevant visual stimuli. Immediate-after studies show the linguistc stimuli while the infants are exposed to attention-getter or blank-screen, and the visual stimuli were to follow immediately after. Simultaneous studies present the visual stimuli and the linguistic stimuli together. We collapsed the latter two levels into one because they contained insufficient number of effect sizes for well-powered analysis. Our model result suggested that infants' learning outcomes were not influenced by the synchronicity between the stimuli. ($\beta$ = `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_z_print`, *p* `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_p_print`). 
 
 ### Role of the testing procedure structure 
 Last but not least, the structure of the testing procedure, mass testing or distributed testing, did not predict the effect size in a statistically meaningful way ($\beta$ = `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_z_print`, *p* `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_p_print`). Infants perfomed similarly in studies that have multiple train-test pair and single train-test pair. Furthermore, contrary to common beliefs, the number of exposures per novel verb the infants received prior to testing does not predict the effect sizes either ($\beta$ = `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_z_print`, *p* `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_p_print`).
