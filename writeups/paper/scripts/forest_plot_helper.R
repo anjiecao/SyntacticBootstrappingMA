@@ -5,11 +5,15 @@ generate_forest_plot <- function(data){
     select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
     mutate(cil = d_calc - qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc),
            cil = case_when(
-             (cil < -8) ~ -8,  # truncate error bar for visibility reason 
+             (cil < -8) ~ -8, # truncate error bar for visibility reason 
              TRUE ~ cil
            ),
            ciu = d_calc +
              qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc), 
+           ciu = case_when(
+             (ciu > 3 ) ~ 3, # truncate error bar for visibility reason 
+             TRUE ~ ciu
+           ),
            meta = "no", 
            label_color = "black",
            print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = "")
@@ -54,30 +58,31 @@ generate_forest_plot <- function(data){
                aes(size=n_1, shape = sentence_structure, color = sentence_structure)) + 
     scale_color_manual(breaks = c("cumulative", "intransitive","transitive"),
                        values = c("red", "black", "black"))+ 
-    scale_size(guide = 'none') + 
+    scale_size(guide = 'none', range = c(3,15)) + 
     scale_shape_manual(breaks = c("cumulative", "intransitive","transitive"),
                        values=c(18,16, 17)) +
+    guides(colour = guide_legend(override.aes = list(size=10))) + 
     #guides(color = guide_legend(override.aes = list(shape = 18, shape = 16, shape = 17))) + 
     geom_linerange(aes(ymin = cil, ymax = ciu, color = sentence_structure), show.legend = FALSE) + 
-    geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = cil),
+    geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = ciu),
                  linejoin = "round", 
                  lineend = "round", 
-                 size = 0.1,
-                 arrow = arrow(length = unit(0.1, "inches")),
-                 data = filter(forest_data,cil == -8))+
+                 size = 2,
+                 arrow = arrow(length = unit(0.2, "inches")),
+                 data = filter(forest_data,ciu == 3))+
     geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2) + 
     geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
                color = "red", linetype = 2) + 
-    geom_text(aes(label = print_full, x = plot_label, y = 8), 
-              size = 5, colour = label_colors) + 
-    scale_y_continuous(breaks = seq(-10, 5, 1))+ 
+    geom_text(aes(label = print_full, x = plot_label, y = 3.2), 
+              size = 12, colour = label_colors) + 
+    scale_y_continuous(breaks = seq(-10, 7, 1))+ 
     coord_cartesian(clip = 'on') + 
     coord_flip() + 
     ylab("Cohen's d") +
     labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
-    theme(text = element_text(size=22),
-          legend.position="bottom",   
-          plot.margin = unit(c(1,2,16,1), "lines"),
+    theme(text = element_text(size=60),
+          legend.position="bottom",
+          plot.margin = unit(c(1,1,1,1), "lines"),
           legend.title = element_blank(),
           panel.background = element_blank(),
           #panel.background = element_rect(fill = "white", colour = "grey50"),

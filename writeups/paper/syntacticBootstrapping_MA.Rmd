@@ -81,6 +81,8 @@ knitr::opts_chunk$set(warning = FALSE,
                       cache = FALSE,
                       echo = FALSE,
                       fig.pos = "t!")
+knitr::opts_chunk$set(dev = 'pdf')
+
 theme_set(theme_classic())
 ```
 
@@ -331,7 +333,7 @@ Publication bias refers to the tendency that journals would selectively publish 
 
  Upon first examination, the shape of the funnel plot is asymmetrical (Figure\ \@ref(fig:funnel)). We formally tested on the asymmetry by conducting Egger’s regression test using a multi-level model. The quantitative result confirms that the asymmetry in the funnel plot is statistically significant (*z* = `r reg_z`; *p* `r reg_p`). However, this does not necessarily imply publication bias. The classical publication bias analysis methods such as Egger’s regression test have assumptions that were often not met. First, Egger’s regression test assumes homogeneous effects. But the heterogeneity test on our dataset has significant results (*Q* = `r filter(mod_print, moderator == "NULL")$Q_print`; *p* `r filter(mod_print, moderator == "NULL")$Qp_print`), which violated this assumption. Second, the classical methods assume that the selection bias operates on the effect size. But in reality the p-value from statistics test was often the selection criterion. 
 
-We addressed these concerns by supplementing our analysis with a sensitivity analysis method introduced by Marthur and VaderWeele (2020). Unlike its predecessors, this method did not have the homogeneity assumption nor the effect-size selection assumption. Instead, it estimated the severity of publication bias by considering how much more likely the “affirmative studies” will be published than the “non-affirmative studies”. Furthermore, it also calculated the severity of publication bias needed in the literature to “explain-away” the meta-analytic effect size. 
+We addressed these concerns by supplementing our analysis with a sensitivity analysis method introduced by Marthur and VaderWeele (2020). Unlike its predecessors, this method did not have the homogeneity assumption nor the effect-size selection assumption. Instead, it estimated the severity of publication bias by considering how much more likely the “affirmative studies” will be published than the “non-affirmative studies”. Furthermore, it calculated the severity of publication bias needed in the literature to attenuate the meta-analytic effect size down to zero.
 
 ```{r label = "moderated_funnel", fig.pos = "T!", fig.width=8, fig.height=5.5, fig.cap = "Significance funnel plot for Syntactic Bootstrapping literature. "}
 
@@ -353,7 +355,7 @@ plot.pooled = TRUE
 
 ```
 
-We conducted the sensitivity analysis by using the PublicationBias provided by Marthur and VaderWeele (2020). We found that [NOT QUITE SURE HOW TO INTERPRET THE ETA STUFF]. Moreover, the analysis also suggested that it is impossible to attenuate the meta-analytic effect size to zero by hypothetically increasing the severity of publication bias (REPORT SOME TEST?). This result can also be seen in the modified funnel plot (Figure\ \@ref(fig:moderated_funnel)). In this modified funnel plot, the x-axis represents the point estimate of Cohen’s d. The y-axis represents the estimated standard error. The gray line represents studies with a p-value of 0.05. To the left of the line are the non-affirmative studies (represented by gray dots), and to the right are the affirmative studies (represented orange dots). The diamonds near the x-axis are meta-analytic effect sizes. Note that the black one is pooling from all studies, whereas the gray one is only pooling from the non-affirmative studies. While the gray diamond is closer to the significance line than the black diamond, it does not cross the gray line. In other words, even in the scenarios with the worst publication bias, where we only consider the non-affirmative studies results, the meta-analytic effect size is still above zero. 
+Our analysis suggested that it is impossible to attenuate the meta-analytic effect size to zero by hypothetically increasing the severity of publication bias. In other words, if we ignored all the positive findings and considered only the negative findings, the meta-analytic effect size is still above zero. This result can also be seen in the modified funnel plot (Figure\ \@ref(fig:moderated_funnel)). In this modified funnel plot, the x-axis represents the point estimate of Cohen’s d. The y-axis represents the estimated standard error. The gray line represents studies with a p-value of 0.05. To the left of the line are the non-affirmative studies (represented by gray dots), and to the right are the affirmative studies (represented orange dots). The diamonds near the x-axis are meta-analytic effect sizes. Note that the black one is pooling from all studies, whereas the gray one is only pooling from the non-affirmative studies. While the gray diamond is closer to the significance line than the black diamond, it does not cross the gray line. Therefore, even in the scenarios with the worst publication bias, where we only consider the non-affirmative studies results, the metat-analytic effect size of syntactic bootstrapping still has a positive value. 
 
 In conclusion, we found moderate evidence for publication bias, but the bias alone is not sufficient to explain away the observed effect. Some of the observed bias using the classical methods might be attributed to the heterogeneity in the data. In the following sections, we analyzed theoretical factors and methodological factors that were contributing to the heterogeneity. 
 
@@ -361,7 +363,8 @@ In conclusion, we found moderate evidence for publication bias, but the bias alo
 
 ## Preliminary Analysis 
 
-```{r label = "forest", fig.pos = "!t", fig.cap = "wow" , fig.height = 35, fig.width = 25 }
+```{r label = "forest", fig.pos = "!t", fig.cap = "wow",fig.width = 45, fig.height = 60}
+#fig.pos = "!t", 
 generate_forest_plot(ma_data)
 
 ```
