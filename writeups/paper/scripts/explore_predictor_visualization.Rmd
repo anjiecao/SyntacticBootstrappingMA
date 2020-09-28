@@ -177,11 +177,13 @@ t_df %>%
             aes(x = fct_reorder(this_moderator, -mod_estimate),
                 y = mod_estimate, 
                 group = model,
-                color = model),
+                color = model,
+                alpha = model),
             position = position_dodge(0.5),
-            alpha = 0.5, 
+            #alpha = 0.5, 
             #color = "grey", 
             size = 0.5) + 
+  scale_alpha_manual(values = c(0, 1)) + 
   geom_hline(yintercept = 0, color = "black", linetype="dashed")+
   coord_flip() + 
   theme(
@@ -209,11 +211,12 @@ m_df %>%
             aes(x = fct_reorder(this_moderator, -mod_estimate),
                 y = mod_estimate, 
                 group = model,
-                color = model),
+                color = model,
+                alpha = model),
             position = position_dodge(0.5),
-            alpha = 0.5, 
             #color = "grey", 
             size = 0.5) + 
+   scale_alpha_manual(values = c(0, 1)) + 
   geom_hline(yintercept = 0, color = "black", linetype="dashed")+
   coord_flip() + 
   theme(
