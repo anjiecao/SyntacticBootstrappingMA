@@ -57,13 +57,6 @@ methodological_df <-  mod_print %>%
   mutate(model = "single", 
          type = "methodological")
 
-
-
-methodological_df <-  mod_print %>%
-  filter(this_moderator %in% METHODOLOGICAL_MODERATORS) %>% 
-  select(this_moderator, mod_estimate, mod_estimate.cih, mod_estimate.cil) %>% 
-  mutate(model = "single", 
-         type = "methodological") 
 ```
 
 
