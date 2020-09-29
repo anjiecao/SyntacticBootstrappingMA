@@ -226,7 +226,7 @@ num_imputed <- data_source_summary %>%
 ```
 
 ### Converting Raw Results 
-In order to calculate the effect sizes, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the four methods: a) directly retrieved from the results section or the data-presenting tables (*N* = `r num_text_or_table`); b) recovered from the plots by measuring the height of the bars and the error bars (*N* =`r num_plot`); c) contacted the original authors (*N* = `r num_author_contact`); d) imputed using values from studies with similar designs (*N* = `r num_imputed`; Among the `r num_imputed`, missing standard deviation from [@hirsh1996young] were imputed with values from [@naigles1990children]; missing values from [@arunachalam2013out] were imputed with values from [@arunachalam2013two]). We decided to impute the missing standard deviations instead of excluding the studies because past work has shown that using "borrowed values" is beneficial to the accuracy of meta-analysis [@furukawa2006imputing].
+In order to calculate the effect sizes, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the four methods: a) directly retrieved from the results section or the data-presenting tables (*N* = `r num_text_or_table`); b) recovered from the plots by measuring the height of the bars and the error bars (*N* =`r num_plot`); c) contacted the original authors (*N* = `r num_author_contact`); d) imputed using values from studies with similar designs (*N* = `r num_imputed`; Among the `r num_imputed`, missing standard deviation from @hirsh1996young were imputed with values from @naigles1990children; missing values from @arunachalam2013out were imputed with values from @arunachalam2013two). We decided to impute the missing standard deviations instead of excluding the studies because past work has shown that using "borrowed values" is beneficial to the accuracy of meta-analysis [@furukawa2006imputing].
 
 To standardize the effect size calculation, we converted some reported raw results to proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum. 
 
@@ -316,7 +316,7 @@ We calculated the Cohen's d effect size for each experimental condition (POINT T
   All the effect sizes and the coded variables were then analyzed with the metafor package in R [@viechtbauer2010].
 
 # Results
-```{r}
+```{r generate to-print model results}
 MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type_collapsed","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 ```
@@ -357,6 +357,7 @@ plot.pooled = TRUE
 )
 
 ```
+
 
 We ran the analysis using the PublicationBias pacakage [@mathur2020sensitivity]. In this analysis, we considered the worst-case sceneario when the publication bias is most severe. To do so, we ignored all the positive findings and considered only the negative findings. However, under this condition, the meta-analytic effect size is still above zero. This result can also be seen in the modified funnel plot (Figure\ \@ref(fig:moderated_funnel)). In plot, the x-axis represents the point estimate of Cohen’s d. The y-axis represents the estimated standard error. The gray line represents studies with a p-value of 0.05. To the left of the line are the non-affirmative studies (represented by gray dots), and to the right are the affirmative studies (represented orange dots). The diamonds near the x-axis are meta-analytic effect sizes. Note that the black one is pooling from all studies, whereas the gray one is only pooling from the non-affirmative studies. Although the gray diamond is closer to the significance line than the black diamond, it does not cross the gray line. Therefore, even in the scenarios with the worst publication bias, where we only consider the non-affirmative studies results, the metat-analytic effect size of syntactic bootstrapping still has a positive value. 
 
@@ -403,19 +404,24 @@ Like sentence structure, the moderator agent argument structure also has two lev
 
 
 ### Theoretical Moderators Model 
-```{r}
+```{r mega model for theoretical moderators}
 theoretical_mod <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/x_1,
                      method = "REML",
                      data = ma_data) 
 
 theoretical_mod_print <- generate_mega_model_df(theoretical_mod)
-generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical")
 #theoretical_mod_print
 #summary(theoretical_mod)
 
 ```
- Finally, we also fit a mixed-effect model that includes all the moderators discussed above. Because there is no a priori reason to believe that these factors would interact with each other, we did not include interaction terms. We also excluded the median vocabulary size because there were only `r  num_vocabulary_available` conditions with this information avaialble. In this model, the intercept is no longer significant ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_p_print`). This suggests that the moderators can explain away some observed learning effects. The results for other predictors are consistent with the single-moderator models. Sentence structure is a significant predictor ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "sentence_structuretransitive")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "sentence_structuretransitive")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_p_print`), whereas agent argument type ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "agent_argument_typepronoun")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "agent_argument_typepronoun")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "agent_argument_typepronoun")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_p_print`) and mean age ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_p_print`).
+
+```{r label = "theoretical_moderators_plot", fig.pos = "T!",  fig.cap = ""}
+generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical")
+```
+
+
+Finally, we also fit a mixed-effect model that includes all the moderators discussed above. Because there is no a priori reason to believe that these factors would interact with each other, we did not include interaction terms. We also excluded the median vocabulary size because there were only `r  num_vocabulary_available` conditions with this information avaialble. In this model, the intercept is no longer significant ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_p_print`). This suggests that the moderators can explain away some observed learning effects. The results for other predictors are consistent with the single-moderator models. Sentence structure is a significant predictor ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "sentence_structuretransitive")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "sentence_structuretransitive")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "intrcpt")$mod_p_print`), whereas agent argument type ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "agent_argument_typepronoun")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "agent_argument_typepronoun")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "agent_argument_typepronoun")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_p_print`) and mean age ($\beta$ = `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_SE_print`, *z* = `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_z_print`, *p* `r filter(theoretical_mod_print, moderator_name == "mean_age")$mod_p_print`). 
 
 In summary, we found that sentence structure is a sigfnicant predictor of the effect size. Children tested with the transitive sentences performed better than those tested with intransitive sentences. The semantic content of the words in agent argument, that is, whether the words are nouns or pronouns, was not found to be a significant predictor. Neither age nor the median productive vocabulary size as measured by CDI was a significant predictor of the effect size.
 
@@ -429,7 +435,7 @@ Motivated by the original @naigles1990children study, a majority of the research
 
 Some studies added additional phases such as character identification phase or practice phase to help infants get used to the testing set-up. We found that neither the presence of the character identification phase ($\beta$ = `r filter(mod_print, moderator == "character_identification")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "character_identification")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "character_identification")$mod_z_print`, *p* `r filter(mod_print, moderator == "character_identification")$mod_p_print`) nor the practice phase ($\beta$ = `r filter(mod_print, moderator == "practice_phase")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "practice_phase")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "practice_phase")$mod_z_print`, *p* `r filter(mod_print, moderator == "practice_phase")$mod_p_print`) predicts the effect size. 
 
-### Role of synchronicity.
+### Role of synchronicity
 
 Studies fall under three categories under the synchronicity between linguistic stimuli and visual stimuli: asynchronous, immediate-after and simultaneous. Asynchronous studies present the linguistic stimuli before the relevant visual stimuli. Immediate-after studies show the linguistc stimuli while the infants are exposed to attention-getter or blank-screen, and the visual stimuli were to follow immediately after. Simultaneous studies present the visual stimuli and the linguistic stimuli together. We collapsed the latter two levels into one because they contained insufficient number of effect sizes for well-powered analysis. Our model result suggested that infants' learning outcomes were not influenced by this factor. ($\beta$ = `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_z_print`, *p* `r filter(mod_print, moderator == "presentation_type_collapsed")$mod_p_print`). 
 
@@ -437,7 +443,7 @@ Studies fall under three categories under the synchronicity between linguistic s
 Last but not least, the structure of the testing procedure, mass testing or distributed testing, did not predict the effect size in a statistically meaningful way ($\beta$ = `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_z_print`, *p* `r filter(mod_print, moderator == "test_mass_or_distributed")$mod_p_print`). Infants perfomed similarly in studies that have multiple train-test pair and single train-test pair. Furthermore, contrary to common beliefs, the number of exposures per novel verb the infants received prior to testing does not predict the effect sizes either ($\beta$ = `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_z_print`, *p* `r filter(mod_print, moderator == "n_repetitions_sentence")$mod_p_print`).
 
 ### Methodological Moderators Model 
-```{r message=FALSE, warning=FALSE}
+```{r mega model for methodological moderators, message=FALSE, warning=FALSE}
 methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase + presentation_type_collapsed + test_mass_or_distributed + n_repetitions_sentence,
                              V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/x_1,
@@ -447,12 +453,17 @@ methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase 
 
 
 methodological_mod_print <- generate_mega_model_df(methodological_mod)
-generate_predictor_plot(mod_print, methodological_mod_print, "methodological")
 #methodological_mod_print
 #summary(methodological_mod)
 ```
 
-We fit a model that included all the theoretical moderators considered above: the presence of character identification phase, the presence of practice phase, the synchronicity between linguistic stimuli and visual stimuli, the structure of testing procedure and the number of repetitions per novel verb prior to the test. Like the methodological moderators models, the intercept became insignificant ($\beta$ = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_p_print`). Most of the moderators were still insignificant, with the exception of testing procedure structure. This moderator became marginally significant in the mega-model, suggesting that children tested in procedure with only one train-test pair performed better than those tested in procedure with multiple train-test pairs ($\beta$ = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_p_print`). The differences between predictors' performance in single-moderator model and mega-model can be seen in figure(???). 
+```{r label = "methodological_mega_model", fig.pos = "T!", fig.cap = ""}
+generate_predictor_plot(mod_print, methodological_mod_print, "methodological")
+```
+
+
+
+We fit a model that included all the theoretical moderators considered above: the presence of character identification phase, the presence of practice phase, the synchronicity between linguistic stimuli and visual stimuli, the structure of testing procedure and the number of repetitions per novel verb prior to the test. Like the methodological moderators models, the intercept became insignificant ($\beta$ = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "intrcpt")$mod_p_print`). Most of the moderators were still insignificant, with the exception of testing procedure structure. This moderator became marginally significant in the mega-model, suggesting that children tested in procedure with only one train-test pair performed better than those tested in procedure with multiple train-test pairs ($\beta$ = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_p_print`). The differences between predictors' performance in single-moderator model and mega-model can be seen in (Figure\ \@ref(fig:methodological_mega_model)). 
 
 
 # General Discussion
