@@ -1,8 +1,28 @@
 library(tidyverse)
+library(stringr)
+
+test <- "Arunachalam, Escovar, Hansen, & Waxman, (2013) - 1a"
+
+str_count(test,",")
+
+abbreviate_label <- function(original_label){
+  label_vec <- unlist(strsplit(original_label, ","))
+  # get the first label 
+  first_author_name <- label_vec[[1]]
+  year <- gsub("(-).*","",tail(label_vec, n=1))
+  number_label <- gsub(".*-","",tail(label_vec, n=1))
+  abbreviated_label <- paste0(first_author_name, " et al.,", year, "-", number_label)
+  #print(number_label)
+  #print(abbreviated_label)
+}
+
+#abbreviate_label(test)
+
 
 generate_forest_plot <- function(data){
   individual_data <- ma_data %>% 
     select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
+    rowwise() %>% 
     mutate(cil = d_calc - qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc),
            cil = case_when(
              (cil < -8) ~ -8, # truncate error bar for visibility reason 
@@ -16,7 +36,11 @@ generate_forest_plot <- function(data){
            ),
            meta = "no", 
            label_color = "black",
-           print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = "")
+           print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""),
+           plot_label = case_when(
+             str_count(plot_label,",") >= 4 ~ abbreviate_label(plot_label),
+             TRUE ~ plot_label
+           )
     )
   
   cumulative <- mod_print %>% 
@@ -48,6 +72,9 @@ generate_forest_plot <- function(data){
   forest_data$plot_label <- factor(forest_data$plot_label, levels = forest_data$plot_label)
   
   
+  mm_to_point = 18/5
+  label_size = 50
+  
   
   # set the neighbourhood levels in the order the occur in the data frame
   label_colors <- forest_data$label_color[order(forest_data$plot_label)]
@@ -58,7 +85,7 @@ generate_forest_plot <- function(data){
                aes(size=n_1, shape = sentence_structure, color = sentence_structure)) + 
     scale_color_manual(breaks = c("cumulative", "intransitive","transitive"),
                        values = c("red", "black", "black"))+ 
-    scale_size(guide = 'none', range = c(3,15)) + 
+    scale_size(guide = 'none', range = c(3,40)) + 
     scale_shape_manual(breaks = c("cumulative", "intransitive","transitive"),
                        values=c(18,16, 17)) +
     guides(colour = guide_legend(override.aes = list(size=10))) + 
@@ -74,13 +101,13 @@ generate_forest_plot <- function(data){
     geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
                color = "red", linetype = 2) + 
     geom_text(aes(label = print_full, x = plot_label, y = 3.2), 
-              size = 12, colour = label_colors) + 
+              size = label_size / mm_to_point, colour = label_colors) + 
     scale_y_continuous(breaks = seq(-10, 7, 1))+ 
     coord_cartesian(clip = 'on') + 
     coord_flip() + 
     ylab("Cohen's d") +
     labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
-    theme(text = element_text(size=60),
+    theme(text = element_text(size=label_size),
           legend.position="bottom",
           plot.margin = unit(c(1,1,1,1), "lines"),
           legend.title = element_blank(),

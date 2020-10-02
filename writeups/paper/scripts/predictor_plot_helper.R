@@ -14,19 +14,18 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
              type = "theoretical", 
              this_moderator = case_when(
                this_moderator == "mean_age" ~ "Mean Age", 
-               this_moderator == "sentence_structure" ~ "Sentence Structure", 
-               this_moderator == "agent_argument_type" ~ "Agent Argument Type", 
+               this_moderator == "sentence_structure" ~ "Sentence Structure \n Transitive / Intransitive ", 
+               this_moderator == "agent_argument_type" ~ "Agent Argument Type \n Pronoun / Noun ", 
              ))
     
     
     mega_df <- all_model_df %>% 
-      filter(moderator_name != "intrcpt") %>% 
+      filter(moderator_name != "intrcpt", moderator_name != "productive_vocab_median") %>% 
       mutate(
         this_moderator = case_when(
           moderator_name == "mean_age" ~ "Mean Age", 
-          moderator_name == "sentence_structuretransitive" ~ "Sentence Structure", 
-          moderator_name == "agent_argument_typepronoun" ~ "Agent Argument Type", 
-          TRUE ~ moderator_name
+          moderator_name == "sentence_structuretransitive" ~ "Sentence Structure \n Transitive / Intransitive ", 
+          moderator_name == "agent_argument_typepronoun" ~ "Agent Argument Type \n Pronoun / Noun ", 
         ),
         mod_estimate.cih = model_ci_ub, 
         mod_estimate.cil = model_ci_lb
@@ -44,11 +43,11 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       mutate(model = "single", 
              type = "methodological",
         this_moderator = case_when(
-          this_moderator == "n_repetitions_sentence" ~ "Sentence Repetitions",
-          this_moderator == "character_identification" ~ "Character Identification Phase", 
-          this_moderator == "practice_phase" ~ "Practice Phase",
-          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure",
-          this_moderator == "presentation_type_collapsed" ~ "Synchronicity",
+          this_moderator == "n_repetitions_sentence" ~ "Sentence Repetitions ",
+          this_moderator == "character_identification" ~ "Character Identification Phase \n Yes / No ", 
+          this_moderator == "practice_phase" ~ "Practice Phase \n Yes / No ",
+          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure \n Mass / Distributed",
+          this_moderator == "presentation_type_collapsed" ~ "Synchronicity \n Simultaneous / Asynchronous",
         )
       ) 
     
@@ -56,11 +55,11 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       filter(moderator_name != "intrcpt") %>% 
       mutate(
         this_moderator = case_when(
-          moderator_name == "n_repetitions_sentence" ~ "Sentence Repetitions",
-          moderator_name == "character_identificationyes" ~ "Character Identification Phase", 
-          moderator_name == "practice_phaseyes" ~ "Practice Phase",
-          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure",
-          moderator_name == "presentation_type_collapsedsimultaneous" ~ "Synchronicity",
+          moderator_name == "n_repetitions_sentence" ~ "Sentence Repetitions ",
+          moderator_name == "character_identificationyes" ~ "Character Identification Phase \n Yes / No ", 
+          moderator_name == "practice_phaseyes" ~ "Practice Phase \n Yes / No ",
+          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure \n Mass / Distributed",
+          moderator_name == "presentation_type_collapsedsimultaneous" ~ "Synchronicity \n Simultaneous / Asynchronous",
         ),
         mod_estimate.cih = model_ci_ub, 
         mod_estimate.cil = model_ci_lb

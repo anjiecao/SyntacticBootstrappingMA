@@ -65,6 +65,8 @@ library(knitr)
 library(PublicationBias)
 library(janitor)
 library(insight)
+library(stringr)
+
 
 source(here("writeups/paper/scripts/prisma_diagram.R"))
 source(here("writeups/paper/scripts/model_print.R"))
@@ -403,6 +405,15 @@ One question we were hoping to address is how the verbs’ syntactic environment
 
 Like sentence structure, the moderator agent argument structure also has two levels: pronoun and noun. Using a similar model, we found that the agent argument structure is not a significant predictor of the effect size ($\beta$ = `r filter(mod_print, moderator == "agent_argument_type")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "agent_argument_type")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "agent_argument_type")$mod_z_print`, *p* `r filter(mod_print, moderator == "agent_argument_type")$mod_p_print`). 
 
+```{r}
+mod <- rma.mv(d_calc ~ character_identification + mean_age, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = ma_data)
+
+summary(mod)
+```
+
 
 ### Theoretical Moderators Model 
 ```{r mega model for theoretical moderators}
@@ -456,7 +467,7 @@ methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase 
 
 methodological_mod_print <- generate_mega_model_df(methodological_mod)
 #methodological_mod_print
-#summary(methodological_mod)
+summary(methodological_mod)
 ```
 
 ```{r label = "methodological_mega_model", fig.pos = "T!", fig.cap = ""}
