@@ -168,7 +168,7 @@ prisma2(found = format(records_identified_google_scholar + records_identified_fo
 ```
 
 <!-- italicize in text numbers with $N$; can reference figures in text with chunk name, e.g. Figure\ \@ref(fig:prisma) -->
-We conducted our literature search following the  Preferred Reporting Items for Systematic Reviews and Meta-Analyses checklist [PRISMA; @moher2009]. We identified relevant papers by conducting a keyword search in Google Scholar with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper [@naigles1990children] (total records identified: *N* =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020; Figure\ \@ref(fig:prisma)). We screened the first $60$ pages (*N* = $600$) of the keyword search results and the first $10$ pages (*N* = $100$) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Additional papers were identified by consulting the references section of the most recent literature review (*N* = `r records_identified_review_reference`) [@fisher2020developmental] and the experts in the field (*N* = `r records_identified_experts_in_the_field`). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
+We conducted our literature search following the  Preferred Reporting Items for Systematic Reviews and Meta-Analyses checklist [PRISMA; @moher2009]. We identified relevant papers by conducting a keyword search in Google Scholar with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper [@naigles1990children] (total records identified: *N* =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020; Figure\ \@ref(fig:prisma)). We screened the first $60$ pages (*N* = $600$) of the keyword search results and the first $10$ pages (*N* = $100$) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Additional papers were identified by consulting the references section of the most recent literature review (*N* = $`r records_identified_review_reference`$) [@fisher2020developmental] and the experts in the field (*N* = $`r records_identified_experts_in_the_field`$). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
 
 We restricted our final sample to papers that satisfied the following conditions: First, the experimental paradigm involved a two-alternative forced-choice task, in which the participants were instructed to identify the scene that matched the linguistic stimuli. Second, the visual stimuli were two events displayed side-by-side on a computer monitor. The two events must include one depicting causative action (e.g. one agent causes the other to move), and one non-causative action (e.g. two agents move simultaneously but do not causally interact with each other). The media displayed can be either videos or animation clips. Third, the linguistic stimuli included at least one novel verb embedded in a syntactically informative frame. For example, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame that is informative about the meaning of the novel verb "kradding". In contrast, "Look, Kradding!" does not provide informative syntactic information. If the children only heard sentences like this, the experiments would be excluded. Finally, only studies working with English-speaking, typically-developing children were included. 
 
@@ -230,7 +230,7 @@ num_imputed <- data_source_summary %>%
 ```
 
 ### Converting Raw Results 
-In order to calculate the effect sizes, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the four methods: a) directly retrieved from the results section or the data-presenting tables (*N* = `r num_text_or_table`); b) recovered from the plots by measuring the height of the bars and the error bars (*N* =`r num_plot`); c) contacted the original authors (*N* = `r num_author_contact`); d) imputed using values from studies with similar designs (*N* = `r num_imputed`; Among the `r num_imputed`, missing standard deviation from @hirsh1996young were imputed with values from @naigles1990children; missing values from @arunachalam2013out were imputed with values from @arunachalam2013two). We decided to impute the missing standard deviations instead of excluding the studies because past work has shown that using "borrowed values" is beneficial to the accuracy of meta-analysis [@furukawa2006imputing].
+In order to calculate the effect sizes, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the four methods: a) directly retrieved from the results section or the data-presenting tables (*N* = `r num_text_or_table`); b) recovered from the plots by measuring the height of the bars and the error bars (*N* =`r num_plot`); c) contacted the original authors (*N* = `r num_author_contact`); d) imputed using values from studies with similar designs (*N* = `r num_imputed`, e.g. @hirsh1996young, the missing SD were imputed with values from @naigles1990children). We decided to impute the missing standard deviations instead of excluding the studies because past work has shown that using "borrowed values" is beneficial to the accuracy of meta-analysis [@furukawa2006imputing].
 
 To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum. 
 
@@ -290,7 +290,7 @@ num_char_id_no <- ma_data %>% filter(character_identification == "no") %>% count
 ```
 
 
-For testing phases, we coded the presence or absence of the practice phase and the character identification phase. Practice phase refers to the trials in which the children were prompted to identify a familiar action upon being prompted with a familiar verb. For example, the children may hear “Find jumping” and be expected to look or point at the events showing jumping). *N* = `r num_practice_yes` conditions included at least one practice trial and `r num_practice_no` conditions did not. Character identification phase refers to trials in which the children were prompted to look for the actors in the testing events. For example, if at the test the children see a bunny and a duck engage in casual actions, they would be prompted “Where’s the bunny?” “Where’s the duck” during the character identification phase.  `r num_char_id_yes` conditions included at least one character identification trial, and `r num_char_id_no` conditions did not. 
+For testing phases, we coded the presence or absence of the practice phase and the character identification phase. Practice phase refers to the trials in which the children were prompted to identify a familiar action upon being prompted with a familiar verb. For example, the children may hear “Find jumping” and be expected to look or point at the events showing jumping).  `r num_practice_yes` conditions included at least one practice trial and `r num_practice_no` conditions did not. Character identification phase refers to trials in which the children were prompted to look for the actors in the testing events. For example, if at the test the children see a bunny and a duck engage in casual actions, they would be prompted “Where’s the bunny?” “Where’s the duck” during the character identification phase.  `r num_char_id_yes` conditions included at least one character identification trial, and `r num_char_id_no` conditions did not. 
 
 ```{r categorize_by_synchronicity}
 num_video_simultaneous <- ma_data %>% filter(presentation_type_collapsed == "simultaneous") %>% count()
@@ -302,10 +302,9 @@ The factor synchronicity, which refers to the alignment between the linguistic s
 num_mass <- ma_data %>% filter(test_mass_or_distributed == "mass") %>% count()
 num_distributed <- ma_data %>% filter(test_mass_or_distributed == "distributed") %>% count()
 ```
-We also examined how the amount of learning experience provided during the experiment would contribute to the learning outcomes. Specifically, we coded the distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the same verb. We also coded how many times each novel verb was spoken in a syntactically-informative way. 
+We also examined how the amount of learning experience provided during the experiment would contribute to the learning outcomes. Specifically, we coded the distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the same verb. We also coded how many times each novel verb was spoken in a syntactically-informative way ^[We also coded additional moderators, including the modality of the stimuli (video or animation), the types of actor in the stimuli (person or non-person), type of transitive event (direct causal action or indirect causal action), type of intransitive action (one-actor or pareallel-action), the number of train-test pair, the number of test trial per pair, the number of video repetitions. Their analyses can be found in the Supplementary information.]. 
 
 
-Footnotes: we also coded additional theoretical moderators and methodological moderators. Their analyses can be found in the Supplementary information.
 
 
 ## Data Preprocessing 
@@ -386,6 +385,41 @@ cor_p <- ifelse(round(age_vocab_cor$p.value, digits = 2)<0.0001, "< 0.0001", as.
 ```
 
 ### Role of experience
+```{r}
+age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/x_1,
+                     method = "REML",
+                     data = ma_data) 
+
+predicted_val_age <- predict(age_model, addx = TRUE) %>% 
+  as.data.frame() %>% 
+  rownames_to_column("data_frame_id") %>%
+  select(data_frame_id, pred) %>%
+  left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
+              select(mean_age, d_calc, data_frame_id)) %>%
+  mutate(model_type = "age") %>%
+  rename(developmental_predictor = mean_age)
+
+predicted_val_age %>%
+  ggplot() +
+  geom_point(aes(x = developmental_predictor, y = d_calc)) +
+  geom_smooth(method = "lm",aes(x = developmental_predictor, y = d_calc)) +
+  theme_bw() + 
+  geom_smooth(method = "lm",
+              aes(x = developmental_predictor, y = d_calc,color = "Cohen's d"),
+              ) +
+    geom_smooth(method = "lm",
+              aes(x = developmental_predictor, y = pred,
+                  color = "Model's Predicted Values")) +
+  xlab("Mean Age (Days)") + 
+  ylab("Calculated Effect Size (Cohen's d)") + 
+  scale_color_manual(name = "Regression Line",             # legend name
+                     values = c("Cohen's d" = "blue",  # map regression line colors
+                                "Model's Predicted Values" = "red"))
+
+
+```
+
 Children do not perform better in the syntactic bootstrapping task as they get more experience. Although age and median productive vocabulary size correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`), neither one was a significant predictor of the effect size in the mixed-effect linear regression model (Age: $\beta$ = `r filter(mod_print, moderator == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age")$mod_p_print` ; Vocabulary Size: $\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`).  
 
 ### Role of sentence structure 

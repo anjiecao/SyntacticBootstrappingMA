@@ -22,6 +22,10 @@ library(knitr)
 library(here)
 library(metafor)
 library(ggimage)
+source(here("writeups/paper/scripts/model_print.R"))
+source(here("writeups/paper/scripts/forest_plot_helper.R"))
+source(here("writeups/paper/scripts/funnel_plot_helper.R"))
+source(here("writeups/paper/scripts/predictor_plot_helper.R"))
 
 opts_chunk$set(echo = F, message = F, warning = F, 
                error = F, cache = F, tidy = F, fig.height = 4.5)
@@ -34,11 +38,46 @@ options(shiny.sanitize.errors = FALSE)
 
 This document was created from an R markdown file. The repository for the project can be found here: https://github.com/anjiecao/SyntacticBootstrapping. The data reported in the paper can be explored interactively at the [Metalab website](http://metalab.stanford.edu/).
 
-# Visualizing variability in procedures
+```{r}
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
+
+ma_data <- read_csv(DATA_PATH)
+ma_raw_data <- read_csv(RAW_DATA_PATH)
+```
+
+
+
+# Additional Moderators 
+## Agent argument type for intransitive sentence 
+## Stimuli Modality (Video or Animation)
+## Stimuli actors (Person or Non-person)
+## Type of transitive event (Direct causal action or Indirect causal action)
+## Type of intransitive event (Single-actor or parallel actions)
+## Number of train-test pair 
+## Number of test trial per pair 
+## Number of video repetitions 
+ 
+[Creat a predictor plots? table? what about interaction between them?]
+
+
+# Comparison betwen baseline result and chance 
+```{r}
+ma_raw_data %>% filter(!is.na(x_2_raw), !is.na(SD_2_raw))
+```
+
+
+
+# Heatmap?
+[Currently not being referred to in the main text]
+
 
 # Variability in visual stimuli as a function of age
 
 Probably want to make all of these black and white?
+also need to update to reflect newer inclusion criteria? 
+[Currently not being referred to in the main text]
+
 ```{r}
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
 

@@ -235,14 +235,14 @@ age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
 
 
 
-predicted_val_vocab <- predict(vocab_model, addx = TRUE) %>% 
-  as.data.frame() %>% 
-  rownames_to_column("data_frame_id") %>%
-  select(data_frame_id, pred) %>%
-  left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
-              select(productive_vocab_median, d_calc, data_frame_id)) %>%
-  mutate(model_type = "vocab") %>%
-  rename(developmental_predictor = productive_vocab_median)
+# predicted_val_vocab <- predict(vocab_model, addx = TRUE) %>% 
+#   as.data.frame() %>% 
+#   rownames_to_column("data_frame_id") %>%
+#   select(data_frame_id, pred) %>%
+#   left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
+#               select(productive_vocab_median, d_calc, data_frame_id)) %>%
+#   mutate(model_type = "vocab") %>%
+#   rename(developmental_predictor = productive_vocab_median)
 
 predicted_val_age <- predict(age_model, addx = TRUE) %>% 
   as.data.frame() %>% 
@@ -253,13 +253,13 @@ predicted_val_age <- predict(age_model, addx = TRUE) %>%
   mutate(model_type = "age") %>%
   rename(developmental_predictor = mean_age)
 
-bind_rows(predicted_val_vocab, predicted_val_age) %>%
+predicted_val_age %>%
   ggplot() +
   geom_point(aes(x = developmental_predictor, y = d_calc)) +
-  geom_smooth(method = "lm",
-              aes(x = developmental_predictor, y = pred), se = T) +
-  facet_wrap(~ model_type, scales = "free_x") +
-  theme_bw()
+  geom_smooth(method = "lm",aes(x = developmental_predictor, y = d_calc)) +
+  theme_bw() + 
+  xlab("Mean Age (Days)") + 
+  ylab("Calculated Effect Size (Cohen's d)")
 
 
 bind_rows(predicted_val_vocab, predicted_val_age) %>%
