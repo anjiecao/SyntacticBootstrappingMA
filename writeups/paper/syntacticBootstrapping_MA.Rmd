@@ -119,6 +119,7 @@ Besides the number of words in the verbs’ arguments, the semantic content is a
 To further shed light on these conflicting findings, we decided to conduct a meta-analysis on syntactic bootstrapping literature. Our first goal is to estimate the robustness of this phenomenon by calculating the meta-analytic effect size. Knowing the effect size is consequential to theory building [@lewis2016quantitative; @bergmann2018promoting]. Many past meta-analyses have tapped into other domains of early language development such as phonotactic learning [@cristia2018can], word segmentation [@bergmann2016development], and mutual exclusivity [@lewis2020role]. To our knowledge, this is the first meta-analysis examining the development of syntactic abilities in early childhood and its influence on word learning. Our second goal is to examine the potential moderators of the effect. Understanding the moderators can be valuable for both theoretical reasons and practical reasons. Due to the limited sample sizes, individual infant experiments often have insufficient statistical power, which can make detecting relevant moderators difficult [@oakes2017sample]. The variations among different testing procedures also made it difficult to reconcile the conflicting findings, because the differences in the observed effect can be caused by a combination of methodological factors, rather than reflecting the differences in the measured constructs. The meta-analytic approach has the opportunity to reveal some of the underlying interactions between different factors, which can inform future researchers about their experimental designs. Last but not least, our fourth goal is to evaluate how the effect changes with age. Most of the syntactic-bootstrapping studies used a cross-sectional design. Despite the virtue of being rigorously controlled, the “time-slice” nature of this design made it difficult to reconstruct a continuous developmental trajectory. The meta-analysis can provide unique insights into how children’s abilities to incorporate syntactic information into verbs learning to develop in the first three years of life. 
 
 # Methods
+All the data and analysis scripts can be found on []. The interactive dataset is also available on []. 
 
 ## Literature Search  
 
@@ -170,6 +171,7 @@ prisma2(found = format(records_identified_google_scholar + records_identified_fo
 We conducted our literature search following the  Preferred Reporting Items for Systematic Reviews and Meta-Analyses checklist [PRISMA; @moher2009]. We identified relevant papers by conducting a keyword search in Google Scholar with the phrase "Syntactic Bootstrapping" and a forward search on papers that cited the seminal paper [@naigles1990children] (total records identified: *N* =  `r records_identified_google_scholar + records_identified_forward_search`; retrieved between May 2020 and July 2020; Figure\ \@ref(fig:prisma)). We screened the first $60$ pages (*N* = $600$) of the keyword search results and the first $10$ pages (*N* = $100$) of the forward search results. The screening processes ended because we could no longer identify relevant, non-duplicate papers from consecutive pages. Additional papers were identified by consulting the references section of the most recent literature review (*N* = `r records_identified_review_reference`) [@fisher2020developmental] and the experts in the field (*N* = `r records_identified_experts_in_the_field`). In our final sample, we included published journal articles, conference proceedings, doctoral dissertations, and unpublished manuscripts. They will be collectively referred to as "papers" in the following sections. Each paper may include multiple experimental conditions, and thus provides multiple effect sizes for the final analysis.
 
 We restricted our final sample to papers that satisfied the following conditions: First, the experimental paradigm involved a two-alternative forced-choice task, in which the participants were instructed to identify the scene that matched the linguistic stimuli. Second, the visual stimuli were two events displayed side-by-side on a computer monitor. The two events must include one depicting causative action (e.g. one agent causes the other to move), and one non-causative action (e.g. two agents move simultaneously but do not causally interact with each other). The media displayed can be either videos or animation clips. Third, the linguistic stimuli included at least one novel verb embedded in a syntactically informative frame. For example, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame that is informative about the meaning of the novel verb "kradding". In contrast, "Look, Kradding!" does not provide informative syntactic information. If the children only heard sentences like this, the experiments would be excluded. Finally, only studies working with English-speaking, typically-developing children were included. 
+
   
 ```{r literature search - report final sample}
 n_effect_sizes <- ma_data %>%
@@ -199,7 +201,7 @@ mean_age_day <- ma_data %>%
 ```
   
 <!-- There's a bunch of missing values in the pdf, not sure why--> 
-   Our final sample included data from `r different_infants` unique infants (Mean age: `r mean_age_day` Days), reported in `r n_effect_sizes` individual effect sizes from `r n_papers` individual papers. 
+Our final sample included data from `r different_infants` unique infants (Mean age: `r mean_age_day` Days), reported in `r n_effect_sizes` individual effect sizes from `r n_papers` individual papers. 
    
 ## Data Entry
 
@@ -231,6 +233,7 @@ num_imputed <- data_source_summary %>%
 In order to calculate the effect sizes, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the four methods: a) directly retrieved from the results section or the data-presenting tables (*N* = `r num_text_or_table`); b) recovered from the plots by measuring the height of the bars and the error bars (*N* =`r num_plot`); c) contacted the original authors (*N* = `r num_author_contact`); d) imputed using values from studies with similar designs (*N* = `r num_imputed`; Among the `r num_imputed`, missing standard deviation from @hirsh1996young were imputed with values from @naigles1990children; missing values from @arunachalam2013out were imputed with values from @arunachalam2013two). We decided to impute the missing standard deviations instead of excluding the studies because past work has shown that using "borrowed values" is beneficial to the accuracy of meta-analysis [@furukawa2006imputing].
 
 To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum. 
+
 
 ```{r categorize_by_proto}
 num_proto_approach <- ma_data %>% 
@@ -270,43 +273,41 @@ num_patient_intransitive <- num_patient_sum %>% filter(patient_argument_type == 
 
 At the participant level, we coded infants' mean age in days (*N* = `r n_effect_sizes`) and the median productive vocabulary measured by MacArthur-Bates Communicative Development Inventories (CDI) Words and Sentences [@fenson2000short] (*N* = `r  num_vocabulary_available`). 
 
-At experimental condition levels, we coded moderators that are theoretically relevant and methodologically relevant. The information was either retrieved from the methods section of the paper or obtained via contacting authors. First, for the theoretically relevant moderators, we coded features of the linguistic stimuli during both training and testing, including the sentence structure and the type of words used in the agent arguments.  Sentence structure has two levels, transitive (*N* = `r num_transitive`) and intransitive (*N* = `r num_intransitive`). The training linguistic stimuli were categorized as transitive if the no. We also coded the types of words used in the agent argument (Noun: *N* = `r num_agent_noun`; Pronoun: *N* = `r num_agent_pronoun`). If in one condition the linguistic stimuli contained at least one occurence of pronouns in the agent argument, then the condition would be coded as "pronoun". Those with no pronoun throughout were coded as "noun". We also coded word types used in the patient argument following the same rule (Noun: *N* = `r num_patient_noun`; Pronoun: *N* = `r num_patient_pronoun`). Because this only applies to studies with transitive structure (*N* = `r num_transitive`), we only presented the exploratory analysis in the SI. 
+At experimental condition levels, we coded moderators that are theoretically relevant and methodologically relevant. The information was either retrieved from the methods section of the paper or obtained via contacting authors. First, for the theoretically relevant moderators, we coded features of the linguistic stimuli during both training and testing, including the sentence structure and the type of words used in the agent arguments.  Sentence structure has two levels, transitive (*N* = `r num_transitive`) and intransitive (*N* = `r num_intransitive`). The t
+raining linguistic stimuli were categorized as transitive if the no. We also coded the types of words used in the agent argument (Noun: *N* = `r num_agent_noun`; Pronoun: *N* = `r num_agent_pronoun`). If in one condition the linguistic stimuli contained at least one occurence of pronouns in the agent argument, then the condition would be coded as "pronoun". Those with no pronoun throughout were coded as "noun". We also coded word types used in the patient argument following the same rule (Noun: *N* = `r num_patient_noun`; Pronoun: *N* = `r num_patient_pronoun`). Because this only applies to studies with transitive structure (*N* = `r num_transitive`), we only presented the exploratory analysis in the SI. 
 
 
-```{r categorize_by_visual_stimuli}
-num_modality_sum <- ma_data %>% count(stimuli_modality)
-num_modality_animation <- num_modality_sum %>% filter(stimuli_modality == "animation") %>% pull(n)
-num_modality_video <- num_modality_sum %>%  filter(stimuli_modality == "video") %>%  pull(n)
-
-num_video_person <- ma_data %>% filter(stimuli_modality == "video") %>% filter(stimuli_actor == "person") %>% count()
-num_video_non_person <- ma_data %>% filter(stimuli_modality == "video") %>% filter(stimuli_actor == "non_person") %>% count()
-
-num_video_simultaneous <- ma_data %>% filter(presentation_type == "simultaneous") %>% count()
-num_video_immediate_after <- ma_data %>% filter(presentation_type == "immediate_after") %>% count()
-num_video_asynchronous <- ma_data %>% filter(presentation_type == "asynchronous") %>% count()
-```
 
 ### Methodological Moderators
 
-For methodologically relevant moderators, we coded the types of media used (video or animation) and the types of protagonists in the events (person or non-person). `r num_modality_video` conditions used video recordings of human actors (*N* = `r num_video_person`) or human actors in animal suits (*N* = `r num_video_non_person`). The other `r num_modality_animation` conditions used clips of animation with non-person figures as the protagonists of the events. We also coded how the onset of the linguistic stimuli aligned with the visual stimuli. Initially, there were three levels coded: asynchronous, simultaneous, immediately after. Some experimental conditions first presented the linguistic stimuli paired with irrelevant visual scenes (e.g. a person on the phone talking). The relevant visual stimuli were not shown until the training phase is over. For experimental conditions using this alignment, they were coded as "asynchronous"(*N* = `r num_video_asynchronous`). The procedure was coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action (*N* = `r num_video_simultaneous`). It was coded as "immediately after" if it was presented along with an attention-getter or a blank screen, immediately followed by the relevant action (*N* = `r num_video_immediate_after`). Later in the analysis stage, we decided to collapse the latter two levels because the number of effect sizes in simultaneous conditions was not sufficient to conduct well-powered analysis. 
+We mainly considered three aspects of methodological factors: the types of testing phases, the alignment between the linguistic stimuli and the visual stimuli, and the amount of learning experience during the experiment. 
 
-
-
-```{r categorize_by_procedure}
-num_point <- ma_data %>% filter(test_method == "point") %>% count()
-num_look <- ma_data %>% filter(test_method == "look") %>% count()
-
+```{r categorize_by_testing_phase}
 num_practice_yes <- ma_data %>% filter(practice_phase == "yes") %>% count()
 num_practice_no <- ma_data %>% filter(practice_phase == "no") %>% count()
 num_char_id_yes <- ma_data %>% filter(character_identification == "yes") %>% count()
 num_char_id_no <- ma_data %>% filter(character_identification == "no") %>% count()
+```
 
+
+For testing phases, we coded the presence or absence of the practice phase and the character identification phase. Practice phase refers to the trials in which the children were prompted to identify a familiar action upon being prompted with a familiar verb. For example, the children may hear “Find jumping” and be expected to look or point at the events showing jumping). *N* = `r num_practice_yes` conditions included at least one practice trial and `r num_practice_no` conditions did not. Character identification phase refers to trials in which the children were prompted to look for the actors in the testing events. For example, if at the test the children see a bunny and a duck engage in casual actions, they would be prompted “Where’s the bunny?” “Where’s the duck” during the character identification phase.  `r num_char_id_yes` conditions included at least one character identification trial, and `r num_char_id_no` conditions did not. 
+
+```{r categorize_by_synchronicity}
+num_video_simultaneous <- ma_data %>% filter(presentation_type_collapsed == "simultaneous") %>% count()
+num_video_asynchronous <- ma_data %>% filter(presentation_type_collapsed == "asynchronous") %>% count()
+```
+The factor synchronicity, which refers to the alignment between the linguistic stimuli and the visual stimuli, has two levels: asynchronous or simultaneous. Some experimental conditions first presented the linguistic stimuli paired with irrelevant visual scenes (e.g. a person on the phone talking). The relevant visual stimuli were not shown until the training phase is over. For experimental conditions using this alignment, they were coded as "asynchronous"(*N* = `r num_video_asynchronous`). The procedure was coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action or along with an attention-getter or a blank screen, immediately followed by the relevant action  (*N* = `r num_video_simultaneous`). 
+
+```{r categorize_by_testing_structure}
 num_mass <- ma_data %>% filter(test_mass_or_distributed == "mass") %>% count()
 num_distributed <- ma_data %>% filter(test_mass_or_distributed == "distributed") %>% count()
 ```
+We also examined how the amount of learning experience provided during the experiment would contribute to the learning outcomes. Specifically, we coded the distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the same verb. We also coded how many times each novel verb was spoken in a syntactically-informative way. 
 
-We also coded aspects of experimental procedures. First, the type of responses elicited from the participants: whether the infants were explicitly prompted to point or their eye gaze duration were measured as they heard the linguistic stimuli (Pointing: *N* = `r num_point`; Looking: *N* = `r num_look`). Second, we coded two characteristics of the experimental procedures: the inclusion of practice phase (Yes: *N* = `r num_practice_yes` ; No: *N* = `r num_practice_no`) and the inclusion of character-identification phase (Yes: *N* = `r num_char_id_yes`; No: *N* = `r num_char_id_no`). Third, the distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the same verb. It was "distributed" if the infants were given multiple train and test pairs on multiple novel verbs. To better characterize the experience infants had prior to testing, we also coded how many train-test pair the infants were given (for mass procedure it was always 1), how many trials during the test phase infants were given, how many times the visual stimuli showing the relevant actions were presented, and how many times each novel verb was spoken in a syntactically-informative way. 
-  
+
+Footnotes: we also coded additional theoretical moderators and methodological moderators. Their analyses can be found in the Supplementary information.
+
+
 ## Data Preprocessing 
 
 ```{r data_preprocessing}
