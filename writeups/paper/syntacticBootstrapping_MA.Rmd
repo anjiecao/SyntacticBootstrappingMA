@@ -1,7 +1,6 @@
 ---
 title             : "A meta-analysis of the syntactic bootstrapping phenomenon in word learning"
 shorttitle        : "Syntactic Bootstrapping MA"
-
 author:  
   - name          : "Anjie Cao"
     affiliation   : "1"
@@ -12,23 +11,20 @@ author:
     affiliation   : "2"
     email         : ""
 affiliation:
+    
   - id            : "1"
     institution   : "Department of Psychology, Stanford University"
   - id            : "2"
     institution   : "Department of Psychology, Carnegie Mellon Unviversity"
-    
 author_note: |
   okie
-
 abstract: |
   so abstract!
   
 keywords          : "language acquisition, syntactic bootstrapping, meta-analysis"
 wordcount         : ""
-
 bibliography      : ["references.bib"]
 csl               : "apa6-meta.csl"
-
 header-includes:
   - \usepackage{setspace}
   - \usepackage{float}
@@ -37,7 +33,6 @@ header-includes:
   - \usepackage{pbox}
   - \usepackage{hyphsubst}
   - \floatplacement{figure}{t!} # make every figure with caption = t
-
 figsintext        : yes
 figurelist        : no
 tablelist         : no
@@ -47,11 +42,11 @@ lineno            : no
 documentclass     : "apa6"
 class             : "man"
 output:
-  #always_allow_html: true
   papaja::apa6_pdf:  #word_document 
     latex_engine: xelatex # this solved an encoding issue
     includes: 
       after_body: appendix.tex
+  #always_allow_html: true
 ---
 
 ```{r load_utility_packages, include = FALSE}

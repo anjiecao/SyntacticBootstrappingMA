@@ -105,16 +105,20 @@ generate_forest_plot <- function(data){
     scale_y_continuous(breaks = seq(-10, 7, 1))+ 
     coord_cartesian(clip = 'on') + 
     coord_flip() + 
+    ylim(-1.8,3.2)+ #doesn't seem to help a lot 
     ylab("Cohen's d") +
     labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
     theme(text = element_text(size=label_size),
           legend.position="bottom",
+          legend.text=element_text(size=label_size),
           plot.margin = unit(c(1,1,1,1), "lines"),
           legend.title = element_blank(),
           panel.background = element_blank(),
           #panel.background = element_rect(fill = "white", colour = "grey50"),
           axis.title.y = element_blank(),
-          axis.text.y = element_text(colour = label_colors)) 
+          axis.text.y = element_text(colour = label_colors, 
+                                     size = label_size), 
+          axis.text.x = element_text(size = label_size * 1.5)) 
   
 
 }
