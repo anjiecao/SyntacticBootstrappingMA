@@ -22,6 +22,7 @@ library(knitr)
 library(here)
 library(metafor)
 library(ggimage)
+library(stringr)
 source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
 source(here("writeups/paper/scripts/funnel_plot_helper.R"))
@@ -47,18 +48,110 @@ ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
 
+# Head Map 
 
-# Additional Moderators 
-## Agent argument type for intransitive sentence 
+
+# Additional Moderators (follow after Arunachalam (2017))
+```{r include=FALSE}
+ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
+INTRANSITIVE <- c("patient_argument_type")
+additional_main <- generate_moderator_df(ADDITIONAL_MODERATORS, ma_data)
+intransitive <- generate_moderator_df(INTRANSITIVE, filter(ma_data, sentence_structure == "transitive"))
+additional_main <- bind_rows(additional_main, intransitive) %>% 
+  select(this_moderator, n, 
+         estimate_print_full, z_print, p_print, 
+         mod_estimate_print_full, mod_CI_print, mod_z_print, mod_p_print) %>% 
+  mutate(
+    intercept = estimate_print_full, 
+    moderator = mod_estimate_print_full,
+    intercept_z_val = gsub("= ","", z_print), 
+    intercept_p_val = gsub("= ", "", p_print),
+    mod_z_val = gsub("= ", "", mod_z_print),
+    mod_p_val = gsub("= ", "", mod_p_print)
+  )
+
+```
+
+## Patient argument type for transitive sentence 
+
+In the main analysis we presented results of the model for the relationship between effect size and the agent argument type. We found that having nouns or pronouns int he agent argument does not significantly predict the effect size. Here, we presented a similar anlaysis on the influence of the patient argument type. Because by definition English intransitive sentences do not have patient argument, we focus on the subset of studies that used the transitive sentences ($N$ = `r filter(additional_main, this_moderator == "patient_argument_type")$n`)
+
+```{r}
+
+pretty_moderator_name <- function(s){
+  new_s <- str_to_title(gsub("_", " ",s))
+  return(new_s)
+}
+
+convert_pretty_print_table <- function(full_df, current_moderator){
+  
+  estimates <- full_df %>% 
+    filter(this_moderator == current_moderator) %>% 
+    pivot_longer(cols = c(intercept, moderator), names_to = "Parameter", values_to = "Estimate") %>% 
+    select(Parameter, Estimate)
+  
+  z_val <- full_df %>% 
+    filter(this_moderator == current_moderator) %>% 
+    pivot_longer(cols = c(intercept_z_val, mod_z_val), names_to = "Parameter", values_to = "z value") %>% 
+    select("z value")
+  
+  p_val <- full_df %>% 
+    filter(this_moderator == current_moderator) %>% 
+    pivot_longer(cols = c(intercept_p_val, mod_p_val), names_to = "Parameter", values_to = "p value") %>% 
+    select("p value")
+  
+  all_df <- bind_cols(estimates, z_val, p_val) %>% 
+    mutate(
+      Parameter = case_when(
+        Parameter == "moderator" ~ pretty_moderator_name(current_moderator),
+        TRUE ~ Parameter
+      )
+    )
+  
+  return(all_df)
+  
+}
+
+
+patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type")
+
+patient_argument_type_table %>% 
+  kable() 
+```
+
+
+
 ## Stimuli Modality (Video or Animation)
+```{r}
+stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality")
+stimuli_argument_type_table %>% 
+  kable()
+```
+
+
 ## Stimuli actors (Person or Non-person)
-## Type of transitive event (Direct causal action or Indirect causal action)
-## Type of intransitive event (Single-actor or parallel actions)
-## Number of train-test pair 
-## Number of test trial per pair 
-## Number of video repetitions 
+```{r}
+stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")
+stimuli_actor_type_table %>% 
+  kable()
+```
+
+## Type of event {.tabset}
+### Transitive Event: Direct causal action or Indirect causal action
+```{r}
+transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")
+transitive_event_type_table %>% 
+  kable()
+```
+### Intransitive Event: Single-actor or parallel actions
+```{r}
+intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")
+intransitive_event_type_table %>% 
+  kable()
+```
+
+
  
-[Creat a predictor plots? table? what about interaction between them?]
 
 
 # Comparison betwen baseline result and chance 

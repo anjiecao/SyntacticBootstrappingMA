@@ -297,7 +297,7 @@ The factor synchronicity, which refers to the alignment between the linguistic s
 num_mass <- ma_data %>% filter(test_mass_or_distributed == "mass") %>% count()
 num_distributed <- ma_data %>% filter(test_mass_or_distributed == "distributed") %>% count()
 ```
-We also examined how the amount of learning experience provided during the experiment would contribute to the learning outcomes. Specifically, we coded the distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the same verb. We also coded how many times each novel verb was spoken in a syntactically-informative way ^[We also coded additional moderators, including the modality of the stimuli (video or animation), the types of actor in the stimuli (person or non-person), type of transitive event (direct causal action or indirect causal action), type of intransitive action (one-actor or pareallel-action), the number of train-test pair, the number of test trial per pair, the number of video repetitions. Their analyses can be found in the Supplementary information.]. 
+We also examined how the amount of learning experience provided during the experiment would contribute to the learning outcomes. Specifically, we coded the distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if and only if the infants were trained exclusively on one novel verb and tested on the same verb. We also coded how many times each novel verb was spoken in a syntactically-informative way ^[We also coded additional moderators, including the modality of the stimuli (video or animation), the types of actor in the stimuli (person or non-person), type of transitive event (direct causal action or indirect causal action), type of intransitive action (one-actor or pareallel-action). Their analyses can be found in the Supplementary information.]. 
 
 
 
@@ -433,16 +433,9 @@ One question we were hoping to address is how the verbs’ syntactic environment
 
 ### Role of word types 
 
-Like sentence structure, the moderator agent argument structure also has two levels: pronoun and noun. Using a similar model, we found that the agent argument structure is not a significant predictor of the effect size ($\beta$ = `r filter(mod_print, moderator == "agent_argument_type")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "agent_argument_type")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "agent_argument_type")$mod_z_print`, *p* `r filter(mod_print, moderator == "agent_argument_type")$mod_p_print`). 
+Like sentence structure, the moderator agent argument structure also has two levels: pronoun and noun. Using a similar model, we found that the agent argument type is not a significant predictor of the effect size ($\beta$ = `r filter(mod_print, moderator == "agent_argument_type")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "agent_argument_type")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "agent_argument_type")$mod_z_print`, *p* `r filter(mod_print, moderator == "agent_argument_type")$mod_p_print`). 
 
-```{r}
-mod <- rma.mv(d_calc ~ character_identification + mean_age, V = d_var_calc,
-                    random = ~ 1 | short_cite/same_infant/x_1,
-                     method = "REML",
-                     data = ma_data)
 
-summary(mod)
-```
 
 
 ### Theoretical Moderators Model 
