@@ -23,6 +23,8 @@ library(here)
 library(metafor)
 library(ggimage)
 library(stringr)
+library(glue)
+library(heatmaply)
 source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
 source(here("writeups/paper/scripts/funnel_plot_helper.R"))
@@ -48,7 +50,54 @@ ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
 
-# Head Map 
+# Heat Map
+
+```{r}
+ALL_CATEGORICAL_VARS <- c("presentation_type_collapsed",
+                      #"agent_argument_type", "patient_argument_type", 
+                     "stimuli_modality", "stimuli_actor", "character_identification",   "practice_phase", "test_mass_or_distributed", "transitive_event_type", "intransitive_event_type")
+
+
+get_cross_counts <- function(args, df){
+  var1 = args[[1]]
+  var2 = args[[2]]
+  
+  if (var1 != var2){
+  
+  df %>%
+    select_(var1, var2) %>%
+    rename(v1 = var1, 
+          v2 = var2) %>%
+    count(v1, v2) %>%
+    mutate(v1_long = glue("{var1}/{v1}"),
+           v2_long = glue("{var2}/{v2}"))  %>%
+    select(v1_long, v2_long, n) 
+
+  }
+}
+
+all_pair_counts <- list(ALL_CATEGORICAL_VARS,
+                        ALL_CATEGORICAL_VARS) %>%
+  cross() %>%
+  map_df(get_cross_counts, ma_data) %>%
+  complete(v1_long, v2_long, fill = list(n = 0)) %>%
+  filter(v1_long != v2_long)
+
+
+  all_counts_wide <- all_pair_counts %>%
+    pivot_wider(names_from = v2_long, values_from = n) 
+  
+
+  all_counts_wide_matrix <- all_counts_wide %>%
+    select(-v1_long) %>%
+    as.matrix()
+  
+  row.names(all_counts_wide_matrix) <-  all_counts_wide$v1_long
+  heatmaply(all_counts_wide_matrix,
+            fontsize_row = 8,
+            fontsize_col = 8)
+```
+
 
 
 # Additional Moderators (follow after Arunachalam (2017))
