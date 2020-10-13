@@ -22,6 +22,7 @@ library(knitr)
 library(here)
 library(metafor)
 library(ggimage)
+library(imager)
 library(stringr)
 library(glue)
 library(heatmaply)
@@ -231,12 +232,12 @@ intransitive_event_type_table %>%
 
 # Variability in visual stimuli as a function of age
 
-Probably want to make all of these black and white?
-also need to update to reflect newer inclusion criteria? 
-[Currently not being referred to in the main text]
+There was some evidence for researchers adapting the level of visual complexity in the visual stimuli according to children's age. We collected the available visual stimuli from the papers and the supporting materials. Schematic illustraions of the visual stimuli were used when the actual screenshots were not provided. Screenshots of the text descriptions of the events were used when the visual stimuli were unavailable. Note that because some papers' publishers converted to the visual stimuli to black-and-white, we decided to grayscale all visual stimuli for easier visual comparison.  
+
+It is easy to see that in the plot studies for particular young children used significantly simpler visual stimuli. This adaptation might be partly responsible for the lack of age effect observed in our samples.  
+
 
 ```{r}
-DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv") 
 
 ma_data <- read_csv(DATA_PATH) %>% 
   mutate(row_id = 1:n()) %>%
@@ -250,22 +251,26 @@ age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
                       random = ~ 1 | short_cite/same_infant/row_id,
                       method = "REML",
                       data = ma_data )
+
+
 ```
 
 ```{r, fig.width = 10, fig.height = 8}
 ma_data_with_predictions <- predict(age_model) %>%
   as.data.frame() %>%
-  bind_cols(ma_data)
+  bind_cols(ma_data) %>% 
+  mutate(
+    mean_age_months = mean_age / 30.44
+  )
 
-ggplot(ma_data_with_predictions, aes(x = mean_age, y = d_calc)) +
+ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
   geom_image(aes(image = stim_path)) +
   geom_smooth(method = "lm") +
   #geom_smooth(method = "lm", data = ma_data_with_predictions, aes(x = mean_age, y = pred)) +
   ylab("Effect Size (d)") +
-  xlab("Mean age (days)")
+  xlab("Mean age (months)")
 ```
 
-# Funnel plot controlling for moderators
 
 
 **References**
