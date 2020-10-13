@@ -50,8 +50,12 @@ ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
 
-# Heat Map
+# Heat Map {.tabset}
 
+The heatmaps below showed the overlappings between moderators. Each cell corresponds to the coocurrences between two moderator levels. Brighter colors indicate higher frequency of co-occurence, and darker colors indicate lower frequency. You can hover your mouse on the heatmap to see the corresponding value and combination on each cell. 
+
+
+## Ordered by Row Average 
 ```{r}
 ALL_CATEGORICAL_VARS <- c("presentation_type_collapsed",
                       #"agent_argument_type", "patient_argument_type", 
@@ -92,12 +96,19 @@ all_pair_counts <- list(ALL_CATEGORICAL_VARS,
     select(-v1_long) %>%
     as.matrix()
   
-  row.names(all_counts_wide_matrix) <-  all_counts_wide$v1_long
+  row.names(all_counts_wide_matrix) <-  as.character(all_counts_wide$v1_long)
   heatmaply(all_counts_wide_matrix,
             fontsize_row = 8,
             fontsize_col = 8)
 ```
 
+## Ordered alphabetically          
+```{r}
+heatmaply(all_counts_wide_matrix,
+            fontsize_row = 8,
+            fontsize_col = 8,
+           Rowv = NA)
+```
 
 
 # Additional Moderators (follow after Arunachalam (2017))
@@ -153,7 +164,7 @@ convert_pretty_print_table <- function(full_df, current_moderator){
     mutate(
       Parameter = case_when(
         Parameter == "moderator" ~ pretty_moderator_name(current_moderator),
-        TRUE ~ Parameter
+        Parameter == "intercept" ~ "Intercept"
       )
     )
   
@@ -171,6 +182,10 @@ patient_argument_type_table %>%
 
 
 ## Stimuli Modality (Video or Animation)
+
+We found that the presentation modality of the stimuli was not a significant perdictor of the effect size. In other words, studies that presented young children with animation clips had similar effect sizes as studies using video clips. The model statistics is shown below. Note that the stimuli modality and the stimuli actor levels had a lot of overlapping studies, so researchers should interpret this result with cautions. 
+
+
 ```{r}
 stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality")
 stimuli_argument_type_table %>% 
@@ -179,6 +194,8 @@ stimuli_argument_type_table %>%
 
 
 ## Stimuli actors (Person or Non-person)
+Similarlty, we did not find an effect of stimuli actors. Studies with human actors as protagonists in the events had similar effect sizes as studies using puppets, human actors in animal suits, or using animated geometrical shapes. 
+
 ```{r}
 stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")
 stimuli_actor_type_table %>% 
@@ -186,6 +203,12 @@ stimuli_actor_type_table %>%
 ```
 
 ## Type of event {.tabset}
+Studies differed in the type of transitive events and intransitive events they presented. Previous studies have shown that young children's looking behaviors in Inter-modal Preferential Looking Paradigm were very sensitive to the subtle perceptual differences in the visual stimuli (Delle Luche, Durrant, Poltrock, & Floccia, 2015; Fernald, Zangl, Portillo, & Marchman, 2008).Therefore, we coded the types of events presented in the visual stimuli. There were two types of transitive events: direct causal action and indirect causal action. The former involved the agent directly acting on the patient and causing the patient to move. The latter involved a mean-end sequence leading to the caused action of the patient. For example, the agent may pulled a band on the patient's waist and caused it to move. There were also two types of intransitive events used in the literature. One involved single actor performing an action, such as jumping up and down. The other involved two actors presented without any causal action. 
+
+Our model suggested that neither of the variables was predictive of the effect sizes. 
+
+
+
 ### Transitive Event: Direct causal action or Indirect causal action
 ```{r}
 transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")
@@ -203,15 +226,7 @@ intransitive_event_type_table %>%
  
 
 
-# Comparison betwen baseline result and chance 
-```{r}
-ma_raw_data %>% filter(!is.na(x_2_raw), !is.na(SD_2_raw))
-```
 
-
-
-# Heatmap?
-[Currently not being referred to in the main text]
 
 
 # Variability in visual stimuli as a function of age
@@ -260,6 +275,11 @@ Bedny M., Koster-Hale J., Elli G., Yazzolino L., Saxe R. (2019) There’s more t
 Bojanowski, P., Grave, E., Joulin, A., & Mikolov, T. (2016). Enriching word vectors with subword information. https://arxiv.org/abs/1607.04606
 
 de Vries, A.  &  Ripley, B. D. (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro
+
+Delle Luche, C., Durrant, S., Poltrock, S., & Floccia, C. (2015). A methodological investigation of the Intermodal Preferential Looking paradigm: Methods of analyses, picture selection and data rejection criteria. Infant Behavior and Development, 40, 151-172
+
+Fernald, A., Zangl, R., Portillo, A. L., & Marchman, V. A. (2008). Looking while listening: Using eye movements to monitor spoken language. Developmental psycholinguistics: On-line methods in children’s language processing, 44, 97.
+
 
 Galili, T. (2015). dendextend: an R package for visualizing, adjusting, and comparing trees of hierarchical clustering. Bioinformatics. DOI: 10.1093/bioinformatics/btv428
 
