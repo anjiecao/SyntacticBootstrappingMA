@@ -60,8 +60,6 @@ library(knitr)
 library(PublicationBias)
 library(janitor)
 library(insight)
-library(stringr)
-
 
 source(here("writeups/paper/scripts/prisma_diagram.R"))
 source(here("writeups/paper/scripts/model_print.R"))
@@ -108,7 +106,6 @@ CRIT_99 <- 2.58
 \newpage
 
 # References
-
 
 ---
 nocite: |
