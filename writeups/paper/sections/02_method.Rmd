@@ -22,7 +22,6 @@ records_screened_forward_search <- 10 * 10
 records_screened_review_reference <- 155 
 records_screened_experts_in_the_field <- 14
 
-# Yikes this code was hard to read! Line breaks are your friend! :) Minimally put a line break after each pipe. 
 total_records_screened <- records_screened_google_scholar +
   records_screened_forward_search + 
   records_screened_review_reference + 
@@ -60,8 +59,7 @@ prisma2(found = format(records_identified_google_scholar + records_identified_fo
 ```
 
 
-  
-```{r literature search - report final sample}
+```{r literature}
 n_effect_sizes <- ma_data %>%
   filter(!is.na(d_calc)) %>%
   nrow()
@@ -81,7 +79,9 @@ non_unique_infants <- ma_data %>%
   distinct(short_cite, expt_condition, .keep_all = TRUE) %>% 
   summarize(sum_infants = sum(n_1))
 
-different_infants <- unique_infants + non_unique_infants
+different_infants <- unique_infants + non_unique_infants %>%
+  pull(sum_infants)
+
 mean_age_day <- ma_data %>% 
   filter(!is.na(mean_age)) %>%
   summarize(mean_age =  format(round(mean(mean_age), 2)))
@@ -189,8 +189,6 @@ num_distributed <- ma_data %>% filter(test_mass_or_distributed == "distributed")
 ```
 
 In addition the theoretical variables, we coded a range of methodological variables that varied across the studies in our sample. First, we coded whether or not the paradigm involved a practice trial prior to the testing phase. A study was coded as having a practice trial if there was at least one trial in which children were presented with a familiar verb and asked to identify a familiar action (e.g. "Find jumping"; N with practice phase =  `r num_practice_yes`). Second, we coded whether or not the paradigm involved trials in which  children were prompted to identify the nouns in the testing events ("Character Identification Phase"; N with character identifcation phase = `r num_char_id_yes`). For example, if at the test the children see a bunny and a duck engage in casual actions, they would be prompted “Where’s the bunny?” “Where’s the duck” during the character identification phase. Third, we coded whether or not the linguistc and visual stimuli were presented synchonously with each other ("Stimuli Synchronicity"). An experimental condition was coded as  "asynchronous" if the linguistic stimulus was first paired with an irrelevant visual scene (e.g. a person on the phone talking), and the matching visual stimulus was not shown until the training phase is over (*N* = `r num_video_asynchronous`); a condition was  coded as "simultaneous" if the very first training sentence was presented along with the visual stimuli depicting relevant action or along with an attention-getter or a blank screen, immediately followed by the relevant action  (*N* = `r num_video_simultaneous`). Fourth, we coded coded the temporal distribution of the training and the testing trials (Mass: *N* = `r num_mass`; Distributed: *N* = `r num_distributed`). A procedure was categorized as "mass" if participanted were trained exclusively on one novel verb and tested on the same verb. Finally, we coded how many times each novel verb was spoken in a syntactically-informative way during training. ^[See SI for additional methodological moderators.]
-
-
 
 
 ## Analytic Approach 
