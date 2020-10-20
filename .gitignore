@@ -8,7 +8,7 @@
 .httr-oauth
 *_cache/*
 writeups/paper/syntacticBootstrapping_MA_files/*
-
+writeups/paper/syntacticBootstrapping_MA.pdf
 
 
 *.log

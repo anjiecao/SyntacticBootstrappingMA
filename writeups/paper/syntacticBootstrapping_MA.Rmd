@@ -61,6 +61,7 @@ library(PublicationBias)
 library(janitor)
 library(insight)
 
+# scripts for data presentation
 source(here("writeups/paper/scripts/prisma_diagram.R"))
 source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
@@ -108,7 +109,7 @@ CRIT_99 <- 2.58
 # References
 
 ---
-nocite: |
+nocite: | @fenson2000short
 ...
   
 ```{r appendix}
