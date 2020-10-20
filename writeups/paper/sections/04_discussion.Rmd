@@ -1,6 +1,8 @@
 
-* Explanations for lack of age effect: variability in design as a function of age, change in input, etc. [Meta point: measuring developmental change requires constancy in task]
+
 * small effect means ma has low power
+* interpret with caution - there's publication bias!
+* Explanations for lack of age effect: variability in design as a function of age, change in input, etc. [Meta point: measuring developmental change requires constancy in task]
 * Transitivity effect is robust - implications for this? Cross-linguistic implications? Text from old intro about multiple possible explanations of this
 
 
