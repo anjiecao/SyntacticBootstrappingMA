@@ -331,6 +331,8 @@ ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
   geom_image(aes(image = stim_path)) +
   geom_smooth(method = "lm") +
   #geom_smooth(method = "lm", data = ma_data_with_predictions, aes(x = mean_age, y = pred)) +
+  scale_x_continuous(breaks = seq(0, 48, by = 12), limits = c(9, 48)) +
+  geom_hline(aes(yintercept = 0), color = "black", linetype = "dashed") +
   ylab("Effect Size (d)") +
   xlab("Mean age (months)")
 ```
@@ -339,17 +341,9 @@ ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
 
 **References**
 
-Bedny M., Koster-Hale J., Elli G., Yazzolino L., Saxe R. (2019) There’s more to “sparkle” than meets the eye: Knowledge of vision and light verbs among congenitally blind and sighted individuals.  _Cognition_ 189:105–115.
-
-Bojanowski, P., Grave, E., Joulin, A., & Mikolov, T. (2016). Enriching word vectors with subword information. https://arxiv.org/abs/1607.04606
-
-de Vries, A.  &  Ripley, B. D. (2016). ggdendro: Create Dendrograms and Tree Diagrams Using 'ggplot2'. R package version 0.1-20. https://CRAN.R-project.org/package=ggdendro
 
 Delle Luche, C., Durrant, S., Poltrock, S., & Floccia, C. (2015). A methodological investigation of the Intermodal Preferential Looking paradigm: Methods of analyses, picture selection and data rejection criteria. Infant Behavior and Development, 40, 151-172
 
 Fernald, A., Zangl, R., Portillo, A. L., & Marchman, V. A. (2008). Looking while listening: Using eye movements to monitor spoken language. Developmental psycholinguistics: On-line methods in children’s language processing, 44, 97.
 
 
-Galili, T. (2015). dendextend: an R package for visualizing, adjusting, and comparing trees of hierarchical clustering. Bioinformatics. DOI: 10.1093/bioinformatics/btv428
-
-Mikolov, T., Chen, K., Corrado, G., & Dean, J. (2013). Efficient estimation of word representations in vector space. _arXiv preprint arXiv:1301.3781_.
