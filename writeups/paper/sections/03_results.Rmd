@@ -9,11 +9,9 @@ generate_forest_plot(ma_data)
 
 ```
 
-The final analysis includent `r n_effect_sizes` independent effect sizes from `r n_papers` papers and contained testing results from `r unique_infants` unique infants. The weighted mean effect size in Cohen's d was `r filter(mod_print, moderator == "NULL")$estimate_print`, which was significantly different from 0  (*z* = `r filter(mod_print, moderator == "NULL")$z_print`; *p*: `r filter(mod_print,  moderator == "NULL")$p_print`). The range of effects sizes across different studies was shown in the forest plot (Figure\ \@ref(fig:forest)). 
+Figure\ \@ref(fig:forest) shows effect size estimates for all conditions in our sample. The weighted mean effect size was `r filter(mod_print, moderator == "NULL")$estimate_print`, which significantly differed from 0  (*Z* = `r filter(mod_print, moderator == "NULL")$z_print`; *p* = `r filter(mod_print,  moderator == "NULL")$p_print`). There was evidence for considerable hetergenity in effect sizes across our sample (*Q* = `r filter(mod_print, moderator == "NULL")$Q_print`; *p* `r filter(mod_print, moderator == "NULL")$Qp_print`).
 
 ## Evidential value of the syntactic bootstrapping literature
-
-
 
 ```{r label = "funnel", fig.pos = "t!", fig.width=8, fig.height=5.5, fig.cap = "Funnel plots. Each point corresponds to an effect size estimate. The gray dashed line represnets the effect size of zero, the red dash lined represents the mean effect size, and the white funnel represents a 95% confidence interval around this mean."}
 generate_funnel_plot(ma_data)
@@ -24,11 +22,17 @@ reg_p <- if_else(reg_result$pval < 0.0001, "< .0001", as.character(reg_result$pv
 #reg_result
 ```
 
-Publication bias refers to the tendency that journals would selectively publish on positive findings. This practice would inflate the real effect size and threaten the evidential value of the literature. In this section, we presented two analyses on publication bias, one using the traditional funnel plot approach combined with Egger’s regression test, the other using a newly established method known as publication bias sensitivity analysis [@mathur2020sensitivity]. We found evidence for publication bias, but the bias alone is not sufficient to explain the meta-analytic effect size.
+We first evaluated the evidence for publicaton bias in our sample in order to determine the evidential value of the literature. Publication bias refers to the tendency to selectively publish positive findings. This practice inflates meta-analytic estimates effect size and threatens the evidential value of the literature. We present two analyses of publication bias: a classic funnel plot analysis, and a sensitivity analysis that assumes a more plausible model of publication bias. 
 
-Upon first examination, the shape of the funnel plot is asymmetrical (Figure\ \@ref(fig:funnel)). We formally tested the asymmetry by conducting Egger’s regression test using a multi-level model, and we found that the asymmetry in the funnel plot is statistically significant (*z* = `r reg_z`; *p* `r reg_p`). However, this does not necessarily imply publication bias. The classical publication bias analysis methods such as Egger’s regression test have assumptions that were often not met. First, it assumes homogeneity. But the heterogeneity test on our dataset has significant results (*Q* = `r filter(mod_print, moderator == "NULL")$Q_print`; *p* `r filter(mod_print, moderator == "NULL")$Qp_print`), which violated this assumption. Second, the classical methods assume that the selection bias operates on the effect size. But in reality the p-value from statistics test was often the selection criterion. 
+Figure\ \@ref(fig:funnel) presents the funnel plot for the effect sizes in our sample. Funnel plots show  estimates of effect size variance (plotted with large values lower on the axis) as a function of effect size (cite egger 1997). Under a model of publication bias in which researchers decide whether or not to publish a study based on the magnitude of its effect size (larger effect sizes being more likely), effect size estimates should fall symmetrically around the grand effect size estimate. Evidence of asymmetry around the grand mean, particularly more large, positive effect sizes, suggests that the literature reflects a biased sample of studies. A formal test of asymmetry in our sample revealed evidence for asymmetry (Egger's test: *Z* = `r reg_z`; *p* `r reg_p`).
 
-We addressed these concerns by supplementing our analysis with a sensitivity analysis method introduced by @mathur2020sensitivity. Unlike its predecessors, this method did not have the homogeneity assumption nor the effect-size selection assumption. Instead, it estimated the severity of publication bias by considering how much more likely the “affirmative studies” will be published than the “non-affirmative studies”. Furthermore, it calculated the severity of publication bias needed in the literature to attenuate the meta-analytic effect size down to zero.
+The funnel plot analysis provides some evidence for publication bias, but the intreprtation of this analysis is limited by the fact that it assumes a relatively implausible model of how researchers decide which studies to make public (CITE): the criteria for publishing a study in a journal is typically not the size of the effect, as assumed by the funnel plot analysis, but rather whether or not the p-value of the hypothesis test for that effect is below some threshold (usually .05). We therefore conducted a second analysis of publication bias, called a sensitivity analysis [@mathur2020sensitivity], that assumes that publication bias operates based on the size of the p-value, rather than the magnitude of the effect size.
+
+<!-- I took out the bit about hetergenity since there are ways to address hetergenity using funell plots - i.e. just include them in the model-->
+
+The intuition behind the sensitivity analysis... 
+
+Instead, it estimated the severity of publication bias by considering how much more likely the “affirmative studies” will be published than the “non-affirmative studies”. Furthermore, it calculated the severity of publication bias needed in the literature to attenuate the meta-analytic effect size down to zero.
 
 ```{r label = "moderated_funnel", fig.pos = "T!", fig.width=8, fig.height=5.5, fig.cap = "Significance funnel plot for Syntactic Bootstrapping literature. "}
 
@@ -51,15 +55,16 @@ plot.pooled = TRUE
 ```
 
 
-We ran the analysis using the PublicationBias package [@mathur2020sensitivity]. In this analysis, we considered the worst-case scenario when the publication bias is most severe. To do so, we ignored all the positive findings and considered only the negative findings. However, under this condition, the meta-analytic effect size is still above zero. This result can also be seen in the modified funnel plot (Figure\ \@ref(fig:moderated_funnel)). In plot, the x-axis represents the point estimate of Cohen’s d. The y-axis represents the estimated standard error. The gray line represents studies with a p-value of 0.05. To the left of the line are the non-affirmative studies (represented by gray dots), and to the right are the affirmative studies (represented orange dots). The diamonds near the x-axis are meta-analytic effect sizes. Note that the black one is pooling from all studies, whereas the gray one is only pooling from the non-affirmative studies. Although the gray diamond is closer to the significance line than the black diamond, it does not cross the gray line. Therefore, even in the scenarios with the worst publication bias, where we only consider the non-affirmative studies results, the meta-analytic effect size of syntactic bootstrapping still has a positive value. 
+We ran the analysis using the PublicationBias package [@mathur2020sensitivity]. In this analysis, we considered the worst-case scenario when the publication bias is most severe. To do so, we ignored all the positive findings and considered only the negative findings. However, under this condition, the meta-analytic effect size is still above zero. This result can also be seen in the modified funnel plot (Figure\ \@ref(fig:moderated_funnel)). In plot, the x-axis represents the point estimate of Cohen’s *d*. The y-axis represents the estimated standard error. The gray line represents studies with a p-value of 0.05. To the left of the line are the non-affirmative studies (represented by gray dots), and to the right are the affirmative studies (represented orange dots). The diamonds near the x-axis are meta-analytic effect sizes. Note that the black one is pooling from all studies, whereas the gray one is only pooling from the non-affirmative studies. Although the gray diamond is closer to the significance line than the black diamond, it does not cross the gray line. Therefore, even in the scenarios with the worst publication bias, where we only consider the non-affirmative studies results, the meta-analytic effect size of syntactic bootstrapping still has a positive value. 
 
-In conclusion, we found moderate evidence for publication bias, but the bias alone is not sufficient to explain away the observed effect. Some of the observed bias using the classical methods might be attributed to the heterogeneity in the data. In the following sections, we analyzed theoretical factors and methodological factors that were contributing to this heterogeneity. 
+In conclusion, across two analyses we find some evidence for publication bias, but the bias alone is not sufficient to explain away the observed effect. Some of the observed bias using the classical methods might be attributed to the heterogeneity in the data. In the following sections, we analyzed theoretical factors and methodological factors that were contributing to this heterogeneity. 
 
 
 
 ## Relating the syntactic bootstrapping effect to other word learning stategies
 
 
+<!-- TO DO -->
 
 ## Theoretical Moderators
 ```{r}
