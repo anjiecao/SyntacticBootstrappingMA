@@ -142,7 +142,8 @@ heatmaply(ordered_matrix,
 
 
 
-# Additional Moderators (follow after Arunachalam (2017))
+# Additional Moderators*
+*The moderators' estimates are for the first level in the parenthesis. 
 ```{r include=FALSE}
 ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
 INTRANSITIVE <- c("patient_argument_type")
@@ -204,7 +205,13 @@ convert_pretty_print_table <- function(full_df, current_moderator){
 }
 
 
-patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type")
+patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Patient Argument Type" ~ "Patient Argument Type (Pronoun / Noun)",
+      TRUE ~ Parameter
+    )
+  )
 
 patient_argument_type_table %>% 
   kable() 
@@ -218,7 +225,13 @@ We found that the presentation modality of the stimuli was not a significant pre
 
 
 ```{r}
-stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality")
+stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality") %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Stimuli Modality" ~ "Stimuli Modality (Video / Animation)",
+      TRUE ~ Parameter
+    )
+  )
 stimuli_argument_type_table %>% 
   kable()
 ```
@@ -228,7 +241,13 @@ stimuli_argument_type_table %>%
 Similarly, we did not find an effect of stimuli actors. Studies with human actors as protagonists in the events had similar effect sizes as studies using puppets, human actors in animal suits, or using animated geometrical shapes. 
 
 ```{r}
-stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")
+stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Stimuli Actor" ~ "Stimuli Actor (Person / Non-person)",
+      TRUE ~ Parameter
+    )
+  )
 stimuli_actor_type_table %>% 
   kable()
 ```
@@ -242,13 +261,28 @@ Our model suggested that neither of the variables was predictive of the effect s
 
 ### Transitive Event: Direct causal action or Indirect causal action
 ```{r}
-transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")
+transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Transitive Event Type" ~ "Transitive Event Type (Indirect caused action / Direct caused action)",
+      TRUE ~ Parameter
+    )
+  )
+
+
 transitive_event_type_table %>% 
   kable()
 ```
 ### Intransitive Event: Single-actor or parallel actions
 ```{r}
-intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")
+intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Intransitive Event Type" ~ "Intransitive Event Type (Parallel actions / One action)",
+      TRUE ~ Parameter
+    )
+  )
+
 intransitive_event_type_table %>% 
   kable()
 ```
