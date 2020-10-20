@@ -199,6 +199,6 @@ In addition to the theoretical variables, we coded a range of methodological var
 
 
 ## Analytic Approach 
-The data were analyzed using multi-level random effect models implemented in the metafor package in R [@viechtbauer2010]. The random effect stucture included groupings by paper and participant group in order to account for the clustering of effect sizes in our sample. Moderator variables were included as additive fixed effects. All estimate ranges correspond to 95% confidence intervals, unless otherwise noted.  Data and analysis scripts are available at XXXX, and the dataset can be interactively explored at XXXX. 
+We analyzed the data using multi-level random effect models implemented in the metafor package in R [@viechtbauer2010]. The random effect stucture included groupings by paper and participant group in order to account for the clustering of effect sizes in our sample. Moderator variables were included as additive fixed effects. All estimate ranges correspond to 95% confidence intervals, unless otherwise noted.  Data and analysis scripts are available at XXXX, and the dataset can be interactively explored at XXXX. 
 <!-- do we also have a random effect of condition? does including this influence the estimates at all? -->
 <!-- for dev sci, the paper needs be double blinded, so we have to remove links to stuff that reveals our identity -->
