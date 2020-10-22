@@ -26,6 +26,7 @@ library(imager)
 library(stringr)
 library(glue)
 library(heatmaply)
+library(PublicationBias)
 source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
 source(here("writeups/paper/scripts/funnel_plot_helper.R"))
@@ -67,6 +68,56 @@ To standardize the effect size calculation, we converted some reported raw resul
 ```
 
 #<!-- do we also have a random effect of condition? does including this influence the estimates at all? -->
+
+
+# Sensitivity analysis
+
+```{r}
+ma_data_with_affirm <- ma_data %>%
+  mutate(pvalue =  2 * (1 - pnorm( abs(d_calc / sqrt(d_var_calc)))),
+         affirm =  (d_calc > 0) & (pvalue < 0.05))
+
+affirm_model<- rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/x_1, data=
+          ma_data_with_affirm %>% filter(affirm == FALSE)) 
+
+affirm_estimate <- as.numeric(affirm_model$b)
+
+worst_case_estimate_print <- paste0(as.numeric(round(affirm_model$beta, 2)),
+                                    " [",
+                                    as.numeric(round(affirm_model$ci.lb, 2)),
+                                    ", ",                                                                                                        as.numeric(round(affirm_model$ci.ub, 2)),
+                                    "]")
+ 
+all_model <- rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/x_1, data=
+          ma_data_with_affirm)
+all_estimate <- as.numeric(all_model$b)
+
+```
+
+The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey. The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effet size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attentuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
+
+
+
+```{r}
+significance_funnel(
+  ma_data$d_calc,
+  ma_data$d_var_calc,
+  xmin = min(ma_data$d_calc),
+  xmax = max(ma_data$d_calc),
+  ymin = 0,
+  ymax = max(sqrt(ma_data$d_var_calc)),
+  xlab = "Point estimate",
+  ylab = "Estimated standard error",
+  favor.positive = TRUE,
+  est.all = all_estimate,
+  est.N = affirm_estimate,
+  alpha.select = 0.05,
+  plot.pooled = TRUE
+)
+
+```
 
 
 # Heat Map {.tabset}
