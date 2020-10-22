@@ -44,8 +44,6 @@ class             : "man"
 output:
   papaja::apa6_pdf:  #word_document 
     latex_engine: xelatex # this solved an encoding issue
-    includes: 
-      after_body: appendix.tex
   #always_allow_html: true
 ---
 

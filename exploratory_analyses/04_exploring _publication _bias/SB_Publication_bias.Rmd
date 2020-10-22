@@ -226,22 +226,6 @@ rma.mv(d_calc ~ sqrt(d_var_calc),  d_var_calc,
 ```
 
 
-# Funnel Plot with key moderators
-```{r}
-
-moderator_model_mv <- rma.mv(d_calc ~    mean_age + transitive_event_type2 + agent_argument_type2 + 
-         test_mass_or_distributed + test_method + n_repetitions_video,  random = ~ 1 | short_cite/same_infant/row_id, d_var_calc, data = ma_data) 
-funnel(moderator_model_mv)
-```
-
-
-### Egger's test
-When including theoretically relevant moderators, it is still shows significant asymmetry. 
-```{r}
-rma.mv(d_calc ~   sqrt(d_var_calc) + mean_age + transitive_event_type2 + agent_argument_type2 + 
-         test_mass_or_distributed + test_method + n_repetitions_video,  random = ~ 1 | short_cite/same_infant/row_id, d_var_calc, data = ma_data)
-```
-
 
 # Sensitivity Analysis (Mathur & VanderWeele, 2020)
 ## P-val plot 
@@ -302,6 +286,28 @@ Not sure why clustered doesn't differ more from non-clustered?
 
 ## Eta estimate under worst case publication bias scenario
 
+Calculate worst case point estimate:
+
+(non-affirmative studies only; corresponds to grey diamond in plot )
+```{r}
+ma_data_with_affirm <- ma_data %>%
+  mutate(pvalue =  2 * (1 - pnorm( abs(d_calc / sqrt(d_var_calc)))),
+         affirm =  (d_calc > 0) & (pvalue < 0.05))
+
+affirm_model<- rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=
+          ma_data_with_affirm %>% filter(affirm == FALSE)) 
+
+affirm_estimate <- as.numeric(affirm_model$b)
+ 
+all_model <- rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=
+          ma_data_with_affirm)
+all_estimate <- as.numeric(all_model$b)
+
+```
+
+
 ```{r}
 m = significance_funnel(
   ma_data$d_calc,
@@ -313,8 +319,8 @@ m = significance_funnel(
   xlab = "Point estimate",
   ylab = "Estimated standard error",
   favor.positive = TRUE,
-  est.all = NA,
-  est.N = NA,
+  est.all = all_estimate,
+  est.N = affirm_estimate,
   alpha.select = 0.05,
   plot.pooled = TRUE
 )
@@ -323,21 +329,11 @@ m
 ```
 
 
-Calculate worst case point estimate:
+Estimate S val (critical value of eta; publication bias) to attenunate mu to critical value (q). This plot shows that no value of eta could attenuate the point estimate to 0. But not much publication bias would attenuate the CI to include 0. 
 
-(non-affirmative studies only; corresponds to grey diamond in plot above)
-```{r}
-ma_data_with_affirm <- ma_data %>%
-  mutate(pvalue =  2 * ( 1 - pnorm( abs(d_calc / sqrt(d_var_calc)))),
-         affirm =  (d_calc > 0) & (pvalue < 0.05))
-
- rma.mv(d_calc,  d_var_calc,  
-                         random = ~ 1 | short_cite/same_infant/row_id, data=
-          ma_data_with_affirm %>% filter(affirm == FALSE))
-
-```
-
-Estimate S val (critical value of eta; publication bias) for varying levels of q. This plot shows that no value of eta could attenuate the point estimate to 0. 
+S (t, q) as the value of η that would attenuate t to q, where q < t (where t in meta-anayltic estimate).
+ 
+svalest = eta to attentuate point estimate to 0; sval.ci = eta to attentunate ci to 0.  
 ```{r}
 get_s_value <- function(i, df){
 
@@ -349,14 +345,14 @@ get_s_value <- function(i, df){
         alpha.select = 0.05,
         eta.grid.hi = 200,
         favor.positive = TRUE,
-        CI.level = 0.95,
+      #  CI.level = 0.95,
         small = TRUE) %>%
     mutate(q = i,
            sval.est = as.numeric(as.character(sval.est)),
            sval.ci = as.numeric(as.character(sval.ci)))  # necessary for binding rows
 }
 
-s_values <- seq(0, 0.3, by = 0.02) %>%
+s_values <- seq(0,0, 0) %>%
   map_df(get_s_value, ma_data) 
 
 ggplot(s_values, aes(x = q, y = sval.est)) +
