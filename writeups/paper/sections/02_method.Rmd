@@ -46,7 +46,7 @@ We conducted a literature search of the syntactic bootstrapping literature follo
 We restricted our final sample to papers that satisfied the following criteria: First, the experimental paradigm involved a two-alternative forced-choice task in which  participants were instructed to identify the scene that matched the linguistic stimuli. Second, the visual stimuli were two events displayed side-by-side on a computer monitor. The two events included one depicting causative action (e.g. one agent causes the other to move), and one non-causative action (e.g. two agents move simultaneously but do not causally interact with each other). We included studies with either videos of live actors or animated clips. Third, the linguistic stimuli included at least one novel verb embedded in a syntactically informative frame. For example, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame that is informative about the meaning of the novel verb "kradding". In contrast, "Look, kradding!" does not provide informative syntactic information.  Finally, we restricted our sample to studies with English-speaking, typically-developing children. Papers that satisfied these constraints reflected a range of methodological implementations which we examine analytically below (see moderators). 
 
 <!-- we need a plot caption here--->
-```{r prisma, fig.cap = "PRISMA plot showing..."}
+```{r prisma, fig.cap = "PRISMA plot showing the paper selection process."}
 prisma2(found = format(records_identified_google_scholar + records_identified_forward_search, big.mark = ","), 
         found_other = records_identified_review_reference + records_identified_experts_in_the_field,
         no_dupes = total_records_screened, 
@@ -88,11 +88,14 @@ different_infants <- unique_infants + non_unique_infants
 mean_age_day <- ma_data %>% 
   filter(!is.na(mean_age)) %>%
   summarize(mean_age =  format(round(mean(mean_age), 2))) %>%
-  pull(mean_age)
+  pull(mean_age) 
+
+mean_age_months <- floor(as.numeric(mean_age_day) / 30.44)
+mean_age_remaining_day <- round((as.numeric(mean_age_day) - mean_age_months * 30.44),0)
 
 ```
   
-Our final sample included  `r n_papers` individual papers, corresponding to `r n_effect_sizes` individual effect sizes and `r unique_infants` unique infants (Mean age: `r mean_age_day` days). <!-- convert this to a meaninful unit - months; days --->
+Our final sample included  `r n_papers` individual papers, corresponding to `r n_effect_sizes` individual effect sizes and `r unique_infants` unique infants (Mean age: `r mean_age_months` Months `r mean_age_remaining_day` Days). 
    
 ## Data Entry
 
@@ -121,9 +124,7 @@ num_imputed <- data_source_summary %>%
 ```
 
 ### Calculating individual effect sizes
-In order to calculate each effect size, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the four methods: a) retrieved from the results section or the data-presenting tables (*N* = `r num_text_or_table`); b) recovered from the plots (*N* =`r num_plot`); c) contacted the original authors (*N* = `r num_author_contact`); d) imputed using values from studies with similar designs (*N* = `r num_imputed`, @hirsh1996young; the missing SD values were imputed from @naigles1990children). Previous work suggests using imputed values from highly similiar studies improves the accuracy of effect size estimates [@furukawa2006imputing]. The reported results do not qualitatively change when conditions from @hirsh1996young are excluded from our sample (see SI). <!-- Is this true? Let's add to the SI the major models in our paper excluding hirsh1996young -->
-
-<!-- let's move this to the SI under the heading of "Details of ES calculation": To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum.  -->
+In order to calculate each effect size, we recorded the sample size of each condition, the group mean, and the across-participant standard deviation. The mean and standard deviation were obtained from one of the four methods: a) retrieved from the results section or the data-presenting tables (*N* = `r num_text_or_table`); b) recovered from the plots (*N* =`r num_plot`); c) contacted the original authors (*N* = `r num_author_contact`); d) imputed using values from studies with similar designs (*N* = `r num_imputed`, @hirsh1996young; the missing SD values were imputed from @naigles1990children). Previous work suggests using imputed values from highly similiar studies improves the accuracy of effect size estimates [@furukawa2006imputing]. The reported results do not qualitatively change when conditions from @hirsh1996young are excluded from our sample (see SI). 
 
 ```{r data_preprocessing}
 num_has_raw <- ma_data %>% 
@@ -133,7 +134,6 @@ num_has_raw <- ma_data %>%
 ```
 
 Using the raw coded data, we calculated an effect size estimate for each condition as Cohen's *d*.  Cohen's *d* was calculated as the differemce between the proportion correct responses and chance (.5), divided by a pooled estimate of variance (see SI for example calculation). Note that we assume baseline performance to be .5 in all cases, even when an empirical baseline was reported (*N* = `r num_has_raw` conditions). This analytical decision was made in order to standardize the effect size estimate across all conditions in our sample, most of which did not report an empirical baseline. 
-<!-- if it's easy, it would be nice to walk through an example calculation of an effect size for a paricular paper/condition in the SI. Similiar to section 3 in https://mlewis.shinyapps.io/xtmem_SI/. --> 
 
 ### Moderators
 
@@ -200,5 +200,4 @@ In addition to the theoretical variables, we coded a range of methodological var
 
 ## Analytic Approach 
 We analyzed the data using multi-level random effect models implemented in the metafor package in R [@viechtbauer2010]. The random effect stucture included groupings by paper and participant group in order to account for the clustering of effect sizes in our sample. Moderator variables were included as additive fixed effects. All estimate ranges correspond to 95% confidence intervals, unless otherwise noted.  Data and analysis scripts are available at XXXX, and the dataset can be interactively explored at XXXX. 
-<!-- do we also have a random effect of condition? does including this influence the estimates at all? -->
 <!-- for dev sci, the paper needs be double blinded, so we have to remove links to stuff that reveals our identity -->
