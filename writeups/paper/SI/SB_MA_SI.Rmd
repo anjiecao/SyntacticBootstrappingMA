@@ -140,6 +140,35 @@ heatmaply(ordered_matrix,
 ```
 
 
+# Additional Models: Methodological Moderators with Theoretical Moderators
+## Methodological Moderators with Age
+```{r}
+age_method_m <- fit_method_model("mean_age", ma_data)
+print_method_model(age_method_m) %>% kable()
+
+
+```
+
+## Methodological Moderators with Productive Vocabulary Size 
+```{r}
+vocab_method_m <- fit_method_model("productive_vocab_median", ma_data)
+print_method_model(vocab_method_m) %>% kable()
+```
+
+## Methodological Moderators with Sentence Structure 
+```{r}
+sentence_structure_method_m <- fit_method_model("sentence_structure", ma_data)
+print_method_model(sentence_structure_method_m) %>% kable()
+
+```
+
+## Methodological Moderators with Agent Argument Type
+```{r}
+argument_type_method_m <- fit_method_model("agent_argument_type", ma_data)
+print_method_model(argument_type_method_m) %>% kable()
+```
+
+
 
 
 # Additional Moderators*

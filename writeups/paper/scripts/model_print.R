@@ -2,6 +2,86 @@ library(tidyverse)
 library(insight)
 library(janitor)
 # This script will run single-moderator models and generate a dataframe to be used in results section 
+
+fit_method_model <- function(additional_moderator, df){
+  
+  formula <- as.formula(paste0("d_calc ~ character_identification + practice_phase + 
+                               presentation_type_collapsed + test_mass_or_distributed + 
+                               n_repetitions_sentence + ", additional_moderator, sep = ""))
+  
+  model <- rma.mv(formula, 
+                  V = d_var_calc,
+                  random = ~ 1 | short_cite/same_infant/x_1,
+                  method = "REML",
+                  data = df)
+  
+  return(model)
+  
+  
+}
+
+print_method_model <- function(model_res){
+  
+  beta <- model_res$beta %>% as.data.frame() %>% rownames_to_column()
+  ci_lb <- model_res$ci.lb %>% as.data.frame() 
+  ci_ub <- model_res$ci.ub %>% as.data.frame() 
+  z_val <- model_res$zval %>% as.data.frame()
+  p_val <- model_res$pval %>% as.data.frame()
+  
+  
+  
+  res_df <- bind_cols(beta, ci_lb, ci_ub, z_val, p_val) 
+  
+  colnames(res_df) <- c("mod_name",
+    "beta", "ci_lb", "ci_ub", "z_val", "p_val")
+  
+  print_res <- res_df %>% 
+    mutate(
+      mod_name_print = case_when(
+        mod_name == "intrcpt" ~ "Intercept",
+        mod_name == "character_identificationyes" ~ "Character Identification Phase (Yes / No)", 
+        mod_name == "practice_phaseyes" ~ "Practice Phase (Yes / No)", 
+        mod_name == "presentation_type_collapsedsimultaneous" ~ "Stimuli Synchronicity (Simultaneous / Asynchronous)",
+        mod_name == "test_mass_or_distributedmass" ~ "Testing Structure (Mass / Distributed)", 
+        mod_name == "agent_argument_typepronoun" ~ "Agent Argument Type (Pronoun / Nouns)", 
+        mod_name == "n_repetitions_sentence" ~ "Number of Sentence Repetitions",
+        mod_name == "sentence_structuretransitive" ~ "Sentence Structure (Transitive / Intransitive)", 
+        mod_name == "productive_vocab_median" ~ "Median Productive Vocabulary Size",
+        mod_name == "mean_age" ~ "Mean Age"
+      ), 
+      beta_print_full = case_when(
+        round(beta, 2) == 0 ~ paste0(round(beta, 3), 
+                                     " [", 
+                                     round(ci_lb, 3), 
+                                     ", ",
+                                     round(ci_ub, 4), 
+                                     "]"),
+        TRUE ~ paste0(round(beta, 2), 
+                      " [", 
+                      round(ci_lb, 2), 
+                      ", ",
+                      round(ci_ub, 2), 
+                      "]")
+      ),
+      z_val_print = round(z_val, 2), 
+      p_val_print = case_when(
+        p_val < 0.001 ~ "< 0.001", 
+        round(p_val,2) <= 0.05 ~ paste0(as.character(round(p_val,2)), "*"), 
+        TRUE ~ as.character(round(p_val, 2))
+      )
+    ) %>% 
+    select(mod_name_print, beta_print_full, z_val_print, p_val_print)
+  
+  colnames(print_res) <- c("Parameter",
+                        "Estimates", "z value", "p value")
+  
+  return(print_res)
+  
+  
+}
+
+
+
 get_MA_params <- function(moderator, df) {
   
   this_data <- df

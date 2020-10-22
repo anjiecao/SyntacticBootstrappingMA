@@ -1,13 +1,15 @@
 ---
 title: "R Notebook"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(tidyverse)
 library(metafor)
 library(metalabr)
@@ -19,11 +21,11 @@ SB_DATA <- SB_DATA %>%
 
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 ml_dataset_info <- metalabr::get_metalab_dataset_info()
 ml_data <- metalabr::get_metalab_data(ml_dataset_info)
 ```
-```{r}
+```{r message=FALSE, warning=FALSE}
 MAPPING_STUDIES <- c("Mutual exclusivity", 
                      "Sound symbolism",
                      "Cross-situational word learning",
@@ -55,7 +57,7 @@ ALL_data <- bind_rows(ME_data,
 ALL_data
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 
 
@@ -135,7 +137,7 @@ ALL_data <- bind_rows(ME_data,
 ```
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 MAPPING_STUDIES <- c("Mutual exclusivity", 
                      "Sound symbolism",
                      "Cross-situational word learning",
@@ -146,13 +148,13 @@ all_models_res <- map_df(MAPPING_STUDIES, get_model_results)
 
 
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 SB_results <- fit_model(SB_DATA, "Syntactic Bootstrapping")
 all_models_res <- bind_rows(all_models_res, SB_results)
 
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 all_models_tidy <- all_models_res %>% 
   pivot_longer(
     null_estimate:age_p, 
@@ -218,5 +220,57 @@ all_models_tidy %>%
       panel.background = element_blank()) + 
     xlab("") + 
     ylab("Estimate") 
+```
+
+# Age 
+```{r}
+ ml_dataset_info <- metalabr::get_metalab_dataset_info()
+
+  ME_info <- ml_dataset_info %>% 
+  filter(name == "Mutual exclusivity")
+SS_info <- ml_dataset_info %>% 
+  filter(name == "Sound symbolism")
+XS_info <- ml_dataset_info %>% 
+  filter(name == "Cross-situational word learning")
+GF_info <- ml_dataset_info %>% 
+  filter(name == "Gaze following")
+
+ME_data <- metalabr::get_metalab_data(ME_info) %>% 
+  mutate(dataset = "Mutual exclusivity")
+SS_data <- metalabr::get_metalab_data(SS_info) %>% 
+  mutate(dataset = "Sound symbolism")
+XS_data <- metalabr::get_metalab_data(XS_info) %>% 
+  mutate(dataset = "Cross-situational word learning")
+GF_data <- metalabr::get_metalab_data(GF_info) %>% 
+  mutate(dataset = "Gaze following")
+
+age_data <- bind_rows(ME_data, 
+                      SS_data, 
+                      XS_data, 
+                      GF_data) %>% 
+  select(dataset, mean_age_1)
+
+SB_DATA <- SB_DATA %>% 
+  mutate(mean_age_1 = mean_age, 
+         unique_row = row_number(),
+         dataset = "Syntactic Bootstrapping") %>% 
+  select(dataset, mean_age_1)
+
+age_data <- bind_rows(age_data, SB_DATA)
+```
+
+
+
+
+```{r}
+age_data %>% 
+  mutate(
+    age_in_month = mean_age_1 / 30.44
+  ) %>% 
+  ggplot(aes(x = dataset, y = age_in_month)) + 
+  geom_violin() +
+  theme(
+    axis.text = element_text(angle = 45, hjust = 1, )
+  )
 ```
 
