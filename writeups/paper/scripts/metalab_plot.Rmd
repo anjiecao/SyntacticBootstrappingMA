@@ -261,16 +261,45 @@ age_data <- bind_rows(age_data, SB_DATA)
 
 
 
-
 ```{r}
-age_data %>% 
-  mutate(
-    age_in_month = mean_age_1 / 30.44
+summarize_age <- age_data %>% 
+  group_by(dataset) %>% 
+  summarise(
+    mean_age = mean(mean_age_1), 
+    mean_age_in_month = mean_age / 30.44,
+    num_study = n()
   ) %>% 
-  ggplot(aes(x = dataset, y = age_in_month)) + 
-  geom_violin() +
-  theme(
-    axis.text = element_text(angle = 45, hjust = 1, )
+  mutate(
+    dataset_name = dataset
   )
+tidy_models_with_age <- left_join(all_models_tidy, 
+                                  summarize_age, 
+                                  by = "dataset_name") %>% 
+  filter(model_type == "null") 
+
+tidy_models_with_age %>% 
+  ggplot(aes(x = mean_age_in_month, 
+            y = estimate, 
+            ymin = estimate.cil, 
+            ymax = estimate.cih, 
+            color = dataset_name,
+            size = (num_study * 0.1)
+            )) + 
+    guides(size = FALSE) +
+    geom_point() + 
+    geom_linerange(size = 0.5) +
+    geom_hline(yintercept = 0, color = "black", linetype="dashed")+
+    theme(
+      axis.line = element_line(size = 1.2),
+      axis.ticks = element_line(size = 1),
+      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      panel.background = element_blank()) + 
+    xlab("") + 
+    ylab("Estimate") 
+
+
+
 ```
+
+
 
