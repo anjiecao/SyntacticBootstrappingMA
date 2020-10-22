@@ -57,9 +57,29 @@ UNDER CONSTRUCTION
 https://mlewis.shinyapps.io/xtmem_SI/#section-effect-size-calculation
 
 To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum.
+
+Below is a step-by-step example calculation using data in Yuan & Fisher (2009) Experiment 1
+
+Raw data from the paper (pg 622) Table 1 
+The values are Mean looking time in seconds (Standard Errors)
+```{r}
+tibble(
+  "Dialogue Type" = c("Transitive", "Intransitive"),
+  "Two-participant Event" = c("4.82 (0.43)", "3.33 (0.24)"), 
+  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)"))
+```
+
+Standardize the raw data 
 ```{r}
 
 ```
+
+Calculate the effect size
+```{r}
+
+```
+
+Final Calculation
 
 
 # Major Models excluding the imputed value
