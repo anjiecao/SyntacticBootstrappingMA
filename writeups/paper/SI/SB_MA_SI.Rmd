@@ -60,14 +60,13 @@ To standardize the effect size calculation, we converted some reported raw resul
 
 Below is a step-by-step example calculation using data in Yuan & Fisher (2009) Experiment 1
 
-Raw data from the paper (pg 622) Table 1 
-The values are Mean looking time in seconds (Standard Errors)
+
 ```{r}
 tibble(
   "Dialogue Type" = c("Transitive", "Intransitive"),
-  "Sample Size" = c(8, 8),
+  "Sample Size" = c("8", "8"),
   "Two-participant Event" = c("4.82 (0.43)", "3.33 (0.24)"), 
-  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable()
+  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable(caption = "Raw data from the Yuan & Fisher (2009, pg 622) Table 1. The values are Mean looking time in seconds, and in parentheses are SE.")
 ```
 
 When the paper only provides raw looking time data, we converted the data into proportion of correct looking time and the variances following the formulae below. 
@@ -79,14 +78,14 @@ SD_{Proportion} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]
 ```{r}
 tibble(
   "Dialogue Type" = c("Transitive", "Intransitive"),
-    "Sample Size" = c(8, 8),
-  "Mean Proportion Calculation" = c("4.82 / (4.82 + 2.87)", "4.12 / (3.33 + 4.12)"), 
-  "Mean Proportion" = c(0.627, 0.553), 
-  "Standard Deviation Calculation" = c("(0.43 / (4.82 + 2.87)) * (8^0.5)", "(0.4 / (3.33 + 4.12)) * (8^0.5)"),
-  "Standard Deviation" = c(0.158, 0.152)) %>% kable()
+    "Sample Size" = c("8", "8"),
+  #"Mean Proportion Calculation" = c("4.82 / (4.82 + 2.87)", "4.12 / (3.33 + 4.12)"), 
+  "Mean Proportion" = c("0.627", "0.553"), 
+  #"Standard Deviation Calculation" = c("(0.43 / (4.82 + 2.87)) * (8^0.5)", "(0.4 / (3.33 + 4.12)) * (8^0.5)"),
+  "Standard Deviation" = c("0.158", "0.152")) %>% kable(caption = "Converted data from raw looking time to proportion of looking time to the correct scenes. For children hearing transitive sentences, the correct scene was the Two-participant Event. For children hearing intransitive sentences, the correct scene was the One-participant Event. Standard Deviations were calculated by scaling the raw SE first, and then multiplied by the square roots of the number of participants.")
 ```
 
-Then we calculate Cohen's d as follows (the implemetation of the script can be found at XXX)
+Then we calculate Cohen's d and the variances as follows (the implemetation of the script can be found at XXX)
 
 
 
@@ -103,10 +102,6 @@ Then we calculate Cohen's d as follows (the implemetation of the script can be f
   &\approx 0.35
   
 \end{aligned}
-
-
-Then we calculate the variance of Cohen's d and the Confidence Intervals as following: 
-
 
 
 \begin{aligned}
