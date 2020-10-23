@@ -6,18 +6,20 @@ generate_funnel_plot <- function(data){
 
   ma_data <- data
 
-  # model <- rma.mv(d_calc ~ 1,  d_var_calc,
-  #                 random = ~ 1 | short_cite/same_infant/x_1,
-  #                 method = "REML",
-  #                 data=ma_data)
-  #
-  # predicted_val <- predict.rma(model)
-
+   model <- rma.mv(d_calc ~ 1,  d_var_calc,
+                   random = ~ 1 | short_cite/same_infant/x_1,
+                   method = "REML",
+                   data=ma_data)
+  
+  predicted_val <- predict.rma(model)
+  intercept_in_model <-  model$beta[1]
+  
+  
 ma_funnel <- ma_data %>%
   mutate(
     se = sqrt(d_var_calc),
     es = d_calc,
-    center = mean(d_calc),
+    center = intercept_in_model,
     lower_lim = max(se) + .05 * max(se),
     type = "non_moderated"
   ) %>%
@@ -52,7 +54,7 @@ ggplot(ma_funnel, aes(x = es, y = -se)) +
   geom_polygon(aes(x = x, y = y),
                data = funnel95.data,
                fill = "grey90") +
-  geom_vline(aes(xintercept=x2),
+  geom_vline(aes(xintercept=intercept_in_model),
              linetype = "dashed", color = "red", size = .8, data = funnel_shape_wide) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey44",  size = .8) +
   scale_y_continuous(labels = function(x){abs(x)}) +

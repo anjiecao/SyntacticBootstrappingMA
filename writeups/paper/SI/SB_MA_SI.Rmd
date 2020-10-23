@@ -48,14 +48,12 @@ This document was created from an R markdown file. The repository for the projec
 DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
 RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 
-ma_data <- read_csv(DATA_PATH) %>% 
-  mutate(presentation_type = presentation_type_collapsed)
+ma_data <- read_csv(DATA_PATH) 
 ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
 # Details of calculating effect size
-UNDER CONSTRUCTION: pending fixing table name
-https://mlewis.shinyapps.io/xtmem_SI/#section-effect-size-calculation
+
 
 To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum.
 
@@ -119,13 +117,13 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 
 # Major Models excluding the imputed value {.tabset}
 ```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type_collapsed","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 excluded_mod_print <- generate_moderator_df(MODERATORS, filter(ma_data,  data_source != "imputed"))
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 
 compare_models_imputed <- function(df, type){
   
-  major_mods <- c("NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type","presentation_type_collapsed", "character_identification", "practice_phase","test_mass_or_distributed", "n_repetitions_sentence")
+  major_mods <- c("NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type","presentation_type", "character_identification", "practice_phase","test_mass_or_distributed", "n_repetitions_sentence")
   
   clean_df <- df %>% 
     filter(this_moderator %in% major_mods) %>% 
@@ -159,7 +157,7 @@ excluded %>%
       this_moderator == "agent_argument_type" ~ "Agent argument type model (pronoun / noun)", 
       this_moderator == "character_identification" ~ "Character identification model (yes / no)", 
       this_moderator == "practice_phase" ~ "Practice phase model (yes / no)", 
-      this_moderator == "presentation_type_collapsed" ~ "Stimuli synchronicity model (simultaneous / asynchronous)", 
+      this_moderator == "presentation_type" ~ "Stimuli synchronicity model (simultaneous / asynchronous)", 
       this_moderator == "test_mass_or_distributed" ~ "Testing structure model (mass / distributed)", 
       this_moderator == "n_repetitions_sentence" ~ "Number of sentence repetition models"
     ), 
@@ -210,7 +208,18 @@ full %>%
 
 
 
-#<!-- do we also have a random effect of condition? does including this influence the estimates at all? -->
+# Random Effect expt condition??
+
+```{r}
+rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/expt_condition/same_infant/row_id, data=
+          ma_data) %>% summary()
+
+rma.mv(d_calc,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=
+          ma_data) %>% summary()
+```
+
 
 
 # Sensitivity analysis
@@ -221,7 +230,7 @@ ma_data_with_affirm <- ma_data %>%
          affirm =  (d_calc > 0) & (pvalue < 0.05))
 
 affirm_model<- rma.mv(d_calc,  d_var_calc,  
-                         random = ~ 1 | short_cite/same_infant/x_1, data=
+                         random = ~ 1 | short_cite/same_infant/row_id, data=
           ma_data_with_affirm %>% filter(affirm == FALSE)) 
 
 affirm_estimate <- as.numeric(affirm_model$b)
@@ -233,9 +242,9 @@ worst_case_estimate_print <- paste0(as.numeric(round(affirm_model$beta, 2)),
                                     "]")
  
 all_model <- rma.mv(d_calc,  d_var_calc,  
-                         random = ~ 1 | short_cite/same_infant/x_1, data=
+                         random = ~ 1 | short_cite/same_infant/row_id, data=
           ma_data_with_affirm)
-all_estimate <- as.numeric(all_model$b)
+all_estimate <- as.numeric(all_model$ b)
 
 ```
 

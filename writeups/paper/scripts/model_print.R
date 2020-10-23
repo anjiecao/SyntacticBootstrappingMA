@@ -11,7 +11,7 @@ fit_method_model <- function(additional_moderator, df){
   
   model <- rma.mv(formula, 
                   V = d_var_calc,
-                  random = ~ 1 | short_cite/same_infant/x_1,
+                  random = ~ 1 | short_cite/same_infant/row_id,
                   method = "REML",
                   data = df)
   
@@ -95,7 +95,7 @@ get_MA_params <- function(moderator, df) {
   
   model <- rma.mv(formula, 
                   V = d_var_calc,
-                  random = ~ 1 | short_cite/same_infant/x_1,
+                  random = ~ 1 | short_cite/same_infant/row_id,
                   method = "REML",
                   data = this_data)
   

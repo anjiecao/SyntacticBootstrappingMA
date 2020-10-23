@@ -16,14 +16,15 @@ We first evaluated the evidential value of the literature by assessing the evide
 
 ```{r label = "funnel", fig.pos = "t!", fig.height = 3.75, fig.width = 4, fig.cap = "Funnel plot showing the standard error of each effect size estimate in our meta-analysis as a function of the magnitude of that effect size. The gray and red vertical dashed lines correspond to an effect size of zero and the meta-analytic effect size estimate, respectively. The grey funnel represents a 95% confidence interval around meta-analytic estimate. In the absence of publication bias, effect size estimates should by symmetrically distributed around the red line."}
 generate_funnel_plot(ma_data)
-reg_model <- rma(ma_data$d_calc, ma_data$d_var_calc)
-reg_result <- regtest(reg_model, model="rma", predictor="sei", ret.fit=FALSE) # access zval and pval from here
+
+reg_result <- rma.mv(d_calc ~ sqrt(d_var_calc),  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=ma_data) # access zval and pval from here
 reg_z <- round(reg_result$zval, digits = 2)
 reg_p <- if_else(reg_result$pval < 0.0001, "< .0001", as.character(reg_result$pval))
 #reg_result
 ```
 
-<!-- the above method of calculating egger's test does not take into account the clustered structure of our data, as we do elsewhere. There's no way to add this structure using the regtest function; you'll need to do the manual regression method that I added to the markdown on publication bias to get the correct values. The red line on the funnel itself should also reflect the model estimate from the correct ma model. -->
+<!-- the above method of calculating egger's test does not take into account the clustered structure of our data, as we do elsewhere. There's no way to add this structure using the regtest function; you'll need to do the manual regression method that I added to the markdown on publication bias to get the correct values. [DONE] The red line on the funnel itself should also reflect the model estimate from the correct ma model. -->
 
 Figure\ \@ref(fig:funnel) presents the funnel plot for the effect sizes in our sample. A funnel plot shows  estimates of effect size variance (plotted with large values lower on the axis) as a function of the magnitude of the effect size [@egger1997bias]. Under a model of publication bias in which researchers decide whether or not to publish a study based on the magnitude of its effect size (larger effect sizes being more likely), effect size estimates should fall symmetrically around the grand effect size estimate. Evidence of asymmetry around the grand mean, particularly more large, positive effect sizes, would suggest that the literature reflects a biased sample of studies. A formal test of asymmetry in our sample revealed evidence for asymmetry (Egger's test: *Z* = `r reg_z`; *p* `r reg_p`).
 

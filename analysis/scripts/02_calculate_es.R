@@ -5,8 +5,11 @@ library(janitor)
 library(gsubfn)
 
 
-INPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
-OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv")
+#INPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
+#OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv")
+
+INPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
+OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv")
 
 # ES function - adopted from compute_es (within-one case)
 get_es <- function(df){
@@ -55,8 +58,8 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
          character_identification = case_when(character_identification == "NA" ~ "no",
                                               is.na(character_identification) ~ "no",
                                               TRUE ~ character_identification),
-         presentation_type = case_when(presentation_type == "immediate-after" ~ "immediate_after",
-                                       presentation_type == "Immediate-after" ~ "immediate_after",
+         presentation_type = case_when(presentation_type == "immediate-after" ~ "simultaneous",
+                                       presentation_type == "Immediate-after" ~ "simultaneous",
                                        TRUE ~ presentation_type),
         stimuli_actor = case_when(stimuli_actor == "non-person" ~ "non_person",
                                   TRUE ~ stimuli_actor),
@@ -126,7 +129,8 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
           (transitive_event_type == "AGENT") ~ "agent_matching",
           TRUE ~ "action_matching"
         ),
-        publication_year = parse_number(unique_id)
+        publication_year = parse_number(unique_id), 
+        row_id = 1:n()
         ) %>%
   mutate(patient_argument_type_clean = if_else (is.na(patient_argument_type),
                                                 "intransitive",
