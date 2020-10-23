@@ -20,6 +20,7 @@ subtitle: Supplementary Information
 library(tidyverse)
 library(knitr)
 library(here)
+library(kableExtra)
 library(metafor)
 library(ggimage)
 library(imager)
@@ -116,10 +117,98 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 
 
 
-# Major Models excluding the imputed value
+# Major Models excluding the imputed value {.tabset}
 ```{r}
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type_collapsed","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+excluded_mod_print <- generate_moderator_df(MODERATORS, filter(ma_data,  data_source != "imputed"))
+mod_print <- generate_moderator_df(MODERATORS, ma_data)
+
+compare_models_imputed <- function(df, type){
+  
+  major_mods <- c("NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type","presentation_type_collapsed", "character_identification", "practice_phase","test_mass_or_distributed", "n_repetitions_sentence")
+  
+  clean_df <- df %>% 
+    filter(this_moderator %in% major_mods) %>% 
+    select(this_moderator, estimate_print_full, z, p, mod_estimate_print_full, moderator_z, moderator_p) %>% 
+    mutate(
+      intercept_estimate_print = estimate_print_full, 
+      intercept_z = z, 
+      intercept_p = p, 
+      df_type = type
+    ) %>% 
+    select(-c(estimate_print_full, z, p))
+    
+  return(clean_df)
+  
+}
+
 
 ```
+## Excluded the imputed value
+```{r}
+excluded <- compare_models_imputed(excluded_mod_print, "no_imputed")
+full <- compare_models_imputed(mod_print, "imputed")
+
+excluded %>% 
+  mutate(
+    "Model" = case_when(
+      this_moderator == "NULL" ~ "Null model", 
+      this_moderator == "mean_age" ~ "Mean age model", 
+      this_moderator == "productive_vocab_median" ~ "Median productive vocabulary size model", 
+      this_moderator == "sentence_structure" ~ "Sentence structure model (transitive / intransitive)",
+      this_moderator == "agent_argument_type" ~ "Agent argument type model (pronoun / noun)", 
+      this_moderator == "character_identification" ~ "Character identification model (yes / no)", 
+      this_moderator == "practice_phase" ~ "Practice phase model (yes / no)", 
+      this_moderator == "presentation_type_collapsed" ~ "Stimuli synchronicity model (simultaneous / asynchronous)", 
+      this_moderator == "test_mass_or_distributed" ~ "Testing structure model (mass / distributed)", 
+      this_moderator == "n_repetitions_sentence" ~ "Number of sentence repetition models"
+    ), 
+    "Intercept Estimates" = intercept_estimate_print, 
+    "Intercept z value" = format(round(intercept_z, 2)), 
+    "Intercept p value" = format(round(intercept_p, 2)), 
+    "Moderator Estimates" = mod_estimate_print_full, 
+    "Moderator z value" = format(round(moderator_z, 2)), 
+    "Moderator p value" = format(round(moderator_p, 2))
+  ) %>% 
+  select(-c(this_moderator, intercept_estimate_print, intercept_z, intercept_p, 
+            mod_estimate_print_full, moderator_z, moderator_p, df_type)) %>% 
+  kable() %>% 
+  kable_styling(font_size = 9)
+
+
+```
+
+## Included the imputed value
+
+```{r}
+full %>% 
+  mutate(
+    "Model" = case_when(
+      this_moderator == "NULL" ~ "Null model", 
+      this_moderator == "mean_age" ~ "Mean age model", 
+      this_moderator == "productive_vocab_median" ~ "Median productive vocabulary size model", 
+      this_moderator == "sentence_structure" ~ "Sentence structure model (transitive / intransitive)",
+      this_moderator == "agent_argument_type" ~ "Agent argument type model (pronoun / noun)", 
+      this_moderator == "character_identification" ~ "Character identification model (yes / no)", 
+      this_moderator == "practice_phase" ~ "Practice phase model (yes / no)", 
+      this_moderator == "presentation_type_collapsed" ~ "Stimuli synchronicity model (simultaneous / asynchronous)", 
+      this_moderator == "test_mass_or_distributed" ~ "Testing structure model (mass / distributed)", 
+      this_moderator == "n_repetitions_sentence" ~ "Number of sentence repetition models"
+    ), 
+    "Intercept Estimates" = intercept_estimate_print, 
+    "Intercept z value" = format(round(intercept_z, 2)), 
+    "Intercept p value" = format(round(intercept_p, 2)), 
+    "Moderator Estimates" = mod_estimate_print_full, 
+    "Moderator z value" = format(round(moderator_z, 2)), 
+    "Moderator p value" = format(round(moderator_p, 2))
+  ) %>% 
+  select(-c(this_moderator, intercept_estimate_print, intercept_z, intercept_p, 
+            mod_estimate_print_full, moderator_z, moderator_p, df_type)) %>% 
+  kable() %>% 
+  kable_styling(font_size = 9)
+```
+
+
 
 #<!-- do we also have a random effect of condition? does including this influence the estimates at all? -->
 
