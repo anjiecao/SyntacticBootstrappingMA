@@ -81,38 +81,28 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
              grepl("point", dependent_measure, fixed = TRUE) ~ "point",
              grepl("look", dependent_measure, fixed = TRUE) ~ "look",
              TRUE ~ dependent_measure),
-         agent_argument_type_clean = case_when(
-          agent_argument_type == "2noun" ~ "noun_phrase",
-          agent_argument_type == "2nouns" ~ "noun_phrase",
-          agent_argument_type == "two_nouns" ~ "noun_phrase",
-          agent_argument_type == "noun_with_adjectives" ~ "noun_phrase",
-          agent_argument_type == "noun_and_pronoun" ~ "varying_agent",
-          agent_argument_type == "two_nouns_and_pronoun" ~ "varying_agent",
+         agent_argument_type = case_when(
+          agent_argument_type == "2noun" ~ "noun",
+          agent_argument_type == "2nouns" ~ "noun",
+          agent_argument_type == "two_nouns" ~ "noun",
+          agent_argument_type == "noun_with_adjectives" ~ "noun",
+          agent_argument_type == "noun_and_pronoun" ~ "pronoun",
+          agent_argument_type == "two_nouns_and_pronoun" ~ "pronoun",
           TRUE ~ agent_argument_type
         ),
-        agent_argument_number = case_when(
-          agent_argument_type == "2noun" ~ "2",
-          agent_argument_type == "2nouns" ~ "2",
-          agent_argument_type == "two_nouns" ~ "2",
-          agent_argument_type == "noun_with_adjectives" ~ "1",
-          agent_argument_type == "noun_and_pronoun" ~ "varying",
-          agent_argument_type == "two_nouns_and_pronoun" ~ "varying",
-          TRUE ~ "1"
-        ),
         transitive_event_type = case_when(
-          transitive_event_type == "direct_ caused_movement"~ "direct_caused_action",
+          transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
           transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
           transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
           transitive_event_type == "indirect_cause_action"~ "indirect_caused_action",
           TRUE ~ transitive_event_type
         ),
 
-        patient_argument_type_clean = case_when(
-          patient_argument_type ==  "noun_and_dropping" ~ "varying_patient",
-          patient_argument_type == "pronoun_and_noun" ~ "varying_patient",
+        patient_argument_type = case_when(
+          patient_argument_type ==  "noun_and_dropping" ~ "noun",
+          patient_argument_type == "pronoun_and_noun" ~ "pronoun",
           TRUE ~ patient_argument_type,
         ),
-
         visual_stimuli_pair = paste(transitive_event_type, intransitive_event_type, sep = '_'),
 
         adult_participant = case_when(
@@ -132,9 +122,9 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
         publication_year = parse_number(unique_id), 
         row_id = 1:n()
         ) %>%
-  mutate(patient_argument_type_clean = if_else (is.na(patient_argument_type),
+  mutate(patient_argument_type = if_else (is.na(patient_argument_type),
                                                 "intransitive",
-                                                patient_argument_type_clean)) %>%
+                                                patient_argument_type)) %>%
   filter(paradigm_type!= "agent_matching") %>%
   select(-id)
     # use line breaks to make code more readable
