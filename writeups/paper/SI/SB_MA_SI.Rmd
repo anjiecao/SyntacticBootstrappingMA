@@ -53,7 +53,7 @@ ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
 # Details of calculating effect size
-UNDER CONSTRUCTION
+UNDER CONSTRUCTION: pending fixing table name
 https://mlewis.shinyapps.io/xtmem_SI/#section-effect-size-calculation
 
 To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum.
@@ -65,21 +65,60 @@ The values are Mean looking time in seconds (Standard Errors)
 ```{r}
 tibble(
   "Dialogue Type" = c("Transitive", "Intransitive"),
+  "Sample Size" = c(8, 8),
   "Two-participant Event" = c("4.82 (0.43)", "3.33 (0.24)"), 
-  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)"))
+  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable()
 ```
 
-Standardize the raw data 
+When the paper only provides raw looking time data, we converted the data into proportion of correct looking time and the variances following the formulae below. 
+
+\begin{aligned}
+Mean_{Proportion} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
+SD_{Proportion} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N}
+\end{aligned}
 ```{r}
-
+tibble(
+  "Dialogue Type" = c("Transitive", "Intransitive"),
+    "Sample Size" = c(8, 8),
+  "Mean Proportion Calculation" = c("4.82 / (4.82 + 2.87)", "4.12 / (3.33 + 4.12)"), 
+  "Mean Proportion" = c(0.627, 0.553), 
+  "Standard Deviation Calculation" = c("(0.43 / (4.82 + 2.87)) * (8^0.5)", "(0.4 / (3.33 + 4.12)) * (8^0.5)"),
+  "Standard Deviation" = c(0.158, 0.152)) %>% kable()
 ```
 
-Calculate the effect size
-```{r}
+Then we calculate Cohen's d as follows (the implemetation of the script can be found at XXX)
 
-```
 
-Final Calculation
+
+\begin{aligned}
+ d_{transitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
+  &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
+  &= \frac{0.627 - 0.5}{0.158} \\
+  &\approx 0.79 \\
+  \\
+  \\
+  d_{intransitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
+  &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
+  &= \frac{0.553 - 0.5}{0.152} \\
+  &\approx 0.35
+  
+\end{aligned}
+
+
+Then we calculate the variance of Cohen's d and the Confidence Intervals as following: 
+
+
+
+\begin{aligned}
+var(d_{transitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
+&= \frac{1}{8} + \frac{0.79^2}{2 * 8} \\
+&\approx 0.16 \\
+
+var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
+&= \frac{1}{8} + \frac{0.35^2}{2 * 8} \\
+&\approx 0.13 \\
+\end{aligned}
+
 
 
 # Major Models excluding the imputed value

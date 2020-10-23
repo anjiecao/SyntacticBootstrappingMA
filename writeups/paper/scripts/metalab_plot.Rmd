@@ -430,7 +430,7 @@ tidy_models_with_age_younger %>%
             size = (num_study * 0.1)
             )) + 
     guides(size = FALSE) +
-    xlim(0,72) +
+    xlim(0,48) +
     coord_flip() +
     geom_point() +
     geom_text(aes(label = dataset_name), hjust = 0.5, vjust = -1.4, size = 3) +
