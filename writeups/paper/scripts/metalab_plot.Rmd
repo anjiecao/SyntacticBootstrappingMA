@@ -423,17 +423,34 @@ tidy_models_with_age_younger <- left_join(all_models_younger_tidy,
   filter(model_type == "null") 
 
 tidy_models_with_age_younger %>% 
+  mutate(
+    text_color = case_when(
+      dataset_name == "Syntactic Bootstrapping" ~ "red", 
+      TRUE ~  "black"
+    ), 
+    dataset_name = case_when(
+      dataset_name == "Cross-situational word learning" ~ "Cross-situational\n word learning",
+      dataset_name == "Syntactic Bootstrapping" ~ "Syntactic \n Bootstrapping",
+      dataset_name == "Mutual exclusivity" ~ "Mutual \n Exclusivity",
+      dataset_name == "Gaze following" ~ "Gaze \n Following", 
+      dataset_name == "Sound symbolism" ~ "Sound \n Symbolism", 
+      TRUE ~ dataset_name
+    )
+  ) %>% 
   ggplot(aes(x = mean_age_in_month, 
             y = estimate, 
             ymin = estimate.cil, 
             ymax = estimate.cih, 
-            size = (num_study * 0.1)
+            size = (num_study * 0.1), 
+            color = text_color
             )) + 
     guides(size = FALSE) +
-    xlim(0,48) +
+    xlim(0,36) +
     coord_flip() +
     geom_point() +
-    geom_text(aes(label = dataset_name), hjust = 0.5, vjust = -1.4, size = 3) +
+    scale_color_manual(values = c("black", "red")) + 
+    guides(color = FALSE) +
+    geom_text(aes(label = dataset_name), hjust = 0.5, vjust = -.5, size = 3) +
     geom_linerange(size = 0.5) +
     geom_hline(yintercept = 0, color = "black", linetype="dashed")+
     theme(
