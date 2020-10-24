@@ -58,6 +58,8 @@ library(knitr)
 library(PublicationBias)
 library(janitor)
 library(insight)
+library(cowplot)
+
 
 # scripts for data presentation
 source(here("writeups/paper/scripts/prisma_diagram.R"))

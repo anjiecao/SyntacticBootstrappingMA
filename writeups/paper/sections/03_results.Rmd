@@ -1,5 +1,5 @@
 ```{r generate to-print model results}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type_collapsed","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 ```
 
@@ -62,10 +62,10 @@ In sum, across two types of analyses, we find some evidence for publication bias
 
 We next asked whether the overall effect size estimate was moderated by our theoretical moderators of interest: development-related moderators (vocabulary and age), and sentence structure moderators (predicate and noun phrase types).
 
-<!-- Things to change in the plot: (1) add caption, making sure to (briefly) explain how to intepret the factor levels and why vocab is not included in the plot (2) change x axis label to match the labels of other plots (3) full model should have lines connecting point estimates to show that they are all simultaneously in the same model, (4) put factor levels in parentheses (i.e. "(Prounoun/noun)"), (5) Change legend to be "Model Type: Full; Single Predictor" or something like that. (6) compress the plot veritically so there's less wasted space? (7) let's combine this plot with the method one so they are side by side. -->
+<!-- Things to change in the plot: (1) add caption, making sure to (briefly) explain how to intepret the factor levels and why vocab is not included in the plot (2) change x axis label to match the labels of other plots (3) full model should have lines connecting point estimates to show that they are all simultaneously in the same model, (4)[done] put factor levels in parentheses (i.e. "(Prounoun/noun)"), (5) Change legend to be "Model Type: Full; Single Predictor" or something like that. (6) compress the plot veritically so there's less wasted space? (7) let's combine this plot with the method one so they are side by side. -->
 ```{r label = "mega_plot"}
 theoretical_mod <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age, V = d_var_calc,
-                    random = ~ 1 | short_cite/same_infant/x_1,
+                    random = ~ 1 | short_cite/same_infant/row_id,
                      method = "REML",
                      data = ma_data) 
 
@@ -110,9 +110,9 @@ predicted_val_age %>%
   geom_smooth(method = "lm",
               aes(x = developmental_predictor, y = d_calc,color = "Cohen's d"),
               ) +
-  geom_smooth(method = "lm",
-              aes(x = developmental_predictor, y = pred,
-                  color = "Model's Predicted Values")) +
+  #geom_smooth(method = "lm",
+  #            aes(x = developmental_predictor, y = pred,
+  #                color = "Model's Predicted Values")) +
   xlab("Mean Age (Days)") + 
   ylab(expression(paste("Effect Size (Cohen's ", italic(d), ")")))   +
   scale_color_manual(name = "Regression Line",             # legend name
@@ -145,9 +145,9 @@ In summary, we found that predicate type is a significant predictor of the effec
 One limiting factor in interpetting the moderating  role of theoretical vairables on the syntactic bootstrapping effect is that there was variability across studies in the exact method used in testing children. It is possible that this methodological variability conceals true underlying moderating influences. For example, if researchers adapt their method to the age of the children they are targeting, this might conceal developmental change in the strength of the effect [@bergmann2018promoting]. 
 
 ```{r mega model for methodological moderators, message=FALSE, warning=FALSE}
-methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase + presentation_type_collapsed + test_mass_or_distributed + n_repetitions_sentence,
+methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase + presentation_type + test_mass_or_distributed + n_repetitions_sentence,
                              V = d_var_calc,
-                    random = ~ 1 | short_cite/same_infant/x_1,
+                    random = ~ 1 | short_cite/same_infant/row_id,
                      method = "REML",
                      data = ma_data)
 
@@ -159,8 +159,15 @@ methodological_mod_print <- generate_mega_model_df(methodological_mod)
 ```
 
 <!-- combine this plot with the theoretical plot, side by side. make same changes as to theoretical plot -->
-```{r label = "methodological_mega_model", fig.pos = "T!", fig.cap = ""}
-generate_predictor_plot(mod_print, methodological_mod_print, "methodological")
+```{r label = "methodological_mega_model", fig.width = 10, fig.height = 5,fig.pos = "T!", fig.cap = ""}
+p_theoretical <- generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical")
+p_model <- generate_predictor_plot(mod_print, methodological_mod_print, "methodological")
+
+plot_grid(p_theoretical, p_model, 
+          labels = c('Theoretical', 'Methodological'), 
+          label_size = 12, 
+          rel_widths = c(0.5, 0.5))
+
 ```
 
 We next asked whether the five different methodological variables (practice phase, sentence repetitions, character identifcation phase, synchronicity, testing procedure structure) moderated the syntactic bootstrapping effect. None of these methodological variables were significant moderators of the effect in a single predictor model (Fig. \@ref(fig:mega); see SI for exact estimates). In an additive linear model with all five methodological predictors, there was a significant effect of testing procedure structure ($\beta$ = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_p_print`), with distributed testing designs tending to have larger effect sizes than mass designs. This finding suggests that children tested in a procedure with only one train-test pair performed better than those tested in procedure with multiple train-test pairs. Finally, we asked how these methodological moderators related to our theoretical moderators of interest. Controlling for methodological variables did not qualitiatively change the role of any of the theoretical moderators (see SI) .  Taken together, these analyses suggest that methodological variables do not play a large influencing role on the size of the syntactic bootstrapping effect. 

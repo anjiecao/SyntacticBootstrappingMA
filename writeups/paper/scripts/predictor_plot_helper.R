@@ -14,8 +14,8 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
              type = "theoretical", 
              this_moderator = case_when(
                this_moderator == "mean_age" ~ "Mean Age", 
-               this_moderator == "sentence_structure" ~ "Sentence Structure \n Transitive / Intransitive ", 
-               this_moderator == "agent_argument_type" ~ "Agent Argument Type \n Pronoun / Noun ", 
+               this_moderator == "sentence_structure" ~ "Predicate Type \n (Transitive / Intransitive)", 
+               this_moderator == "agent_argument_type" ~ "Agent Argument Type \n (Pronoun / Noun)", 
              ))
     
     
@@ -24,8 +24,8 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       mutate(
         this_moderator = case_when(
           moderator_name == "mean_age" ~ "Mean Age", 
-          moderator_name == "sentence_structuretransitive" ~ "Sentence Structure \n Transitive / Intransitive ", 
-          moderator_name == "agent_argument_typepronoun" ~ "Agent Argument Type \n Pronoun / Noun ", 
+          moderator_name == "sentence_structuretransitive" ~ "Predicate Type \n (Transitive / Intransitive)", 
+          moderator_name == "agent_argument_typepronoun" ~ "Agent Argument Type \n (Pronoun / Noun)", 
         ),
         mod_estimate.cih = model_ci_ub, 
         mod_estimate.cil = model_ci_lb
@@ -35,7 +35,7 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
              type = "theoretical")
     
   }else if (type == "methodological"){
-    MODERATORS <- c("character_identification", "practice_phase", "test_mass_or_distributed","n_repetitions_sentence", "presentation_type_collapsed")
+    MODERATORS <- c("character_identification", "practice_phase", "test_mass_or_distributed","n_repetitions_sentence", "presentation_type")
     
     single_df <- single_model_df %>% 
       filter(this_moderator %in% MODERATORS) %>% 
@@ -44,10 +44,10 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
              type = "methodological",
         this_moderator = case_when(
           this_moderator == "n_repetitions_sentence" ~ "Sentence Repetitions ",
-          this_moderator == "character_identification" ~ "Character Identification Phase \n Yes / No ", 
-          this_moderator == "practice_phase" ~ "Practice Phase \n Yes / No ",
-          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure \n Mass / Distributed",
-          this_moderator == "presentation_type_collapsed" ~ "Synchronicity \n Simultaneous / Asynchronous",
+          this_moderator == "character_identification" ~ "Character Identification Phase \n (Yes / No)", 
+          this_moderator == "practice_phase" ~ "Practice Phase \n (Yes / No)",
+          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)",
+          this_moderator == "presentation_type" ~ "Synchronicity \n (Simultaneous / Asynchronous)",
         )
       ) 
     
@@ -56,10 +56,10 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       mutate(
         this_moderator = case_when(
           moderator_name == "n_repetitions_sentence" ~ "Sentence Repetitions ",
-          moderator_name == "character_identificationyes" ~ "Character Identification Phase \n Yes / No ", 
-          moderator_name == "practice_phaseyes" ~ "Practice Phase \n Yes / No ",
-          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure \n Mass / Distributed",
-          moderator_name == "presentation_type_collapsedsimultaneous" ~ "Synchronicity \n Simultaneous / Asynchronous",
+          moderator_name == "character_identificationyes" ~ "Character Identification Phase \n (Yes / No)", 
+          moderator_name == "practice_phaseyes" ~ "Practice Phase \n (Yes / No)",
+          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure \n (Mass / Distributed)",
+          moderator_name == "presentation_typesimultaneous" ~ "Synchronicity \n (Simultaneous / Asynchronous)",
         ),
         mod_estimate.cih = model_ci_ub, 
         mod_estimate.cil = model_ci_lb
@@ -70,7 +70,7 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
     
   }
   
-  all_df <- bind_rows(single_df, mega_df)
+  all_df <- bind_rows(mega_df,single_df)
   
   all_df %>% ggplot(aes(x = fct_reorder(this_moderator, -mod_estimate), color = model, 
             y = mod_estimate, 
@@ -89,7 +89,7 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       #alpha = 0.5, 
       #color = "grey", 
       size = 0.5) + 
-    scale_alpha_manual(values = c(0, 1)) + 
+    scale_alpha_manual(values = c(1, 0)) + 
     geom_hline(yintercept = 0, color = "black", linetype="dashed")+
     coord_flip() + 
     theme(

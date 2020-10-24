@@ -48,7 +48,7 @@ ma_data_with_es <- ma_data %>%
 
 # clean up factor level issues
 tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing variables
-  clean_names() %>%
+  janitor::clean_names() %>%
   #select(-long_cite) %>%
   filter(!is.na(d_calc) & paper_eligibility == "include") %>% # tidy column names
   mutate(id = row_number(),
@@ -130,6 +130,17 @@ tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing v
     # use line breaks to make code more readable
   # & (sentence_structure == "intransitive")
 
-write_csv(tidy_es, OUTPATH)
+# temp cleaning measurement 
+
+d <- read_csv(OUTPATH) %>% 
+  mutate(
+    presentation_type = case_when(
+      presentation_type == "immediate_after" ~ "simultaneous", 
+      TRUE ~ presentation_type
+    )
+  )
+write_csv(d, OUTPATH)
+
+#write_csv(tidy_es, OUTPATH)
 
 

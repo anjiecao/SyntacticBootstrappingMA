@@ -186,8 +186,8 @@ num_char_id_no <- ma_data %>% filter(character_identification == "no") %>% nrow(
 ```
 
 ```{r categorize_by_synchronicity}
-num_video_simultaneous <- ma_data %>% filter(presentation_type_collapsed == "simultaneous") %>% nrow()
-num_video_asynchronous <- ma_data %>% filter(presentation_type_collapsed == "asynchronous") %>% nrow()
+num_video_simultaneous <- ma_data %>% filter(presentation_type == "simultaneous") %>% nrow()
+num_video_asynchronous <- ma_data %>% filter(presentation_type == "asynchronous") %>% nrow()
 ```
 
 ```{r categorize_by_testing_structure}
