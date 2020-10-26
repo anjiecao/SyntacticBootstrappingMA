@@ -62,24 +62,39 @@ In sum, across two types of analyses, we find some evidence for publication bias
 
 We next asked whether the overall effect size estimate was moderated by our theoretical moderators of interest: development-related moderators (vocabulary and age), and sentence structure moderators (predicate and noun phrase types).
 
-<!-- Things to change in the plot: (1) add caption, making sure to (briefly) explain how to intepret the factor levels and why vocab is not included in the plot (2) change x axis label to match the labels of other plots (3) full model should have lines connecting point estimates to show that they are all simultaneously in the same model, (4)[done] put factor levels in parentheses (i.e. "(Prounoun/noun)"), (5) Change legend to be "Model Type: Full; Single Predictor" or something like that. (6) compress the plot veritically so there's less wasted space? (7) let's combine this plot with the method one so they are side by side. -->
-```{r label = "mega_plot"}
+```{r label = "megaPlot", fig.width = 10, fig.height = 5,fig.pos = "T!", fig.cap = "In these figures we presented moderator estimates from two types of model: the red dots represent moderator estimates from single-predictor model, and the gray dots connected with each other represent moderator estimates from the full model including all the moderators from the group. For categorical variables, the dots represent the level that appears first in the parentheses. We found that each theoretical moderator and methodological moderator has similar estimates in the single-predictor models and the full models.  (a) Predicate type is a significant predictor for effect size. In particular, transitive sentence has a positive effect on the effect size relative to intransitive sentence. Note that in this plot we did not include median productive vocabulary size. This is because only a subset of studies reported the information. (b) Testing structure and sentence reptitions marginally predict.."}
+
 theoretical_mod <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/row_id,
                      method = "REML",
                      data = ma_data) 
 
 theoretical_mod_print <- generate_mega_model_df(theoretical_mod)
-#theoretical_mod_print
-#summary(theoretical_mod)
-```
 
-```{r label = "theoretical_moderators_plot", fig.pos = "T!",  fig.cap = ""}
-generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical")
+methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase + presentation_type + test_mass_or_distributed + n_repetitions_sentence,
+                             V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = ma_data)
+methodological_mod_print <- generate_mega_model_df(methodological_mod)
+
+
+p_theoretical <- generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical")
+  #theme(legend.position = "none")
+p_model <- generate_predictor_plot(mod_print, methodological_mod_print, "methodological")
+
+
+p_model_pane <- p_theoretical + p_model +
+  plot_annotation(tag_levels = 'a') & 
+  theme(plot.tag = element_text(size = 8))
+
+p_model_pane  
+
 ```
 
 
 ### Development
+
 ```{r}
 age_vocab_cor <- cor.test(ma_data$mean_age,ma_data$productive_vocab_median)
 cor_p <- ifelse(round(age_vocab_cor$p.value, digits = 2)<0.0001, "< 0.0001", as.character(round(age_vocab_cor$p.value, digits = 2)))
@@ -99,13 +114,20 @@ predicted_val_age <- predict(age_model, addx = TRUE) %>%
   select(data_frame_id, pred) %>%
   left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
               select(mean_age, d_calc, data_frame_id)) %>%
-  mutate(model_type = "age") %>%
+  mutate(model_type = "age",
+         mean_age_month = round(mean_age / 30.44)) %>%
   rename(developmental_predictor = mean_age)
+
+days_to_months <- scales::trans_new("days_to_months", 
+                             transform = function(x) (x/30.44), 
+                             inverse = function(x)(x*30.44), 
+                             domain=c(- Inf, Inf))
 
 predicted_val_age %>%
   ggplot() +
   geom_point(aes(x = developmental_predictor, y = d_calc)) +
   geom_smooth(method = "lm",aes(x = developmental_predictor, y = d_calc)) +
+  scale_x_continuous(trans = days_to_months, limits = c(0,12)) +
   theme_classic() + 
   geom_smooth(method = "lm",
               aes(x = developmental_predictor, y = d_calc,color = "Cohen's d"),
@@ -113,14 +135,14 @@ predicted_val_age %>%
   #geom_smooth(method = "lm",
   #            aes(x = developmental_predictor, y = pred,
   #                color = "Model's Predicted Values")) +
-  xlab("Mean Age (Days)") + 
+  xlab("Mean Age (Months)") + 
   ylab(expression(paste("Effect Size (Cohen's ", italic(d), ")")))   +
   scale_color_manual(name = "Regression Line",             # legend name
                      values = c("Cohen's d" = "blue",  # map regression line colors
                                 "Model's Predicted Values" = "red"))
 ```
 
-Does the syntactic bootstrapping effect get stronger across development? We examined two measures of developmental change: age and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`). Neither age ($\beta$ = `r filter(mod_print, moderator == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age")$mod_p_print`; Fig.\ \@ref(fig:development); \@ref(fig:mega_plot)), nor vocabulary size ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`) significantly moderated the effect.
+Does the syntactic bootstrapping effect get stronger across development? We examined two measures of developmental change: age and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`). Neither age ($\beta$ = `r filter(mod_print, moderator == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age")$mod_p_print`; Fig.\ \@ref(fig:development); \@ref(fig:megaPlot)), nor vocabulary size ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`) significantly moderated the effect.
 
 ### Sentence structure 
 ```{r summarize_sentence_structure}
@@ -135,7 +157,7 @@ ss_summary <- ma_data %>%
 
 We next asked how properties of the sentence struture that children heard influenced the strength of the syntactic bootstrapping effect. Predicate type (transitive vs. intransitive) significantly was a significant moderator, ($\beta$ = `r filter(mod_print, moderator == "sentence_structure")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "sentence_structure")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "sentence_structure")$mod_z_print`, *p* `r filter(mod_print, moderator == "sentence_structure")$mod_p_print`), with the effect being larger for transitive conditions (*M* = `r filter(ss_summary, sentence_structure == "transitive")$mean`, *SD* = `r filter(ss_summary, sentence_structure == "transitive")$sd`) relative to intransitive conditions (*M* = `r filter(ss_summary, sentence_structure == "intransitive")$mean`, *SD* = `r filter(ss_summary, sentence_structure == "intransitive")$sd`). In contrast, there was no effet of agent argument type (pronoun vs. noun; $\beta$ = `r filter(mod_print, moderator == "agent_argument_type")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "agent_argument_type")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "agent_argument_type")$mod_z_print`, *p* `r filter(mod_print, moderator == "agent_argument_type")$mod_p_print`). 
 
-To compare the effects of all theoretical moderators, we fit an additive model with all theoretical variables as fixed effects. We excluded vocabulary size from the additive model since it was highly correlated with age, and only available for a subset of conditions (`r  num_vocabulary_available`).  \@ref(fig:mega) shows estimates for each of the single-predictor models along with the additive linear model. The additive model revelaed estimates that were highly comproable to the single-predictor model.  
+To compare the effects of all theoretical moderators, we fit an additive model with all theoretical variables as fixed effects. We excluded vocabulary size from the additive model since it was highly correlated with age, and only available for a subset of conditions (`r  num_vocabulary_available`).  \@ref(fig:megaPlot) shows estimates for each of the single-predictor models along with the additive linear model. The additive model revelaed estimates that were highly comproable to the single-predictor model.  
 
 In summary, we found that predicate type is a significant predictor of the effect size. Conditions with transitive sentences were associated with larger effect sizes than those tested with intransitive sentences. No other theoretical variable significantly moderated the effect.
 
@@ -144,32 +166,6 @@ In summary, we found that predicate type is a significant predictor of the effec
 
 One limiting factor in interpetting the moderating  role of theoretical vairables on the syntactic bootstrapping effect is that there was variability across studies in the exact method used in testing children. It is possible that this methodological variability conceals true underlying moderating influences. For example, if researchers adapt their method to the age of the children they are targeting, this might conceal developmental change in the strength of the effect [@bergmann2018promoting]. 
 
-```{r mega model for methodological moderators, message=FALSE, warning=FALSE}
-methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase + presentation_type + test_mass_or_distributed + n_repetitions_sentence,
-                             V = d_var_calc,
-                    random = ~ 1 | short_cite/same_infant/row_id,
-                     method = "REML",
-                     data = ma_data)
-
-
-
-methodological_mod_print <- generate_mega_model_df(methodological_mod)
-#methodological_mod_print
-#summary(methodological_mod)
-```
-
-<!-- combine this plot with the theoretical plot, side by side. make same changes as to theoretical plot -->
-```{r label = "methodological_mega_model", fig.width = 10, fig.height = 5,fig.pos = "T!", fig.cap = ""}
-p_theoretical <- generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical")
-p_model <- generate_predictor_plot(mod_print, methodological_mod_print, "methodological")
-
-plot_grid(p_theoretical, p_model, 
-          labels = c('Theoretical', 'Methodological'), 
-          label_size = 12, 
-          rel_widths = c(0.5, 0.5))
-
-```
-
-We next asked whether the five different methodological variables (practice phase, sentence repetitions, character identifcation phase, synchronicity, testing procedure structure) moderated the syntactic bootstrapping effect. None of these methodological variables were significant moderators of the effect in a single predictor model (Fig. \@ref(fig:mega); see SI for exact estimates). In an additive linear model with all five methodological predictors, there was a significant effect of testing procedure structure ($\beta$ = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_p_print`), with distributed testing designs tending to have larger effect sizes than mass designs. This finding suggests that children tested in a procedure with only one train-test pair performed better than those tested in procedure with multiple train-test pairs. Finally, we asked how these methodological moderators related to our theoretical moderators of interest. Controlling for methodological variables did not qualitiatively change the role of any of the theoretical moderators (see SI) .  Taken together, these analyses suggest that methodological variables do not play a large influencing role on the size of the syntactic bootstrapping effect. 
+We next asked whether the five different methodological variables (practice phase, sentence repetitions, character identifcation phase, synchronicity, testing procedure structure) moderated the syntactic bootstrapping effect. None of these methodological variables were significant moderators of the effect in a single predictor model (Fig. \@ref(fig:megaPlot); see SI for exact estimates). In an additive linear model with all five methodological predictors, there was a significant effect of testing procedure structure ($\beta$ = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_p_print`), with distributed testing designs tending to have larger effect sizes than mass designs. This finding suggests that children tested in a procedure with only one train-test pair performed better than those tested in procedure with multiple train-test pairs. Finally, we asked how these methodological moderators related to our theoretical moderators of interest. Controlling for methodological variables did not qualitiatively change the role of any of the theoretical moderators (see SI) .  Taken together, these analyses suggest that methodological variables do not play a large influencing role on the size of the syntactic bootstrapping effect. 
 
 <!-- rather than list all the (null, not-very-interesting) estimates in the main text, lets add tables to the SI with the exact values from the theoretical and methodological plots --> 

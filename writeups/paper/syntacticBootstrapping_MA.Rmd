@@ -58,7 +58,7 @@ library(knitr)
 library(PublicationBias)
 library(janitor)
 library(insight)
-library(cowplot)
+library(patchwork)
 
 
 # scripts for data presentation
