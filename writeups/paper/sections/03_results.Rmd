@@ -8,7 +8,7 @@ mod_print <- generate_moderator_df(MODERATORS, ma_data)
 generate_forest_plot(ma_data)
 ```
 
-Figure\ \@ref(fig:forest) shows effect size estimates for all conditions in our sample. The weighted mean effect size was `r filter(mod_print, moderator == "NULL")$estimate_print`, which significantly differed from 0  (*Z* = `r filter(mod_print, moderator == "NULL")$z_print`; *p* `r filter(mod_print,  moderator == "NULL")$p_print`). There was evidence for considerable heterogenity in effect sizes across our sample (*Q* = `r filter(mod_print, moderator == "NULL")$Q_print`; *p* `r filter(mod_print, moderator == "NULL")$Qp_print`).
+Figure\ \@ref(fig:forest) shows effect size estimates for all conditions in our sample. The weighted mean effect size was `r filter(mod_print, moderator == "NULL")$estimate_print`, which significantly differed from 0  (*Z* = `r filter(mod_print, moderator == "NULL")$z_print`; *p* `r filter(mod_print,  moderator == "NULL")$p_print`). There was evidence for considerable heterogenity in effect sizes across our sample (*Q* = `r filter(mod_print, moderator == "NULL")$Q_print`; *p* `r filter(mod_print, moderator == "NULL")$Qp_print`), meaning that there is unexplained variance in effect sizes aross studies.
 
 ## Evidential value of the syntactic bootstrapping literature
 
