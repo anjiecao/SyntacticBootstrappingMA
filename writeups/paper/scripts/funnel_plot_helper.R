@@ -7,7 +7,7 @@ generate_funnel_plot <- function(data){
   ma_data <- data
 
    model <- rma.mv(d_calc ~ 1,  d_var_calc,
-                   random = ~ 1 | short_cite/same_infant/x_1,
+                   random = ~ 1 | short_cite/same_infant/row_id,
                    method = "REML",
                    data=ma_data)
   
