@@ -52,6 +52,70 @@ ma_data <- read_csv(DATA_PATH)
 ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
+# Methodological moderators and theoretical moderators model resuls {.tabset}
+```{r}
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+T_MODERATORS <- c("mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type")
+M_MODERATORS <- c("presentation_type","character_identification", "practice_phase", "test_mass_or_distributed","n_repetitions_sentence")
+
+si_mod_print <- generate_moderator_df(MODERATORS, ma_data) %>% 
+  select(this_moderator, 
+         mod_estimate_print_full, 
+         mod_z_print, 
+         moderator_p)
+
+```
+
+## Theoretical Moderators 
+```{r}
+si_mod_print %>% 
+  filter(this_moderator %in% T_MODERATORS) %>%
+  mutate(
+     this_moderator = case_when(
+          this_moderator == "mean_age" ~ "Mean Age", 
+          this_moderator == "productive_vocab_median" ~ "Median Productive Vocabulary Size",
+          this_moderator == "sentence_structure" ~ "Predicate Type \n (Transitive / Intransitive)", 
+          this_moderator == "agent_argument_type" ~ "Agent Argument Type \n (Pronoun / Noun)", 
+        ), 
+     moderator_p = round(moderator_p, 2)
+  ) %>% 
+  rename(
+    Moderator = this_moderator, 
+    Estimate = mod_estimate_print_full, 
+    "z value" = mod_z_print, 
+    "p value" = moderator_p
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+
+
+```
+## Methodological Moderators
+```{r}
+si_mod_print %>% 
+  filter(this_moderator %in% M_MODERATORS) %>% 
+  mutate(
+     this_moderator = case_when(
+        this_moderator == "character_identification" ~ "Character Identification Phase (Yes / No)", 
+        this_moderator == "practice_phase" ~ "Practice Phase (Yes / No)", 
+        this_moderator == "presentation_type" ~ "Stimuli Synchronicity (Simultaneous / Asynchronous)",
+        this_moderator == "test_mass_or_distributed" ~ "Testing Structure (Mass / Distributed)", 
+        this_moderator == "n_repetitions_sentence" ~ "Number of Sentence Repetitions"
+        ),
+     moderator_p = round(moderator_p, 2)
+  ) %>% 
+  rename(
+    Moderator = this_moderator, 
+    Estimate = mod_estimate_print_full, 
+    "z value" = mod_z_print, 
+    "p value" = moderator_p
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+
 # Details of calculating effect size
 
 
@@ -65,7 +129,8 @@ tibble(
   "Dialogue Type" = c("Transitive", "Intransitive"),
   "Sample Size" = c("8", "8"),
   "Two-participant Event" = c("4.82 (0.43)", "3.33 (0.24)"), 
-  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable(caption = "Raw data from the Yuan & Fisher (2009, pg 622) Table 1. The values are Mean looking time in seconds, and in parentheses are SE.")
+  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable(caption = "Raw data from the Yuan & Fisher (2009, pg 622) Table 1. The values are Mean looking time in seconds, and in parentheses are SE.") %>% 
+  kable_styling(font_size = 12)
 ```
 
 When the paper only provides raw looking time data, we converted the data into proportion of correct looking time and the variances following the formulae below. 
@@ -81,7 +146,8 @@ tibble(
   #"Mean Proportion Calculation" = c("4.82 / (4.82 + 2.87)", "4.12 / (3.33 + 4.12)"), 
   "Mean Proportion" = c("0.627", "0.553"), 
   #"Standard Deviation Calculation" = c("(0.43 / (4.82 + 2.87)) * (8^0.5)", "(0.4 / (3.33 + 4.12)) * (8^0.5)"),
-  "Standard Deviation" = c("0.158", "0.152")) %>% kable(caption = "Converted data from raw looking time to proportion of looking time to the correct scenes. For children hearing transitive sentences, the correct scene was the Two-participant Event. For children hearing intransitive sentences, the correct scene was the One-participant Event. Standard Deviations were calculated by scaling the raw SE first, and then multiplied by the square roots of the number of participants.")
+  "Standard Deviation" = c("0.158", "0.152")) %>% kable(caption = "Converted data from raw looking time to proportion of looking time to the correct scenes. For children hearing transitive sentences, the correct scene was the Two-participant Event. For children hearing intransitive sentences, the correct scene was the One-participant Event. Standard Deviations were calculated by scaling the raw SE first, and then multiplied by the square roots of the number of participants.") %>% 
+  kable_styling(font_size = 12)
 ```
 
 Then we calculate Cohen's d and the variances as follows (the implemetation of the script can be found at XXX)
@@ -117,7 +183,7 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 
 # Major Models excluding the imputed value {.tabset}
 ```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type","agent_argument_number", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 excluded_mod_print <- generate_moderator_df(MODERATORS, filter(ma_data,  data_source != "imputed"))
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 
@@ -364,7 +430,9 @@ heatmaply(ordered_matrix,
 ## Methodological Moderators with Age
 ```{r}
 age_method_m <- fit_method_model("mean_age", ma_data)
-print_method_model(age_method_m) %>% kable()
+print_method_model(age_method_m) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
 
 
 ```
@@ -372,20 +440,26 @@ print_method_model(age_method_m) %>% kable()
 ## Methodological Moderators with Productive Vocabulary Size 
 ```{r}
 vocab_method_m <- fit_method_model("productive_vocab_median", ma_data)
-print_method_model(vocab_method_m) %>% kable()
+print_method_model(vocab_method_m) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
 ```
 
 ## Methodological Moderators with Sentence Structure 
 ```{r}
 sentence_structure_method_m <- fit_method_model("sentence_structure", ma_data)
-print_method_model(sentence_structure_method_m) %>% kable()
+print_method_model(sentence_structure_method_m) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
 
 ```
 
 ## Methodological Moderators with Agent Argument Type
 ```{r}
 argument_type_method_m <- fit_method_model("agent_argument_type", ma_data)
-print_method_model(argument_type_method_m) %>% kable()
+print_method_model(argument_type_method_m) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
 ```
 
 
@@ -463,7 +537,8 @@ patient_argument_type_table <- convert_pretty_print_table(additional_main, "pati
   )
 
 patient_argument_type_table %>% 
-  kable() 
+  kable() %>% 
+  kable_styling(font_size = 12)
 ```
 
 
@@ -482,7 +557,8 @@ stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stim
     )
   )
 stimuli_argument_type_table %>% 
-  kable()
+  kable() %>% 
+  kable_styling(font_size = 12)
 ```
 
 
@@ -498,7 +574,8 @@ stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli
     )
   )
 stimuli_actor_type_table %>% 
-  kable()
+  kable() %>% 
+  kable_styling(font_size = 12)
 ```
 
 ## Type of event {.tabset}
@@ -520,7 +597,8 @@ transitive_event_type_table <- convert_pretty_print_table(additional_main, "tran
 
 
 transitive_event_type_table %>% 
-  kable()
+  kable()%>% 
+  kable_styling(font_size = 12)
 ```
 ### Intransitive Event: Single-actor or parallel actions
 ```{r}
@@ -533,7 +611,8 @@ intransitive_event_type_table <- convert_pretty_print_table(additional_main, "in
   )
 
 intransitive_event_type_table %>% 
-  kable()
+  kable() %>% 
+  kable_styling(font_size = 12)
 ```
 
 

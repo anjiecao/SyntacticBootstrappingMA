@@ -41,7 +41,7 @@ print_method_model <- function(model_res){
         mod_name == "intrcpt" ~ "Intercept",
         mod_name == "character_identificationyes" ~ "Character Identification Phase (Yes / No)", 
         mod_name == "practice_phaseyes" ~ "Practice Phase (Yes / No)", 
-        mod_name == "presentation_type_collapsedsimultaneous" ~ "Stimuli Synchronicity (Simultaneous / Asynchronous)",
+        mod_name == "presentation_typesimultaneous" ~ "Stimuli Synchronicity (Simultaneous / Asynchronous)",
         mod_name == "test_mass_or_distributedmass" ~ "Testing Structure (Mass / Distributed)", 
         mod_name == "agent_argument_typepronoun" ~ "Agent Argument Type (Pronoun / Nouns)", 
         mod_name == "n_repetitions_sentence" ~ "Number of Sentence Repetitions",
@@ -148,8 +148,29 @@ generate_moderator_df <- function(moderator,data){
            z_print = round(z, 2),
            p_print = round(p, 2),
            p_print = ifelse(p_print <.001, "<.001", paste0("= ", p_print)),
-           mod_estimate_print = round(mod_estimate, 2),
+           mod_estimate_round_two = round(mod_estimate,2),
+           mod_estimate_round_three = round(mod_estimate,3),
+           
+           mod_estimate_print = case_when(
+             mod_estimate_round_two == 0 ~ mod_estimate_round_three, 
+             TRUE ~ mod_estimate_round_two),
+           
            mod_SE_print = round(mod_SE, 2), 
+           
+           mod_estimate.cil_round_two = round(mod_estimate.cil, 2),
+           mod_estimate.cil_round_three = round(mod_estimate.cil, 3),
+           mod_estimate.cih_round_two = round(mod_estimate.cih, 2),
+           mod_estimate.cih_round_three = round(mod_estimate.cih, 3),
+           
+           mod_estimate.cil = case_when(
+             mod_estimate.cil_round_two == 0 ~ mod_estimate.cil_round_three, 
+             TRUE ~ mod_estimate.cil_round_two
+           ), 
+           mod_estimate.cih = case_when(
+             mod_estimate.cih_round_two == 0 ~ mod_estimate.cih_round_three, 
+             TRUE ~ mod_estimate.cih_round_two
+           ),
+           
            mod_CI_print = paste0(" [", 
                                  round(mod_estimate.cil, 2),
                                  ", ",
@@ -163,7 +184,12 @@ generate_moderator_df <- function(moderator,data){
                                 paste0("= ", mod_p_print)),
            Q_print = round(Q, 2),
            Qp_print = round(Qp, 2),
-           Qp_print = ifelse(Qp_print < .001, "<.001", paste0("= ", Qp_print)))
+           Qp_print = ifelse(Qp_print < .001, "<.001", paste0("= ", Qp_print))) %>% 
+    select(
+      -c(mod_estimate_round_two, mod_estimate_round_three, 
+         mod_estimate.cil_round_two, mod_estimate.cil_round_three, 
+         mod_estimate.cih_round_two, mod_estimate.cih_round_three)
+    )
   
   return(mod_print)
   

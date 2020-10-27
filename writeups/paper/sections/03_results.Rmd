@@ -100,8 +100,8 @@ age_vocab_cor <- cor.test(ma_data$mean_age,ma_data$productive_vocab_median)
 cor_p <- ifelse(round(age_vocab_cor$p.value, digits = 2)<0.0001, "< 0.0001", as.character(round(age_vocab_cor$p.value, digits = 2)))
 ```
 
-<!-- Things to change in the plot: (1) add caption, (2) change x axis to be months (3) I know we've gone back and forth about this, but let's just include the simple lm model fit. I think having both is confusing. -->
-```{r, label = "development"}
+<!-- Things to change in the plot: [done](1) add caption, [done](2) change x axis to be months [done](3) I know we've gone back and forth about this, but let's just include the simple lm model fit. I think having both is confusing. -->
+```{r, label = "development", fig.cap = "Effect size (Cohen's d) as a function of age in months. The dash line corresponds to effect size equals zero, the solid blue regression line is a simple linear model fit, and the shaded area corresponds to the standard error of the fitted model. Each dot represents one calcaulated effect size."}
 
 age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/x_1,
@@ -114,20 +114,16 @@ predicted_val_age <- predict(age_model, addx = TRUE) %>%
   select(data_frame_id, pred) %>%
   left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
               select(mean_age, d_calc, data_frame_id)) %>%
-  mutate(model_type = "age",
-         mean_age_month = round(mean_age / 30.44)) %>%
+  mutate(model_type = "age") %>%
   rename(developmental_predictor = mean_age)
-
-days_to_months <- scales::trans_new("days_to_months", 
-                             transform = function(x) (x/30.44), 
-                             inverse = function(x)(x*30.44), 
-                             domain=c(- Inf, Inf))
 
 predicted_val_age %>%
   ggplot() +
   geom_point(aes(x = developmental_predictor, y = d_calc)) +
   geom_smooth(method = "lm",aes(x = developmental_predictor, y = d_calc)) +
-  scale_x_continuous(trans = days_to_months, limits = c(0,12)) +
+  scale_x_continuous(labels = function(x) round(x/30.44), 
+                     breaks = seq(0,36*30.44, 12*30.44)) +
+  geom_hline(yintercept = 0, linetype = "dashed")+
   theme_classic() + 
   geom_smooth(method = "lm",
               aes(x = developmental_predictor, y = d_calc,color = "Cohen's d"),
