@@ -21,41 +21,7 @@ SB_DATA <- SB_DATA %>%
 
 ```
 
-```{r message=FALSE, warning=FALSE}
-ml_dataset_info <- metalabr::get_metalab_dataset_info()
-ml_data <- metalabr::get_metalab_data(ml_dataset_info)
-```
-```{r message=FALSE, warning=FALSE}
-MAPPING_STUDIES <- c("Mutual exclusivity", 
-                     "Sound symbolism",
-                     "Cross-situational word learning",
-                     "Gaze following")
 
-
-ME_info <- ml_dataset_info %>% 
-  filter(name == "Mutual exclusivity")
-SS_info <- ml_dataset_info %>% 
-  filter(name == "Sound symbolism")
-XS_info <- ml_dataset_info %>% 
-  filter(name == "Cross-situational word learning")
-GF_info <- ml_dataset_info %>% 
-  filter(name == "Gaze following")
-
-ME_data <- metalabr::get_metalab_data(ME_info) %>% 
-  mutate(dataset = "Mutual exclusivity")
-SS_data <- metalabr::get_metalab_data(SS_info) %>% 
-  mutate(dataset = "Sound symbolism")
-XS_data <- metalabr::get_metalab_data(XS_info) %>% 
-  mutate(dataset = "Cross-situational word learning")
-GF_data <- metalabr::get_metalab_data(GF_info) %>% 
-  mutate(dataset = "Gaze following")
-
-ALL_data <- bind_rows(ME_data, 
-                      SS_data, 
-                      XS_data, 
-                      GF_data)
-ALL_data
-```
 
 ```{r message=FALSE, warning=FALSE}
 
@@ -137,171 +103,6 @@ ALL_data <- bind_rows(ME_data,
 ```
 
 
-```{r message=FALSE, warning=FALSE}
-MAPPING_STUDIES <- c("Mutual exclusivity", 
-                     "Sound symbolism",
-                     "Cross-situational word learning",
-                     "Gaze following")
-
-all_models_res <- map_df(MAPPING_STUDIES, get_model_results)
-```
-
-
-
-```{r message=FALSE, warning=FALSE}
-SB_results <- fit_model(SB_DATA, "Syntactic Bootstrapping")
-all_models_res <- bind_rows(all_models_res, SB_results)
-
-```
-
-```{r message=FALSE, warning=FALSE}
-all_models_tidy <- all_models_res %>% 
-  pivot_longer(
-    null_estimate:age_p, 
-    names_to = "model_name",
-    values_to = "value"
-  ) %>% 
-  mutate(
-    model_type = case_when(
-      grepl("null", model_name) ~ "null", 
-      grepl("age", model_name) ~ "age"
-    ), 
-    value_type = gsub(".*_", "", model_name)
-  ) %>%  
-  pivot_wider(
-    names_from = value_type, 
-    values_from = value
-  ) %>% 
-  group_by(dataset_name, model_type) %>%
-  mutate_at(vars(-group_cols()), function(x) {x[!is.na(x)][1]}) %>%
-  distinct() %>% 
-  select(-model_name)
-```
-
-```{r}
-all_models_tidy %>% 
-  ggplot(aes(x = fct_reorder(dataset_name, -estimate), color = model_type, 
-            y = estimate, 
-            ymin = estimate.cil, 
-            ymax = estimate.cih, 
-            group = model_type)) + 
-    geom_pointrange(size = 1, position = position_dodge(0.5)) + 
-    scale_color_manual(values = c("grey", "red")) + 
-    scale_alpha_manual(values = c(0, 1)) + 
-    geom_hline(yintercept = 0, color = "black", linetype="dashed")+
-    coord_flip() + 
-    theme(
-      axis.line = element_line(size = 1.2),
-      axis.ticks = element_line(size = 1),
-      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-      panel.background = element_blank()) + 
-    xlab("") + 
-    ylab("Estimate") 
-  
-```
-
-
-```{r}
-all_models_tidy %>% 
-  ggplot(aes(x = fct_reorder(dataset_name, -estimate), color = model_type, 
-            y = estimate, 
-            ymin = estimate.cil, 
-            ymax = estimate.cih, 
-            group = model_type)) + 
-    geom_pointrange(size = 1) + 
-    scale_color_manual(values = c("grey", "red")) + 
-    scale_alpha_manual(values = c(0, 1)) + 
-    geom_hline(yintercept = 0, color = "black", linetype="dashed")+
-    coord_flip() + 
-    theme(
-      axis.line = element_line(size = 1.2),
-      axis.ticks = element_line(size = 1),
-      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-      panel.background = element_blank()) + 
-    xlab("") + 
-    ylab("Estimate") 
-```
-
-# Age 
-```{r}
- ml_dataset_info <- metalabr::get_metalab_dataset_info()
-
-  ME_info <- ml_dataset_info %>% 
-  filter(name == "Mutual exclusivity")
-SS_info <- ml_dataset_info %>% 
-  filter(name == "Sound symbolism")
-XS_info <- ml_dataset_info %>% 
-  filter(name == "Cross-situational word learning")
-GF_info <- ml_dataset_info %>% 
-  filter(name == "Gaze following")
-
-ME_data <- metalabr::get_metalab_data(ME_info) %>% 
-  mutate(dataset = "Mutual exclusivity")
-SS_data <- metalabr::get_metalab_data(SS_info) %>% 
-  mutate(dataset = "Sound symbolism")
-XS_data <- metalabr::get_metalab_data(XS_info) %>% 
-  mutate(dataset = "Cross-situational word learning")
-GF_data <- metalabr::get_metalab_data(GF_info) %>% 
-  mutate(dataset = "Gaze following")
-
-age_data <- bind_rows(ME_data, 
-                      SS_data, 
-                      XS_data, 
-                      GF_data) %>% 
-  select(dataset, mean_age_1)
-
-SB_DATA <- SB_DATA %>% 
-  mutate(mean_age_1 = mean_age, 
-         unique_row = row_number(),
-         dataset = "Syntactic Bootstrapping") %>% 
-  select(dataset, mean_age_1)
-
-age_data <- bind_rows(age_data, SB_DATA)
-```
-
-
-
-```{r}
-summarize_age <- age_data %>% 
-  group_by(dataset) %>% 
-  summarise(
-    mean_age = mean(mean_age_1), 
-    mean_age_in_month = mean_age / 30.44,
-    num_study = n()
-  ) %>% 
-  mutate(
-    dataset_name = dataset
-  )
-tidy_models_with_age <- left_join(all_models_tidy, 
-                                  summarize_age, 
-                                  by = "dataset_name") %>% 
-  filter(model_type == "null") 
-
-tidy_models_with_age %>% 
-  ggplot(aes(x = mean_age_in_month, 
-            y = estimate, 
-            ymin = estimate.cil, 
-            ymax = estimate.cih, 
-            size = (num_study * 0.1)
-            )) + 
-    guides(size = FALSE) +
-    xlim(0,72) +
-    coord_flip() +
-    geom_point() +
-    geom_text(aes(label = dataset_name), hjust = 0.5, vjust = -1.4, size = 3) +
-    geom_linerange(size = 0.5) +
-    geom_hline(yintercept = 0, color = "black", linetype="dashed")+
-    theme(
-      axis.line = element_line(size = 1.2),
-      axis.ticks = element_line(size = 1),
-      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-      panel.background = element_blank()) + 
-    xlab("Mean Age (Months)") + 
-    ylab("Effect Size Estimate") 
-
-
-
-```
 
 
 ```{r}
@@ -379,6 +180,34 @@ all_models_younger_tidy <- all_models_res_younger %>%
   distinct() %>% 
   select(-model_name)
 ```
+
+```{r}
+  ml_dataset_info <- metalabr::get_metalab_dataset_info()
+
+  ME_info <- ml_dataset_info %>% 
+  filter(name == "Mutual exclusivity")
+SS_info <- ml_dataset_info %>% 
+  filter(name == "Sound symbolism")
+XS_info <- ml_dataset_info %>% 
+  filter(name == "Cross-situational word learning")
+GF_info <- ml_dataset_info %>% 
+  filter(name == "Gaze following")
+
+ME_data <- metalabr::get_metalab_data(ME_info) %>% 
+  mutate(dataset = "Mutual exclusivity")
+SS_data <- metalabr::get_metalab_data(SS_info) %>% 
+  mutate(dataset = "Sound symbolism")
+XS_data <- metalabr::get_metalab_data(XS_info) %>% 
+  mutate(dataset = "Cross-situational word learning")
+GF_data <- metalabr::get_metalab_data(GF_info) %>% 
+  mutate(dataset = "Gaze following")
+
+ALL_data <- bind_rows(ME_data, 
+                      SS_data, 
+                      XS_data, 
+                      GF_data)
+```
+
 
 
 ```{r}
