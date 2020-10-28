@@ -205,4 +205,25 @@ generate_metalab_plot <- function(res_with_age){
   
 }
 
+get_metalab_es_print <- function(summary_df){
+  
+  tidy_print_val <- summary_df %>% 
+    mutate(
+      estimate_print = round(estimate, 2), 
+      estimate_cil_print = round(estimate.cil, 2), 
+      estimate_cih_print = round(estimate.cih, 2), 
+      estimate_print_full = paste0(
+        estimate_print, 
+        " [",
+        estimate_cil_print, 
+        ", ",
+        estimate_cih_print, 
+        "]",
+        sep = ""
+      ))
+  
+  return(tidy_print_val)
+  
+}
+
 
