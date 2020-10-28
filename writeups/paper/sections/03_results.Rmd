@@ -59,7 +59,26 @@ Conducting this sensitivity analysis on our data reveals that no amount of publi
 In sum, across two types of analyses, we find some evidence for publication bias in the synactic bootstrapping literature, but even under worst-case scenarios publication bias was not enough to fully attenuate the meta-analytic point estimate to 0. Further, some of the publication bias observed in the funnel plot analysis may be due to heterogeneity in the data. In the following sections, we analyze theoretical and methodological moderators that could be contributing to this heterogeneity, though we emphasize that the likely presence of publication bias implies that these moderators should be interpreted with caution. 
 
 ## Relating the syntactic bootstrapping effect to other word learning stategies
-<!-- TO DO -->
+
+```{r message=FALSE, warning=FALSE}
+MAPPING_STUDIES <- c("Mutual exclusivity", 
+                     "Sound symbolism",
+                     "Cross-situational word learning",
+                     "Gaze following")
+
+
+all_models_res_younger <- map_df(MAPPING_STUDIES, get_model_results_younger_than, 48)
+SB_res_younger <- fit_model(filter(ma_data, mean_age < 30.44 * 48), "Syntactic Bootstrapping")
+all_models_res_younger <- bind_rows(all_models_res_younger, SB_res_younger) 
+tidy_all_models_res_younger <-  tidy_metalab_df(all_models_res_younger)
+tidy_all_age_summary <- summarize_metalab_age_younger_than(ma_data, 48)
+tidy_models_with_age_younger <- left_join(tidy_all_models_res_younger, 
+                                  tidy_all_age_summary, 
+                                  by = "dataset_name") 
+generate_metalab_plot(tidy_models_with_age_younger)
+```
+
+
 In order to learn words, children must figure out the mapping relationships between the words and their references. Previous research has proposed numerous biases and learning strategies by which children can solve the mapping problem. Here we relate the syntactic bootstrapping effect to other word learning stratgies. We found its effect size is relatively small compared to the other phenomena in children under 36 months of age. [the other goes into the caption?]
 
 

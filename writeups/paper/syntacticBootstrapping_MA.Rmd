@@ -59,6 +59,7 @@ library(PublicationBias)
 library(janitor)
 library(insight)
 library(patchwork)
+library(metalabr)
 
 
 # scripts for data presentation
@@ -67,6 +68,7 @@ source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
 source(here("writeups/paper/scripts/funnel_plot_helper.R"))
 source(here("writeups/paper/scripts/predictor_plot_helper.R"))
+source(here("writeups/paper/scripts/metalab_plot_helper.R"))
 ```
 
 
