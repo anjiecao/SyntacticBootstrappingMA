@@ -5,16 +5,14 @@ library(janitor)
 library(gsubfn)
 
 
-#INPATH <- here("data/raw/syntactic_bootstrapping_raw_data_molly.csv")
-#OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data_molly.csv")
 
 INPATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 OUTPATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv")
 
 # ES function - adopted from compute_es (within-one case)
 get_es <- function(df){
-  if (!is.na(df$x_1) & !is.na(df$x_2) & !is.na(df$SD_1)) {
-    d_calc <- (df$x_1 - df$x_2) / df$SD_1
+  if (!is.na(df$x_1) & !is.na(df$x_2) & !is.na(df$sd_1)) {
+    d_calc <- (df$x_1 - df$x_2) / df$sd_1
     es_method  <- "group_means_one"
   } else if (!is.na(df$t)) {
     d_calc <- df$t / sqrt(df$n_1)
@@ -38,109 +36,17 @@ ma_data <- read_csv(INPATH)
 
 # add effect sizes
 ma_data_with_es <- ma_data %>%
-  filter(!is.na(t)| (!is.na(x_1) & !is.na(x_2) & !is.na(SD_1)) | (!is.na(d))) %>%
-  nest(data = c(n_1, x_1,x_2,x_2_raw,SD_1,SD_2,SD_2_raw,t,d)) %>%
+  filter(!is.na(t)| (!is.na(x_1) & !is.na(x_2) & !is.na(sd_1)) | (!is.na(d))) %>%
+  nest(data = c(n_1, x_1,x_2,x_2_raw,sd_1,sd_2,sd_2_raw,t,d)) %>%
   mutate(es = map(data, get_es)) %>%
   unnest(cols = c(es,data)) %>%
   mutate(d_calc = ifelse(d_calc == Inf, NA_real_, d_calc),
-         d_var_calc = ifelse(d_var_calc == Inf, NA_real_, d_var_calc))
+         d_var_calc = ifelse(d_var_calc == Inf, NA_real_, d_var_calc), 
+         row_id = 1:n())
 
 
-# clean up factor level issues
-tidy_es <- ma_data_with_es %>% # it's best practice not to write over existing variables
-  janitor::clean_names() %>%
-  #select(-long_cite) %>%
-  filter(!is.na(d_calc) & paper_eligibility == "include") %>% # tidy column names
-  mutate(id = row_number(),
-        practice_phase = case_when(practice_phase == "NA" ~ "no",
-                                    is.na(practice_phase) ~ "no",
-                                    TRUE ~ practice_phase), # case_when is a better version of ifelse (no need to nest ifelse statements)
-         character_identification = case_when(character_identification == "NA" ~ "no",
-                                              is.na(character_identification) ~ "no",
-                                              TRUE ~ character_identification),
-         presentation_type = case_when(presentation_type == "immediate-after" ~ "simultaneous",
-                                       presentation_type == "Immediate-after" ~ "simultaneous",
-                                       TRUE ~ presentation_type),
-        stimuli_actor = case_when(stimuli_actor == "non-person" ~ "non_person",
-                                  TRUE ~ stimuli_actor),
-         patient_argument_type = case_when(patient_argument_type == "N/A" ~ "NA",
-                                           TRUE ~ patient_argument_type),
-         population_type = case_when(population_type == "typical_developing" ~  "typically_developing",
-                                     TRUE ~ population_type),
-         agent_argument_type = case_when(agent_argument_type == "pronoun_and_noun" | agent_argument_type == "pronoung_and_noun" ~ "noun_and_pronoun",
-                                         TRUE ~ agent_argument_type),
-         test_type = case_when(test_type == "actor" ~ "agent",
-                               TRUE ~ test_type),
-         unique_infant = case_when(same_infant == "no" ~ "unique_condition",
-                                   same_infant == NA ~ "unique_condition",
-                                   same_infant == "NA" ~ "unique_condition",
-                                   TRUE ~ "not_unique"),
-         same_infant = case_when(same_infant == "no" ~ as.character(id),
-                                 TRUE ~ same_infant),
-         test_method = case_when(
-             grepl("point", dependent_measure, fixed = TRUE) ~ "point",
-             grepl("look", dependent_measure, fixed = TRUE) ~ "look",
-             TRUE ~ dependent_measure),
-         agent_argument_type = case_when(
-          agent_argument_type == "2noun" ~ "noun",
-          agent_argument_type == "2nouns" ~ "noun",
-          agent_argument_type == "two_nouns" ~ "noun",
-          agent_argument_type == "noun_with_adjectives" ~ "noun",
-          agent_argument_type == "noun_and_pronoun" ~ "pronoun",
-          agent_argument_type == "two_nouns_and_pronoun" ~ "pronoun",
-          TRUE ~ agent_argument_type
-        ),
-        transitive_event_type = case_when(
-          transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
-          transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
-          transitive_event_type == "direct_caused_movement"~ "direct_caused_action",
-          transitive_event_type == "indirect_cause_action"~ "indirect_caused_action",
-          TRUE ~ transitive_event_type
-        ),
+write_csv(ma_data_with_es, OUTPATH)
 
-        patient_argument_type = case_when(
-          patient_argument_type ==  "noun_and_dropping" ~ "noun",
-          patient_argument_type == "pronoun_and_noun" ~ "pronoun",
-          TRUE ~ patient_argument_type,
-        ),
-        visual_stimuli_pair = paste(transitive_event_type, intransitive_event_type, sep = '_'),
 
-        adult_participant = case_when(
-          is.na(mean_age) ~ "yes",
-          TRUE ~ "no"
-        ),
-        data_source_clean = case_when(
-          grepl("text", data_source, fixed = TRUE) ~ "text",
-          grepl("author", data_source, fixed = TRUE) ~ "author_contact",
-          grepl("table", data_source, fixed = TRUE) ~ "table",
-          TRUE ~ "plot"
-        ),
-        paradigm_type = case_when(
-          (transitive_event_type == "AGENT") ~ "agent_matching",
-          TRUE ~ "action_matching"
-        ),
-        publication_year = parse_number(unique_id), 
-        row_id = 1:n()
-        ) %>%
-  mutate(patient_argument_type = if_else (is.na(patient_argument_type),
-                                                "intransitive",
-                                                patient_argument_type)) %>%
-  filter(paradigm_type!= "agent_matching") %>%
-  select(-id)
-    # use line breaks to make code more readable
-  # & (sentence_structure == "intransitive")
-
-# temp cleaning measurement 
-
-d <- read_csv(OUTPATH) %>% 
-  mutate(
-    presentation_type = case_when(
-      presentation_type == "immediate_after" ~ "simultaneous", 
-      TRUE ~ presentation_type
-    )
-  )
-write_csv(d, OUTPATH)
-
-#write_csv(tidy_es, OUTPATH)
 
 
