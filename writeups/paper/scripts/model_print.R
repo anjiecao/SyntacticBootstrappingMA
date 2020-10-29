@@ -39,23 +39,18 @@ print_method_model <- function(model_res){
     mutate(
       mod_name_print = case_when(
         mod_name == "intrcpt" ~ "Intercept",
-        mod_name == "character_identificationyes" ~ "Character Identification Phase (Yes / No)", 
-        mod_name == "practice_phaseyes" ~ "Practice Phase (Yes / No)", 
-        mod_name == "presentation_typesimultaneous" ~ "Stimuli Synchronicity (Simultaneous / Asynchronous)",
-        mod_name == "test_mass_or_distributedmass" ~ "Testing Structure (Mass / Distributed)", 
-        mod_name == "agent_argument_typepronoun" ~ "Agent Argument Type (Pronoun / Nouns)", 
-        mod_name == "n_repetitions_sentence" ~ "Number of Sentence Repetitions",
-        mod_name == "sentence_structuretransitive" ~ "Sentence Structure (Transitive / Intransitive)", 
-        mod_name == "productive_vocab_median" ~ "Median Productive Vocabulary Size",
-        mod_name == "mean_age" ~ "Mean Age"
+        mod_name == "character_identificationyes" ~ "Character identification phase (Yes / No)", 
+        mod_name == "practice_phaseyes" ~ "Practice phase (Yes / No)", 
+        mod_name == "presentation_typesimultaneous" ~ "Stimuli synchronicity (Simultaneous / Asynchronous)",
+        mod_name == "test_mass_or_distributedmass" ~ "Testing structure (Mass / Distributed)", 
+        mod_name == "agent_argument_typepronoun" ~ "Noun phrase type (Pronoun / Nouns)", 
+        mod_name == "n_repetitions_sentence" ~ "Number of sentence repetitions",
+        mod_name == "sentence_structuretransitive" ~ "Predicate type (Transitive / Intransitive)", 
+        mod_name == "productive_vocab_median" ~ "Median productive vocabulary size",
+        mod_name == "mean_age" ~ "Mean age"
       ), 
       beta_print_full = case_when(
-        round(beta, 2) == 0 ~ paste0(round(beta, 3), 
-                                     " [", 
-                                     round(ci_lb, 3), 
-                                     ", ",
-                                     round(ci_ub, 4), 
-                                     "]"),
+        round(beta, 2) == 0 ~ paste0("<.001"),
         TRUE ~ paste0(round(beta, 2), 
                       " [", 
                       round(ci_lb, 2), 
@@ -65,7 +60,7 @@ print_method_model <- function(model_res){
       ),
       z_val_print = round(z_val, 2), 
       p_val_print = case_when(
-        p_val < 0.001 ~ "< 0.001", 
+        p_val < 0.001 ~ "<.001", 
         round(p_val,2) <= 0.05 ~ paste0(as.character(round(p_val,2)), "*"), 
         TRUE ~ as.character(round(p_val, 2))
       )

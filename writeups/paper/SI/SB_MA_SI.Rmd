@@ -343,114 +343,6 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 \end{aligned}
 
 
-
-# Major Models excluding the imputed value {.tabset}
-```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
-excluded_mod_print <- generate_moderator_df(MODERATORS, filter(ma_data,  data_source != "imputed"))
-mod_print <- generate_moderator_df(MODERATORS, ma_data)
-
-compare_models_imputed <- function(df, type){
-  
-  major_mods <- c("NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type","presentation_type", "character_identification", "practice_phase","test_mass_or_distributed", "n_repetitions_sentence")
-  
-  clean_df <- df %>% 
-    filter(this_moderator %in% major_mods) %>% 
-    select(this_moderator, estimate_print_full, z, p, mod_estimate_print_full, moderator_z, moderator_p) %>% 
-    mutate(
-      intercept_estimate_print = estimate_print_full, 
-      intercept_z = z, 
-      intercept_p = p, 
-      df_type = type
-    ) %>% 
-    select(-c(estimate_print_full, z, p))
-    
-  return(clean_df)
-  
-}
-
-
-```
-## Excluded the imputed value
-```{r}
-excluded <- compare_models_imputed(excluded_mod_print, "no_imputed")
-full <- compare_models_imputed(mod_print, "imputed")
-
-excluded %>% 
-  mutate(
-    "Model" = case_when(
-      this_moderator == "NULL" ~ "Null model", 
-      this_moderator == "mean_age" ~ "Mean age model", 
-      this_moderator == "productive_vocab_median" ~ "Median productive vocabulary size model", 
-      this_moderator == "sentence_structure" ~ "Sentence structure model (transitive / intransitive)",
-      this_moderator == "agent_argument_type" ~ "Agent argument type model (pronoun / noun)", 
-      this_moderator == "character_identification" ~ "Character identification model (yes / no)", 
-      this_moderator == "practice_phase" ~ "Practice phase model (yes / no)", 
-      this_moderator == "presentation_type" ~ "Stimuli synchronicity model (simultaneous / asynchronous)", 
-      this_moderator == "test_mass_or_distributed" ~ "Testing structure model (mass / distributed)", 
-      this_moderator == "n_repetitions_sentence" ~ "Number of sentence repetition models"
-    ), 
-    "Intercept Estimates" = intercept_estimate_print, 
-    "Intercept z value" = format(round(intercept_z, 2)), 
-    "Intercept p value" = format(round(intercept_p, 2)), 
-    "Moderator Estimates" = mod_estimate_print_full, 
-    "Moderator z value" = format(round(moderator_z, 2)), 
-    "Moderator p value" = format(round(moderator_p, 2))
-  ) %>% 
-  select(-c(this_moderator, intercept_estimate_print, intercept_z, intercept_p, 
-            mod_estimate_print_full, moderator_z, moderator_p, df_type)) %>% 
-  kable() %>% 
-  kable_styling(font_size = 9)
-
-
-```
-
-## Included the imputed value
-
-```{r}
-full %>% 
-  mutate(
-    "Model" = case_when(
-      this_moderator == "NULL" ~ "Null model", 
-      this_moderator == "mean_age" ~ "Mean age model", 
-      this_moderator == "productive_vocab_median" ~ "Median productive vocabulary size model", 
-      this_moderator == "sentence_structure" ~ "Sentence structure model (transitive / intransitive)",
-      this_moderator == "agent_argument_type" ~ "Agent argument type model (pronoun / noun)", 
-      this_moderator == "character_identification" ~ "Character identification model (yes / no)", 
-      this_moderator == "practice_phase" ~ "Practice phase model (yes / no)", 
-      this_moderator == "presentation_type_collapsed" ~ "Stimuli synchronicity model (simultaneous / asynchronous)", 
-      this_moderator == "test_mass_or_distributed" ~ "Testing structure model (mass / distributed)", 
-      this_moderator == "n_repetitions_sentence" ~ "Number of sentence repetition models"
-    ), 
-    "Intercept Estimates" = intercept_estimate_print, 
-    "Intercept z value" = format(round(intercept_z, 2)), 
-    "Intercept p value" = format(round(intercept_p, 2)), 
-    "Moderator Estimates" = mod_estimate_print_full, 
-    "Moderator z value" = format(round(moderator_z, 2)), 
-    "Moderator p value" = format(round(moderator_p, 2))
-  ) %>% 
-  select(-c(this_moderator, intercept_estimate_print, intercept_z, intercept_p, 
-            mod_estimate_print_full, moderator_z, moderator_p, df_type)) %>% 
-  kable() %>% 
-  kable_styling(font_size = 9)
-```
-
-
-
-# Random Effect expt condition??
-
-```{r}
-rma.mv(d_calc,  d_var_calc,  
-                         random = ~ 1 | short_cite/expt_condition/same_infant/row_id, data=
-          ma_data) %>% summary()
-
-rma.mv(d_calc,  d_var_calc,  
-                         random = ~ 1 | short_cite/same_infant/row_id, data=
-          ma_data) %>% summary()
-```
-
-
-
 # Sensitivity analysis
 
 ```{r}
@@ -482,6 +374,71 @@ The plot below shows a modified funnel plot, or "significance funnel" where sign
 
 
 ```{r}
+
+significance_funnel <- function (yi, vi, xmin = min(yi), xmax = max(yi), ymin = 0, ymax = max(sqrt(vi)), 
+    xlab = "Point estimate", ylab = "Estimated standard error", 
+    favor.positive = NA, est.all = NA, est.N = NA, alpha.select = 0.05, 
+    plot.pooled = TRUE) 
+{
+    d = data.frame(yi, vi)
+    d$sei = sqrt(vi)
+    d$pval = 2 * (1 - pnorm(abs(yi)/sqrt(vi)))
+    if (!is.na(est.all) & is.na(favor.positive)) {
+        favor.positive = (est.all > 0)
+        warning("favor.positive not provided, so assuming publication bias favors estimates whose sign matches est.all")
+    }
+    if (is.na(est.all) & is.na(favor.positive)) {
+        stop("Need to specify favor.positive")
+    }
+    d$affirm = rep(NA, nrow(d))
+    if (favor.positive == TRUE) {
+        d$affirm[(d$yi > 0) & (d$pval < alpha.select)] = "Affirmative"
+        d$affirm[(d$yi < 0) | (d$pval >= alpha.select)] = "Non-affirmative"
+    }
+    if (favor.positive == FALSE) {
+        d$affirm[(d$yi < 0) & (d$pval < alpha.select)] = "Affirmative"
+        d$affirm[(d$yi > 0) | (d$pval >= alpha.select)] = "Non-affirmative"
+    }
+    d$affirm = factor(d$affirm, c("Non-affirmative", "Affirmative"))
+    if (sum(d$affirm == "Non-affirmative") == 0) {
+        stop("There are no non-affirmative studies. The plot would look silly.")
+    }
+    if (sum(d$affirm == "Affirmative") == 0) {
+        stop("There are no affirmative studies. The plot would look silly.")
+    }
+    if (is.na(est.N) & is.na(est.all)) {
+        est.N = rma.uni(yi = d$yi[d$affirm == "Non-affirmative"], 
+            vi = d$vi[d$affirm == "Non-affirmative"], method = "FE")$b
+        est.all = rma.uni(yi = d$yi, vi = d$vi, method = "FE")$b
+    }
+    pooled.pts = data.frame(yi = c(est.N, est.all), sei = c(0, 
+        0))
+    just_signif_est = function(.sei) .sei * qnorm(1 - alpha.select/2)
+    if (favor.positive == TRUE) 
+        sl = 1/qnorm(1 - alpha.select/2)
+    if (favor.positive == FALSE) 
+        sl = -1/qnorm(1 - alpha.select/2)
+    int = 0
+    colors = c("darkgray", "orange")
+    p.funnel = ggplot(data = d, aes(x = d$yi, y = d$sei, color = d$affirm))
+    if (plot.pooled == TRUE) {
+        p.funnel = p.funnel + geom_point(data = pooled.pts, aes(x = pooled.pts$yi, 
+            y = pooled.pts$sei), size = 4, shape = 5, fill = NA, 
+            color = c(colors[1], "black")) + geom_point(data = pooled.pts, 
+            aes(x = pooled.pts$yi, y = pooled.pts$sei), size = 4, 
+            shape = 18, color = c(colors[1], "black"), alpha = 1) + 
+            geom_hline(yintercept = 0) + geom_abline(slope = sl, 
+            intercept = int, color = "gray")
+    }
+    p.funnel = p.funnel + geom_point(size = 3, alpha = 0.3) + 
+        geom_point(size = 3, shape = 1) + scale_color_manual(values = colors) + 
+        xlab(xlab) + ylab(ylab) + scale_x_continuous(limits = c(xmin, 
+        xmax)) + scale_y_continuous(limits = c(ymin, ymax)) + 
+        theme_classic() + theme(legend.title = element_blank())
+    plot(p.funnel)
+}
+
+
 significance_funnel(
   ma_data$d_calc,
   ma_data$d_var_calc,
@@ -489,7 +446,7 @@ significance_funnel(
   xmax = max(ma_data$d_calc),
   ymin = 0,
   ymax = max(sqrt(ma_data$d_var_calc)),
-  xlab = "Point estimate",
+  xlab = "Estimate Effect Size (Cohen's d)",
   ylab = "Estimated standard error",
   favor.positive = TRUE,
   est.all = all_estimate,
@@ -589,40 +546,50 @@ heatmaply(ordered_matrix,
 ```
 
 
-# Additional Models: Methodological Moderators with Theoretical Moderators
-## Methodological Moderators with Age
+# Additional Models: Methodological Moderators with Theoretical Moderators {.tabset}
+## With age
 ```{r}
 age_method_m <- fit_method_model("mean_age", ma_data)
-print_method_model(age_method_m) %>% 
+age_print_table <- print_method_model(age_method_m) 
+age_print_table %>% 
   kable() %>% 
-  kable_styling(font_size = 12)
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(age_print_table$Parameter == "Mean age"),bold = T, color = "white", background = "cornflowerblue")
 
 
 ```
 
-## Methodological Moderators with Productive Vocabulary Size 
+## With productive vocabulary size 
 ```{r}
 vocab_method_m <- fit_method_model("productive_vocab_median", ma_data)
-print_method_model(vocab_method_m) %>% 
+vocab_print_table <- print_method_model(vocab_method_m) 
+vocab_print_table %>% 
   kable() %>% 
-  kable_styling(font_size = 12)
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(vocab_print_table$Parameter == "Median productive vocabulary size"),bold = T, color = "white", background = "cornflowerblue")
+
 ```
 
-## Methodological Moderators with Sentence Structure 
+## With predicate type
 ```{r}
 sentence_structure_method_m <- fit_method_model("sentence_structure", ma_data)
-print_method_model(sentence_structure_method_m) %>% 
+sentence_structure_print_table <- print_method_model(sentence_structure_method_m)
+sentence_structure_print_table %>% 
   kable() %>% 
-  kable_styling(font_size = 12)
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Transitive / Intransitive)"),bold = T, color = "white", background = "cornflowerblue")
 
 ```
 
-## Methodological Moderators with Agent Argument Type
+## With Noun phrase type
 ```{r}
 argument_type_method_m <- fit_method_model("agent_argument_type", ma_data)
-print_method_model(argument_type_method_m) %>% 
+argument_type_print <- print_method_model(argument_type_method_m) 
+
+argument_type_print%>% 
   kable() %>% 
-  kable_styling(font_size = 12)
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Pronoun / Nouns)"),bold = T, color = "white", background = "cornflowerblue")
 ```
 
 
