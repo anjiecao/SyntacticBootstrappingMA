@@ -155,29 +155,33 @@ generate_moderator_df <- function(moderator,data){
              mod_estimate_round_two == 0 ~ mod_estimate_round_three, 
              TRUE ~ mod_estimate_round_two),
            
-           mod_SE_print = round(mod_SE, 2), 
+           mod_SE_print = case_when(
+             round(mod_SE, 2) == 0 ~ "<.001",
+             TRUE ~ as.character(round(mod_SE,2))), 
            
            mod_estimate.cil_round_two = round(mod_estimate.cil, 2),
            mod_estimate.cil_round_three = round(mod_estimate.cil, 3),
            mod_estimate.cih_round_two = round(mod_estimate.cih, 2),
            mod_estimate.cih_round_three = round(mod_estimate.cih, 3),
            
-           mod_estimate.cil = case_when(
-             mod_estimate.cil_round_two == 0 ~ mod_estimate.cil_round_three, 
-             TRUE ~ mod_estimate.cil_round_two
+           mod_estimate.cil_print = case_when(
+             mod_estimate.cil_round_two == 0 ~ "<.001", 
+             TRUE ~ as.character(mod_estimate.cil_round_two)
            ), 
-           mod_estimate.cih = case_when(
-             mod_estimate.cih_round_two == 0 ~ mod_estimate.cih_round_three, 
-             TRUE ~ mod_estimate.cih_round_two
+           mod_estimate.cih_print = case_when(
+             mod_estimate.cih_round_two == 0 ~ "<.001", 
+             TRUE ~ as.character(mod_estimate.cih_round_two)
            ),
            
            mod_CI_print = paste0(" [", 
-                                 round(mod_estimate.cil, 2),
+                                 mod_estimate.cil_print,
                                  ", ",
-                                 round(mod_estimate.cih, 2),
+                                 mod_estimate.cih_print,
                                  "]"),
-           mod_estimate_print_full = paste(mod_estimate_print, mod_CI_print),
-           
+           mod_estimate_print_full = case_when(
+             mod_estimate_print == 0 ~  "<.001",
+             TRUE ~ paste(mod_estimate_print, mod_CI_print),
+           ),
            mod_z_print =  round(moderator_z, 2),
            mod_p_print =  round(moderator_p, 2),
            mod_p_print = ifelse(mod_p_print < .001, "<.001", 
@@ -219,7 +223,9 @@ generate_mega_model_df <- function(model){
       Q = model$QE,
       Qp = model$QEp, 
       mod_estimate_print = round(mod_estimate, 2),
-      mod_SE_print = round(mod_SE, 2), 
+      mod_SE_print = case_when(
+        round(mod_SE, 2) == 0 ~ "<.001",
+        TRUE ~ as.character(round(mod_SE,2))), 
       mod_ci_lb_print = round(model_ci_lb, 2), 
       mod_ci_ub_print = round(model_ci_ub, 2),
       mod_CI_print = paste0(" [", 
@@ -242,10 +248,6 @@ generate_mega_model_df <- function(model){
         mod_estimate_print == 0 ~ round(mod_estimate, 3), 
         TRUE ~ mod_estimate_print
       ),
-      mod_SE_print = case_when(
-        mod_SE_print == 0 ~ round(mod_SE, 3), 
-        TRUE ~ mod_SE_print
-      ), 
       mod_ci_lb_print = case_when(
         mod_ci_lb_print == 0 ~ round(model_ci_lb, 3), 
         TRUE ~ mod_ci_lb_print
