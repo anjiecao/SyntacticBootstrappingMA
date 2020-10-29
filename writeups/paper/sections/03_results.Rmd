@@ -108,14 +108,15 @@ methodological_mod <- rma.mv(d_calc ~ character_identification + practice_phase 
 methodological_mod_print <- generate_mega_model_df(methodological_mod)
 
 
-p_theoretical <- generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical")
-  #theme(legend.position = "none")
-p_model <- generate_predictor_plot(mod_print, methodological_mod_print, "methodological")
+p_theoretical <- generate_predictor_plot(mod_print, theoretical_mod_print, "theoretical") +
+  theme(legend.position = "none") + 
+  ggtitle("a. Theoretical Moderators")
+
+p_model <- generate_predictor_plot(mod_print, methodological_mod_print, "methodological") + 
+  ggtitle("b. Methodological Moderators")
 
 
-p_model_pane <- p_theoretical + p_model +
-  plot_annotation(tag_levels = 'a') & 
-  theme(plot.tag = element_text(size = 8))
+p_model_pane <- p_theoretical + p_model
 
 p_model_pane  
 
@@ -130,44 +131,28 @@ cor_p <- ifelse(round(age_vocab_cor$p.value, digits = 2)<0.0001, "< 0.0001", as.
 ```
 
 <!-- Things to change in the plot: [done](1) add caption, [done](2) change x axis to be months [done](3) I know we've gone back and forth about this, but let's just include the simple lm model fit. I think having both is confusing. -->
-```{r, label = "development", fig.cap = "Effect size (Cohen's d) as a function of age in months. The dash line corresponds to effect size equals zero, the solid blue regression line is a simple linear model fit, and the shaded area corresponds to the standard error of the fitted model. Each dot represents one calcaulated effect size."}
+```{r, label = "development", fig.cap = "Effect size (Cohen's d) as a function of age in months. The dash line corresponds to effect size equals zero, the solid red regression line is a simple linear model fit, and the shaded area corresponds to the standard error of the fitted model. Each dot represents one calcaulated effect size, and the size of the dot corresponds to the number of infants included in that condition."}
 
-age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
-                    random = ~ 1 | short_cite/same_infant/x_1,
-                     method = "REML",
-                     data = ma_data) 
-
-predicted_val_age <- predict(age_model, addx = TRUE) %>% 
-  as.data.frame() %>% 
-  rownames_to_column("data_frame_id") %>%
-  select(data_frame_id, pred) %>%
-  left_join(ma_data %>% rownames_to_column("data_frame_id") %>%
-              select(mean_age, d_calc, data_frame_id)) %>%
-  mutate(model_type = "age") %>%
-  rename(developmental_predictor = mean_age)
-
-predicted_val_age %>%
+ma_data %>%
   ggplot() +
-  geom_point(aes(x = developmental_predictor, y = d_calc)) +
-  geom_smooth(method = "lm",aes(x = developmental_predictor, y = d_calc)) +
+  geom_point(aes(x = mean_age, y = d_calc, size = n_1)) +
+  geom_smooth(method = "lm",aes(x = mean_age, y = d_calc)) +
   scale_x_continuous(labels = function(x) round(x/30.44), 
-                     breaks = seq(0,36*30.44, 12*30.44)) +
+                     breaks = seq(12,48*30.44, 6*30.44)) +
   geom_hline(yintercept = 0, linetype = "dashed")+
   theme_classic() + 
   geom_smooth(method = "lm",
-              aes(x = developmental_predictor, y = d_calc,color = "Cohen's d"),
+              aes(x = mean_age, y = d_calc,color = "Cohen's d"),
               ) +
   #geom_smooth(method = "lm",
   #            aes(x = developmental_predictor, y = pred,
   #                color = "Model's Predicted Values")) +
   xlab("Mean Age (Months)") + 
   ylab(expression(paste("Effect Size (Cohen's ", italic(d), ")")))   +
-  scale_color_manual(name = "Regression Line",             # legend name
-                     values = c("Cohen's d" = "blue",  # map regression line colors
-                                "Model's Predicted Values" = "red"))
+  guides(colour = FALSE, size = FALSE)
 ```
 
-Does the syntactic bootstrapping effect get stronger across development? We examined two measures of developmental change: age and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`). Neither age ($\beta$ = `r filter(mod_print, moderator == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age")$mod_p_print`; Fig.\ \@ref(fig:development); \@ref(fig:megaPlot)), nor vocabulary size ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`) significantly moderated the effect.
+Does the syntactic bootstrapping effect get stronger across development? We examined two measures of developmental change: age and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`). Neither age ($\beta$ = `r filter(mod_print, moderator == "mean_age")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age")$mod_p_print`; \@ref(fig:megaPlot);Fig. \@ref(fig:development), a), nor vocabulary size ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`) significantly moderated the effect.
 
 ### Sentence structure 
 ```{r summarize_sentence_structure}
