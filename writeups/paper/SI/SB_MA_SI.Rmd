@@ -166,6 +166,118 @@ convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>%
   kable_styling(font_size = 12)
 ```
 
+# Reported model results using dataset without imputed values {.tabset}
+As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no signifcant difference between the outcomes from the two datasets. 
+
+```{r}
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+
+si_mod_print_no_impute <- generate_moderator_df(MODERATORS,filter(ma_data,  data_source != "imputed"))
+
+```
+
+## Mean age (Days??)
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "mean_age") %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Median productive vocabulary size
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "productive_vocab_median") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Predicate Type
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Noun phrase type
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Character identification phase
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Practice phase 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "practice_phase") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Synchronicity 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "presentation_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Testing structure 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "test_mass_or_distributed") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Number of sentence repetitions
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
 
 # Details of calculating effect size
 
