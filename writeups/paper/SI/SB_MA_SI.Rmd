@@ -32,6 +32,7 @@ source(here("writeups/paper/scripts/model_print.R"))
 source(here("writeups/paper/scripts/forest_plot_helper.R"))
 source(here("writeups/paper/scripts/funnel_plot_helper.R"))
 source(here("writeups/paper/scripts/predictor_plot_helper.R"))
+source(here("writeups/paper/scripts/SI_table_helper.R"))
 
 opts_chunk$set(echo = F, message = F, warning = F, 
                error = F, cache = F, tidy = F, fig.height = 4.5)
@@ -52,68 +53,118 @@ ma_data <- read_csv(DATA_PATH)
 ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
-# Methodological moderators and theoretical moderators model results {.tabset}
+# Reported model results  {.tabset}
+
+The tables below show the estimates for the single-moderator models reported in the main text. For the categorical variables, the level reported in the table is the first level appeared in the parentheses. Across all the single-predictor model, the predicate type is significant, such that hearing transitive sentences have a positive effect on the effect size. We also found that median vocabulary size is a marginally significant moderator. 
 ```{r}
 MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
-T_MODERATORS <- c("mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type")
-M_MODERATORS <- c("presentation_type","character_identification", "practice_phase", "test_mass_or_distributed","n_repetitions_sentence")
 
-si_mod_print <- generate_moderator_df(MODERATORS, ma_data) %>% 
-  select(this_moderator, 
-         mod_estimate_print_full, 
-         mod_z_print, 
-         moderator_p)
+si_mod_print <- generate_moderator_df(MODERATORS, ma_data) 
 
 ```
 
-## Theoretical Moderators 
+## Mean age (Days??)
 ```{r}
-si_mod_print %>% 
-  filter(this_moderator %in% T_MODERATORS) %>%
-  mutate(
-     this_moderator = case_when(
-          this_moderator == "mean_age" ~ "Mean Age", 
-          this_moderator == "productive_vocab_median" ~ "Median Productive Vocabulary Size",
-          this_moderator == "sentence_structure" ~ "Predicate Type \n (Transitive / Intransitive)", 
-          this_moderator == "agent_argument_type" ~ "Agent Argument Type \n (Pronoun / Noun)", 
-        ), 
-     moderator_p = round(moderator_p, 2)
-  ) %>% 
-  rename(
-    Moderator = this_moderator, 
-    Estimate = mod_estimate_print_full, 
-    "z value" = mod_z_print, 
-    "p value" = moderator_p
-  ) %>% 
+convert_pretty_print_table(si_mod_print, "mean_age") %>% 
   kable() %>% 
   kable_styling(font_size = 12)
-
-
 ```
-## Methodological Moderators
+
+## Median productive vocabulary size
 ```{r}
-si_mod_print %>% 
-  filter(this_moderator %in% M_MODERATORS) %>% 
+convert_pretty_print_table(si_mod_print, "productive_vocab_median") %>% 
   mutate(
-     this_moderator = case_when(
-        this_moderator == "character_identification" ~ "Character Identification Phase (Yes / No)", 
-        this_moderator == "practice_phase" ~ "Practice Phase (Yes / No)", 
-        this_moderator == "presentation_type" ~ "Stimuli Synchronicity (Simultaneous / Asynchronous)",
-        this_moderator == "test_mass_or_distributed" ~ "Testing Structure (Mass / Distributed)", 
-        this_moderator == "n_repetitions_sentence" ~ "Number of Sentence Repetitions"
-        ),
-     moderator_p = round(moderator_p, 2)
-  ) %>% 
-  rename(
-    Moderator = this_moderator, 
-    Estimate = mod_estimate_print_full, 
-    "z value" = mod_z_print, 
-    "p value" = moderator_p
+    Parameter = case_when(
+    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
+    TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
   kable_styling(font_size = 12)
 ```
 
+## Predicate Type
+```{r}
+convert_pretty_print_table(si_mod_print, "sentence_structure") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Noun phrase type
+```{r}
+convert_pretty_print_table(si_mod_print, "agent_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Character identification phase
+```{r}
+convert_pretty_print_table(si_mod_print, "character_identification") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Practice phase 
+```{r}
+convert_pretty_print_table(si_mod_print, "practice_phase") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Synchronicity 
+```{r}
+convert_pretty_print_table(si_mod_print, "presentation_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Testing structure 
+```{r}
+convert_pretty_print_table(si_mod_print, "test_mass_or_distributed") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Number of sentence repetitions
+```{r}
+convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
 
 
 # Details of calculating effect size
@@ -492,40 +543,6 @@ additional_main <- bind_rows(additional_main, intransitive) %>%
 In the main analysis, we presented the results of the model for the relationship between effect size and the agent argument type. We found that having nouns or pronouns int he agent argument does not significantly predict the effect size. Here, we presented a similar analysis of the influence of the patient argument type. Because by definition English intransitive sentences do not have patient argument, we focus on the subset of studies that used the transitive sentences ($N$ = `r filter(additional_main, this_moderator == "patient_argument_type")$n`)
 
 ```{r}
-
-pretty_moderator_name <- function(s){
-  new_s <- str_to_title(gsub("_", " ",s))
-  return(new_s)
-}
-
-convert_pretty_print_table <- function(full_df, current_moderator){
-  
-  estimates <- full_df %>% 
-    filter(this_moderator == current_moderator) %>% 
-    pivot_longer(cols = c(intercept, moderator), names_to = "Parameter", values_to = "Estimate") %>% 
-    select(Parameter, Estimate)
-  
-  z_val <- full_df %>% 
-    filter(this_moderator == current_moderator) %>% 
-    pivot_longer(cols = c(intercept_z_val, mod_z_val), names_to = "Parameter", values_to = "z value") %>% 
-    select("z value")
-  
-  p_val <- full_df %>% 
-    filter(this_moderator == current_moderator) %>% 
-    pivot_longer(cols = c(intercept_p_val, mod_p_val), names_to = "Parameter", values_to = "p value") %>% 
-    select("p value")
-  
-  all_df <- bind_cols(estimates, z_val, p_val) %>% 
-    mutate(
-      Parameter = case_when(
-        Parameter == "moderator" ~ pretty_moderator_name(current_moderator),
-        Parameter == "intercept" ~ "Intercept"
-      )
-    )
-  
-  return(all_df)
-  
-}
 
 
 patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type") %>% 
