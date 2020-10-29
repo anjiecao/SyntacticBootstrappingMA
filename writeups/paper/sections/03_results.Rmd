@@ -60,7 +60,7 @@ In sum, across two types of analyses, we find some evidence for publication bias
 
 ## Relating the syntactic bootstrapping effect to other word learning stategies
 
-```{r label = "metalab", fig.cap = "", message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=FALSE,results='hide'}
 MAPPING_STUDIES <- c("Mutual exclusivity", 
                      "Sound symbolism",
                      "Cross-situational word learning",
@@ -75,16 +75,16 @@ tidy_all_age_summary <- summarize_metalab_age_younger_than(ma_data, 48)
 tidy_models_with_age_younger <- left_join(tidy_all_models_res_younger, 
                                   tidy_all_age_summary, 
                                   by = "dataset_name") 
+ML_print <- get_metalab_es_print(tidy_all_models_res_younger)
+
+```
+
+```{r message=FALSE, warning=FALSE, echo=FALSE,results='hide', label = "metalab", fig.pos="H", fig.cap= "Each dot represents a meta-analytic effect size. The size of the dot represents the number of individual effect sizes included in that particular meta-analysis. The x-axis corresponds to the magnitude of the esimated effect size. The y-axis represents the mean age of the infants included in each meta-analysis."}
 generate_metalab_plot(tidy_models_with_age_younger)
 ```
 
-```{r}
-ML_print <- get_metalab_es_print(tidy_all_models_res_younger, "Mutual exclusivity")
-ML_print
-```
 
-
-In order to learn words, children must figure out the mapping relationships between the words and their references. Previous research has proposed numerous biases and learning strategies by which children can solve the local mapping problem. We collected an opportunity sample of meta-analyses on the related learning strategies through publicly available datasets on Metalab and can be accessed with the metalabr package (CITATION?). For more direct comparison across the learning phenomena, we focused on children younger than 48-month-olds. We included Mutual exclusivity (*d* = `filter(ML_print, datset_name == "Mutual exclusivity")$estimate_print_full`; Mean age: ; SD:  ), Cross-situational word learning (*d* = `filter(ML_print, datset_name == "Cross-situational word learning")$estimate_print_full`; Mean age: ; SD: ), Gaze following (*d* = `filter(ML_print, datset_name == "Gaze following")$estimate_print_full`) and Sound symbolism(*d* = `filter(ML_print, datset_name == "Sound symbolism")$estimate_print_full`). [CITE FIGURE] shows syntactic bootstrapping's effect size is relatively small compared to other learning strategies. The discrepancy might caused by the other word learning strategies were studied exclusively with nouns. 
+In order to learn words, children must figure out the mapping relationships between the words and their references. Previous research has proposed numerous biases and learning strategies by which children can solve the local mapping problem. We collected an opportunity sample of meta-analyses on the related learning strategies through publicly available datasets on Metalab and can be accessed with the metalabr package (CITATION?). For more direct comparison across the learning phenomena, we focused on children younger than 48-month-olds. We included Mutual exclusivity (*d* = `r filter(ML_print, dataset_name == "Mutual exclusivity")$estimate_print_full`; Mean age: `r filter(tidy_all_age_summary, dataset == "Mutual exclusivity")$mean_age` Days), Cross-situational word learning (*d* = `r filter(ML_print, dataset_name == "Cross-situational word learning")$estimate_print_full`; Mean age: `r filter(tidy_all_age_summary, dataset == "Mutual exclusivity")$mean_age` Days ), Gaze following (*d* = `r filter(ML_print, dataset_name == "Gaze following")$estimate_print_full`; Mean age: `r filter(tidy_all_age_summary, dataset == "Gaze following")$mean_age` Days ) and Sound symbolism(*d* = `r filter(ML_print, dataset_name == "Sound symbolism")$estimate_print_full`; Mean age: `r filter(tidy_all_age_summary, dataset == "Sound symbolism")$mean_age` Days). Figure \@ref(fig:metalab) shows syntactic bootstrapping's effect size is relatively small compared to other learning strategies. The discrepancy might caused by the other word learning strategies were studied exclusively with nouns. 
 
 
 ## Theoretical Moderators
