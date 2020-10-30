@@ -280,6 +280,9 @@ convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>%
 ```
 
 # Additional Models: Methodological Moderators with Theoretical Moderators {.tabset}
+Syntactic Bootstrapping studies differ in their implementational details. Here we examine to what extent the influences of the theoretical moderators can be accounted for by the methodological factors. The tables below present the results of models that include all the key methodological moderators and one of the theoretical moderators. The patterns were consistent with the single-predictor theoretical models: predicate type is still a significant predictor of the effect. 
+
+
 ## With age
 ```{r}
 age_method_m <- fit_method_model("mean_age", ma_data)
@@ -329,7 +332,7 @@ argument_type_print%>%
 
 
 # Additional Models: exploratory moderators {.tabset}
-The moderators' estimates are for the first level in the parenthesis. 
+The tables here present some exploratory moderators. The level represented in the table is the first one in the parenthesis. 
 ```{r include=FALSE}
 ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
 INTRANSITIVE <- c("patient_argument_type")
