@@ -279,6 +279,172 @@ convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>%
   kable_styling(font_size = 12)
 ```
 
+# Additional Models: Methodological Moderators with Theoretical Moderators {.tabset}
+## With age
+```{r}
+age_method_m <- fit_method_model("mean_age", ma_data)
+age_print_table <- print_method_model(age_method_m) 
+age_print_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(age_print_table$Parameter == "Mean age"),bold = T, color = "white", background = "cornflowerblue")
+
+
+```
+
+## With productive vocabulary size 
+```{r}
+vocab_method_m <- fit_method_model("productive_vocab_median", ma_data)
+vocab_print_table <- print_method_model(vocab_method_m) 
+vocab_print_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(vocab_print_table$Parameter == "Median productive vocabulary size"),bold = T, color = "white", background = "cornflowerblue")
+
+```
+
+## With predicate type
+```{r}
+sentence_structure_method_m <- fit_method_model("sentence_structure", ma_data)
+sentence_structure_print_table <- print_method_model(sentence_structure_method_m)
+sentence_structure_print_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Transitive / Intransitive)"),bold = T, color = "white", background = "cornflowerblue")
+
+```
+
+## With Noun phrase type
+```{r}
+argument_type_method_m <- fit_method_model("agent_argument_type", ma_data)
+argument_type_print <- print_method_model(argument_type_method_m) 
+
+argument_type_print%>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Pronoun / Nouns)"),bold = T, color = "white", background = "cornflowerblue")
+```
+
+
+
+
+# Additional Models: exploratory moderators {.tabset}
+The moderators' estimates are for the first level in the parenthesis. 
+```{r include=FALSE}
+ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
+INTRANSITIVE <- c("patient_argument_type")
+additional_main <- generate_moderator_df(ADDITIONAL_MODERATORS, ma_data)
+intransitive <- generate_moderator_df(INTRANSITIVE, filter(ma_data, sentence_structure == "transitive"))
+additional_main <- bind_rows(additional_main, intransitive) %>% 
+  select(this_moderator, n, 
+         estimate_print_full, z_print, p_print, p, moderator_p,
+         mod_estimate_print_full, mod_CI_print, mod_z_print, mod_p_print) %>% 
+  mutate(
+    intercept = estimate_print_full, 
+    moderator = mod_estimate_print_full,
+    intercept_z_val = gsub("= ","", z_print), 
+    intercept_p_val = gsub("= ", "", p_print),
+    mod_z_val = gsub("= ", "", mod_z_print),
+    mod_p_val = gsub("= ", "", mod_p_print)
+  )
+
+```
+
+## Patient argument type for transitive sentence 
+
+In the main analysis, we presented the results of the model for the relationship between effect size and the agent argument type. We found that having nouns or pronouns int he agent argument does not significantly predict the effect size. Here, we presented a similar analysis of the influence of the patient argument type. Because by definition English intransitive sentences do not have patient argument, we focus on the subset of studies that used the transitive sentences ($N$ = `r filter(additional_main, this_moderator == "patient_argument_type")$n`)
+
+```{r}
+patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Patient Argument Type" ~ "Patient Argument Type (Pronoun / Noun)",
+      TRUE ~ Parameter
+    )
+  )
+
+patient_argument_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+
+## Stimuli Modality
+
+We found that the presentation modality of the stimuli was not a significant predictor of the effect size. In other words, studies that presented young children with animation clips had similar effect sizes as studies using video clips. The model statistics are shown below. Note that the stimuli modality and the stimuli actor levels had a lot of overlapping studies, so researchers should interpret this result with caution. 
+
+
+```{r}
+stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality") %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Stimuli Modality" ~ "Stimuli Modality (Video / Animation)",
+      TRUE ~ Parameter
+    )
+  )
+stimuli_argument_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+## Stimuli actors
+There is a marginal effect of stimuli actor. Studies with human actors as protagonists in the events had relatively smaller effect sizes as studies using puppets, human actors in animal suits, or using animated geometrical shapes. This might due to the relatively higher visual complexity associated with stimuli using real human actors.  
+
+```{r}
+stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Stimuli Actor" ~ "Stimuli Actor (Person / Non-person)",
+      TRUE ~ Parameter
+    )
+  )
+stimuli_actor_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Type of event {.tabset}
+Studies differed in the type of transitive events and intransitive events they presented. Previous studies have shown that young children's looking behaviors in Inter-modal Preferential Looking Paradigm were very sensitive to the subtle perceptual differences in the visual stimuli (Delle Luche, Durrant, Poltrock, & Floccia, 2015; Fernald, Zangl, Portillo, & Marchman, 2008). Therefore, we coded the types of events presented in the visual stimuli. There were two types of transitive events: direct causal action and indirect causal action. The former involved the agent directly acting on the patient and causing the patient to move. The latter involved a mean-end sequence leading to the caused action of the patient. For example, the agent may pull a band on the patient's waist and caused it to move. There were also two types of intransitive events used in the literature. One involved a single actor acting, such as jumping up and down. The other involved two actors presented without any causal action. 
+
+Our model suggested that neither of the variables was predictive of the effect sizes. 
+
+
+
+### Transitive Event type
+```{r}
+transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Transitive Event Type" ~ "Transitive Event Type (Indirect caused action / Direct caused action)",
+      TRUE ~ Parameter
+    )
+  )
+
+
+transitive_event_type_table %>% 
+  kable()%>% 
+  kable_styling(font_size = 12)
+```
+### Intransitive event type
+```{r}
+intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Intransitive Event Type" ~ "Intransitive Event Type (Parallel actions / One action)",
+      TRUE ~ Parameter
+    )
+  )
+
+intransitive_event_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+
+
 # Details of calculating effect size
 
 
@@ -545,171 +711,6 @@ heatmaply(ordered_matrix,
           Colv = NA)
 ```
 
-
-# Additional Models: Methodological Moderators with Theoretical Moderators {.tabset}
-## With age
-```{r}
-age_method_m <- fit_method_model("mean_age", ma_data)
-age_print_table <- print_method_model(age_method_m) 
-age_print_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(age_print_table$Parameter == "Mean age"),bold = T, color = "white", background = "cornflowerblue")
-
-
-```
-
-## With productive vocabulary size 
-```{r}
-vocab_method_m <- fit_method_model("productive_vocab_median", ma_data)
-vocab_print_table <- print_method_model(vocab_method_m) 
-vocab_print_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(vocab_print_table$Parameter == "Median productive vocabulary size"),bold = T, color = "white", background = "cornflowerblue")
-
-```
-
-## With predicate type
-```{r}
-sentence_structure_method_m <- fit_method_model("sentence_structure", ma_data)
-sentence_structure_print_table <- print_method_model(sentence_structure_method_m)
-sentence_structure_print_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Transitive / Intransitive)"),bold = T, color = "white", background = "cornflowerblue")
-
-```
-
-## With Noun phrase type
-```{r}
-argument_type_method_m <- fit_method_model("agent_argument_type", ma_data)
-argument_type_print <- print_method_model(argument_type_method_m) 
-
-argument_type_print%>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Pronoun / Nouns)"),bold = T, color = "white", background = "cornflowerblue")
-```
-
-
-
-
-# Additional Moderators*
-*The moderators' estimates are for the first level in the parenthesis. 
-```{r include=FALSE}
-ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
-INTRANSITIVE <- c("patient_argument_type")
-additional_main <- generate_moderator_df(ADDITIONAL_MODERATORS, ma_data)
-intransitive <- generate_moderator_df(INTRANSITIVE, filter(ma_data, sentence_structure == "transitive"))
-additional_main <- bind_rows(additional_main, intransitive) %>% 
-  select(this_moderator, n, 
-         estimate_print_full, z_print, p_print, 
-         mod_estimate_print_full, mod_CI_print, mod_z_print, mod_p_print) %>% 
-  mutate(
-    intercept = estimate_print_full, 
-    moderator = mod_estimate_print_full,
-    intercept_z_val = gsub("= ","", z_print), 
-    intercept_p_val = gsub("= ", "", p_print),
-    mod_z_val = gsub("= ", "", mod_z_print),
-    mod_p_val = gsub("= ", "", mod_p_print)
-  )
-
-```
-
-## Patient argument type for transitive sentence 
-
-In the main analysis, we presented the results of the model for the relationship between effect size and the agent argument type. We found that having nouns or pronouns int he agent argument does not significantly predict the effect size. Here, we presented a similar analysis of the influence of the patient argument type. Because by definition English intransitive sentences do not have patient argument, we focus on the subset of studies that used the transitive sentences ($N$ = `r filter(additional_main, this_moderator == "patient_argument_type")$n`)
-
-```{r}
-
-
-patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type") %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Patient Argument Type" ~ "Patient Argument Type (Pronoun / Noun)",
-      TRUE ~ Parameter
-    )
-  )
-
-patient_argument_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-
-
-## Stimuli Modality (Video or Animation)
-
-We found that the presentation modality of the stimuli was not a significant predictor of the effect size. In other words, studies that presented young children with animation clips had similar effect sizes as studies using video clips. The model statistics are shown below. Note that the stimuli modality and the stimuli actor levels had a lot of overlapping studies, so researchers should interpret this result with caution. 
-
-
-```{r}
-stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality") %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Stimuli Modality" ~ "Stimuli Modality (Video / Animation)",
-      TRUE ~ Parameter
-    )
-  )
-stimuli_argument_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-
-## Stimuli actors (Person or Non-person)
-Similarly, we did not find an effect of stimuli actors. Studies with human actors as protagonists in the events had similar effect sizes as studies using puppets, human actors in animal suits, or using animated geometrical shapes. 
-
-```{r}
-stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")  %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Stimuli Actor" ~ "Stimuli Actor (Person / Non-person)",
-      TRUE ~ Parameter
-    )
-  )
-stimuli_actor_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Type of event {.tabset}
-Studies differed in the type of transitive events and intransitive events they presented. Previous studies have shown that young children's looking behaviors in Inter-modal Preferential Looking Paradigm were very sensitive to the subtle perceptual differences in the visual stimuli (Delle Luche, Durrant, Poltrock, & Floccia, 2015; Fernald, Zangl, Portillo, & Marchman, 2008). Therefore, we coded the types of events presented in the visual stimuli. There were two types of transitive events: direct causal action and indirect causal action. The former involved the agent directly acting on the patient and causing the patient to move. The latter involved a mean-end sequence leading to the caused action of the patient. For example, the agent may pull a band on the patient's waist and caused it to move. There were also two types of intransitive events used in the literature. One involved a single actor acting, such as jumping up and down. The other involved two actors presented without any causal action. 
-
-Our model suggested that neither of the variables was predictive of the effect sizes. 
-
-
-
-### Transitive Event: Direct causal action or Indirect causal action
-```{r}
-transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")  %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Transitive Event Type" ~ "Transitive Event Type (Indirect caused action / Direct caused action)",
-      TRUE ~ Parameter
-    )
-  )
-
-
-transitive_event_type_table %>% 
-  kable()%>% 
-  kable_styling(font_size = 12)
-```
-### Intransitive Event: Single-actor or parallel actions
-```{r}
-intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")  %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Intransitive Event Type" ~ "Intransitive Event Type (Parallel actions / One action)",
-      TRUE ~ Parameter
-    )
-  )
-
-intransitive_event_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
 
 
  

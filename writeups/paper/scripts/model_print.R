@@ -49,13 +49,25 @@ print_method_model <- function(model_res){
         mod_name == "productive_vocab_median" ~ "Median productive vocabulary size",
         mod_name == "mean_age" ~ "Mean age"
       ), 
+      ci_lb_round = round(ci_lb, 2), 
+      ci_ub_round = round(ci_ub, 2),
+      
+      ci_lb_print = case_when(
+        ci_lb_round == 0 ~ "<.001", 
+        TRUE ~ as.character(ci_lb_round)
+      ), 
+      ci_ub_print = case_when(
+        ci_ub_round == 0 ~ "<.001", 
+        TRUE ~ as.character(ci_ub_round)
+      ), 
+      
       beta_print_full = case_when(
         round(beta, 2) == 0 ~ paste0("<.001"),
         TRUE ~ paste0(round(beta, 2), 
                       " [", 
-                      round(ci_lb, 2), 
+                      ci_lb_print, 
                       ", ",
-                      round(ci_ub, 2), 
+                      ci_ub_print, 
                       "]")
       ),
       z_val_print = round(z_val, 2), 

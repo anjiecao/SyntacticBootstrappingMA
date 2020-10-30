@@ -8,15 +8,20 @@ convert_pretty_print_table <- function(full_df, current_moderator){
   
   full_df <- full_df %>% 
     select(this_moderator, n, 
-           estimate_print_full, z_print, p_print, 
-           mod_estimate_print_full, mod_CI_print, mod_z_print, mod_p_print) %>% 
+           estimate_print_full, z_print, p_print, p, 
+           mod_estimate_print_full, mod_CI_print, mod_z_print, mod_p_print, moderator_p) %>% 
     mutate(
       intercept = estimate_print_full, 
       moderator = mod_estimate_print_full,
       intercept_z_val = gsub("= ","", z_print), 
-      intercept_p_val = gsub("= ", "", p_print),
+      intercept_p_val = case_when(
+        p < 0.05 ~ paste0(gsub("= ", "", p_print), "*"), 
+        TRUE ~ gsub("= ", "", p_print)
+        ),
       mod_z_val = gsub("= ", "", mod_z_print),
-      mod_p_val = gsub("= ", "", mod_p_print)
+      mod_p_val = case_when(
+        moderator_p < 0.05 ~ paste0(gsub("= ", "", mod_p_print), "*"), 
+        TRUE ~ gsub("= ", "", mod_p_print))
     )
   
   
