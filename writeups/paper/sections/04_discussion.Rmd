@@ -8,19 +8,56 @@ Three decades of research in syntactic bootstrapping has tremedously extended ou
 
 
 ## Small effect size
-The effect size for syntactic bootstrapping is considered small by the standard conventional Cohen's d interpretation (STANDARD). Relatively, it is also small compared to other word learning strategies. We compared syntactic bootstrapping with an opportunity sample of early language development meta-analyses: mutual-exclusivity, cross-situational learning, gaze following and sound symbolism. These strategies and biases, similar to Syntactic Bootstrapping, are considered to be instrumental for young children to establish the mapping relationships between words and their references in a local context. We showed that the effect size for Syntactic Bootstrapping is comparable to sound symbolism but smaller than the other three phenomena. 
+The effect size for syntactic bootstrapping is considered small by the conventional Cohen's d interpretation (STANDARD). Relatively, it is also small compared to other word learning strategies. We compared syntactic bootstrapping with an opportunity sample of early language development meta-analyses: mutual-exclusivity, cross-situational learning, gaze following and sound symbolism. These strategies and biases are selected because they are considered to be instrumental for young children to establish the mapping relationships between words and their references in a local context. We showed that the effect size for Syntactic Bootstrapping is comparable to sound symbolism but smaller than the all other three phenomena. 
 
-One possible explanation for this discrepancy is the syntactic category difference. Studies in the four domains are all primarily concerned with noun learning. [EACH condition]Even for sound symbolism, the bias at test is hypothesized to be influencing the mapping between a sound and a stable entity, which is a potential candidate reference for nouns. In this regard, syntactic bootstrapping deviates from the other learning strategies by guiding infants to map a word to an ephemeral action. The challenging of verb learning relative to noun learning has been well documented in the observational literature (CITE) and experimental studies (). Our finding is consistent with the ove 
-.  
-
-Processing deman for sentence? -> it is not enough to simply focus on words 
-, becaus
+One possible explanation for this discrepancy is the syntactic category difference. Studies in the four domains are all primarily concerned with noun learning. However, syntactic bootstrapping deviates by expecting infants to learn verb. The challenging nature of verb learning relative to noun learning has been well documented in the observational literature (CITE) and experimental studies (CITE). Second, studies in syntactic bootstrapping may be more challenging for children because they require children to attend, process and incoportate the full sentence. The neighboring words and their orderings are essential to determine the references of the novel word (e.g. "The bunny is *gorping* the duck" and "the duck is *gorping* the bunny" corresponds to two distinct actions). In contrast, in a classic mutual exclusivity study, the local linguistic context does not play a central role in the semantics of the novel word (e.g. "Look at the *dax*" can be replaced by "Can you show me the *dax*"). 
 
 ## Lack of age effect
+We also find an intriguing lack of age effect. Children do not seem to get better at this task as they get older, which is also in contrast with other phenomena (MAYBE LIST OUT COEFFICIENTS?). One potential cause for the lack of age effect is the nature of this learning strategy: syntactic bootstrapping has been argued to be an unlearned bias (CITE), and therefore the accumulation of experience should not have a significant impact on this effect as children age. Of coruse, an unlearned bias does not necessarily imply that the effect sizes should not change. In theory, older children tend to process information faster, have more capacity in their working memory, and are able to stay focus at test longer (CITATION?). As a result, another possible cause for the lack of age effect is the way researchers adapting studies based on children's age. Although in our studies we did not find adding methodological moderators to significantly change the age model's results, it is plausible that our coded moderators fail to capture the changes the methods. Indeed, an intuitive inspection of the visual stimuli use change as a function of the age suggests suggests that researchers tend to use more complex visua stimuli to older children (see SI). With older infants tested in a more demanding way, the adaptation could mask some developmental changes of the learning strategies. [FIT MODEL IN THE SUBSET?]
+
+```{r}
+library(here)
+library(tidyverse)
+library(metafor)
+DATA_PATH <- here("data/processed/syntactic_bootstrapping_tidy_data.csv") 
+
+ma_data <- read_csv(DATA_PATH)
+
+vocab_only_data <- ma_data %>% filter(!is.na(productive_vocab_median))
+
+vocab_model <- rma.mv(d_calc ~ productive_vocab_median, 
+                  V = d_var_calc,
+                  random = ~ 1 | short_cite/same_infant/row_id,
+                  method = "REML",
+                  data = vocab_only_data)
+
+age_model <- rma.mv(d_calc ~ mean_age, 
+                  V = d_var_calc,
+                  random = ~ 1 | short_cite/same_infant/row_id,
+                  method = "REML",
+                  data = vocab_only_data)
+
+summary(vocab_model)
+summary(age_model)
+```
+
 
 ## Implications of the robust transitivity effect
+Children perform better in conditions using transitive sentences than those using intransitive sentences. This finding consolidates the observations many researchers have made [CITATION]. Three factors may have given rise of this transitivity advantage. First, under certain contexts, the transitive sentences have less ambiguity than their intransitive counterparts.  If one sees two scenes: in one a girl patting a boy, in the other a girl and a boy jumping side-by-side, then upon hearing “the girl is gorping the boy”, only the scene with patting action is a plausible interpretation. In contrast, if one hears the intransitive sentence, “the girl is gorping”,  the verb can be interpreted as being consistent with both the causative scene and the non-causative scene. Second, children may have more experience with transitive sentences than intransitive sentences. A corpus analysis on parental utterances for 1- to 6-year-old children found that transitive sentences make up approximately 24.36% of all utterances, whereas intransitive sentences occupy only 17.24% [@laakso2007pronouns]. Thus the familiarity with transitive sentences can potentially improve children’s understanding of transitive sentences in the lab. Last but not least, the perceptual saliency of the visual scenes may have contributed to the asymmetrical performance in the transitive conditions and the transitive conditions. Children were found to have a baseline preference for two actors event over one actor event [e.g., @yuan2012counting], and for synchronous movement over causative movement [e.g., @naigles1993first]. These preferences can make detecting an effect in the transitive condition easier than in the intransitive condition. 
+
 
 ## Limitations and moving forward 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
