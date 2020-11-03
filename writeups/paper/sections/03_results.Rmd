@@ -53,7 +53,7 @@ worst_case_estimate_print <- paste0(as.numeric(round(affirm_model$beta, 2)),
 )
 ```
 
-Conducting this sensitivity analysis on our data reveals that no amount of publication bias could attentuate the point estimate of the effect size to 0. Nevertheless, the worse-case scenario appreciably attenuates the meta-analytic effect size, and the attenuated effect size estimate includes 0 in its 95% confidence interval (`r worst_case_estimate_print`; see SI for additional details). 
+Conducting this sensitivity analysis on our data reveals that no amount of publication bias could attentuate the point estimate of the effect size to 0. Nevertheless, the worst-case scenario appreciably attenuates the meta-analytic effect size, and the attenuated effect size estimate includes 0 in its 95% confidence interval (`r worst_case_estimate_print`; see SI for additional details). 
 
 In sum, across two types of analyses, we find some evidence for publication bias in the syntactic bootstrapping literature, but even under worst-case scenarios publication bias was not enough to fully attenuate the meta-analytic point estimate to 0. Further, some of the publication bias observed in the funnel plot analysis may be due to heterogeneity in the data. In the following sections, we analyze theoretical and methodological moderators that could be contributing to this heterogeneity, though we emphasize that the likely presence of publication bias implies that these moderators should be interpreted with caution. 
 
