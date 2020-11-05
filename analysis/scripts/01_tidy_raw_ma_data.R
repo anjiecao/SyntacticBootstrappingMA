@@ -18,6 +18,7 @@ read_raw_data_and_clean <- function(sheet_id, sheet_name, outpath){
                         col_types = "ccccccccccccccdccdddccccccccccccccddddccdcdddddddddddcccccccd")
   tidy_es <- ma_data %>%
     mutate(mean_age = str_remove(mean_age, ",")) %>%
+ 
     select(-c(d_calc, 
              d_var_calc, 
              es_method)) %>% 

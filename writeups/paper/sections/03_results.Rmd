@@ -1,5 +1,5 @@
 ```{r generate to-print model results}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 ```
 
@@ -92,7 +92,7 @@ We next asked whether the overall effect size estimate was moderated by our theo
 
 ```{r label = "megaPlot", fig.width = 10, fig.height = 5,fig.pos = "T!", fig.cap = "In these figures we presented moderator estimates from two types of model: the red dots represent moderator estimates from single-predictor model, and the gray dots connected with each other represent moderator estimates from the full model including all the moderators from the group. For categorical variables, the dots represent the level that appears first in the parentheses. We found that each theoretical moderator and methodological moderator has similar estimates in the single-predictor models and the full models.  (a) Predicate type is a significant predictor for effect size. In particular, transitive sentence has a positive effect on the effect size relative to intransitive sentence. Note that in this plot we did not include median productive vocabulary size. This is because only a subset of studies reported the information. (b) Testing structure and sentence reptitions marginally predict.."}
 
-theoretical_mod <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age, V = d_var_calc,
+theoretical_mod <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age_months, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/row_id,
                      method = "REML",
                      data = ma_data) 
@@ -125,7 +125,7 @@ p_model_pane
 ### Development
 
 ```{r}
-age_vocab_cor <- cor.test(ma_data$mean_age,ma_data$productive_vocab_median)
+age_vocab_cor <- cor.test(ma_data$mean_age_months,ma_data$productive_vocab_median)
 cor_p <- ifelse(round(age_vocab_cor$p.value, digits = 2)<0.0001, "< 0.0001", as.character(round(age_vocab_cor$p.value, digits = 2)))
 ```
 
@@ -151,7 +151,7 @@ ma_data %>%
   guides(colour = FALSE, size = FALSE)
 ```
 
-Does the syntactic bootstrapping effect get stronger across development? We examined two measures of developmental change: age and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`). Age ($\beta$ = `r filter(mod_print, moderator == "mean_age")$mod_estimate_print_full`, *SE* `r filter(mod_print, moderator == "mean_age")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age")$mod_p_print`; Fig.\@ref(fig:megaPlot); Fig.\@ref(fig:development)a) is not a significant moderator of the effect. However, with the subset of the studies with vocabulary information available, vocabulary size is a marginally significant moderator ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`).
+Does the syntactic bootstrapping effect get stronger across development? We examined two measures of developmental change: age (months) and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p*: `r cor_p`). Age (in months; $\beta$ = `r filter(mod_print, moderator == "mean_age_months")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age_months")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age_months")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age_months")$mod_p_print`; Fig.\@ref(fig:megaPlot); Fig.\@ref(fig:development)a) is not a significant moderator of the effect. However, with the subset of the studies with vocabulary information available, vocabulary size is a marginally significant moderator ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`).
 
 ### Sentence structure 
 ```{r summarize_sentence_structure}

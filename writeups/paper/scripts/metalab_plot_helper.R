@@ -60,11 +60,12 @@ get_model_results_younger_than <- function(
   ALL_data <- bind_rows(ME_data, 
                         SS_data, 
                         XS_data, 
-                        GF_data)
+                        GF_data) %>% 
+    mutate(mean_age_months = mean_age_1 / 30.44)
   
   
   mod_data <- ALL_data %>% 
-    filter(dataset == dataset_name, mean_age_1 < 30.44 * max_age_months)
+    filter(dataset == dataset_name, mean_age_months < max_age_months)
   
   mod_results <- fit_model(mod_data, dataset_name)
   
@@ -130,14 +131,16 @@ summarize_metalab_age_younger_than <- function(SB_data, max_age_months){
                                 XS_data, 
                                 GF_data) %>% 
     select(dataset, mean_age_1) %>% 
-    filter(mean_age_1 < 30.44 * max_age_months)
+    mutate(mean_age_months = mean_age_1 / 30.44) %>% 
+    filter(mean_age_months < max_age_months)
   
   sb_data_younger <- SB_data %>% 
     mutate(mean_age_1 = mean_age, 
            unique_row = row_number(),
-           dataset = "Syntactic Bootstrapping") %>% 
-    select(dataset, mean_age) %>% 
-    filter(mean_age < 30.44 * max_age_months) %>% 
+           dataset = "Syntactic Bootstrapping", 
+           mean_age_months = mean_age / 30.44) %>% 
+    select(dataset, mean_age_months, mean_age) %>% 
+    filter(mean_age_months < max_age_months) %>% 
     rename(mean_age_1 = mean_age)
   
   age_data_younger <- bind_rows(age_data_younger, sb_data_younger)

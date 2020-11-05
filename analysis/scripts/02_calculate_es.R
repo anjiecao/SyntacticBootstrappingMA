@@ -42,6 +42,7 @@ ma_data_with_es <- ma_data %>%
   unnest(cols = c(es,data)) %>%
   mutate(d_calc = ifelse(d_calc == Inf, NA_real_, d_calc),
          d_var_calc = ifelse(d_var_calc == Inf, NA_real_, d_var_calc), 
+         mean_age_months = mean_age/30.44, 
          row_id = 1:n())
 
 

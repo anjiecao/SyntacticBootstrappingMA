@@ -47,7 +47,7 @@ print_method_model <- function(model_res){
         mod_name == "n_repetitions_sentence" ~ "Number of sentence repetitions",
         mod_name == "sentence_structuretransitive" ~ "Predicate type (Transitive / Intransitive)", 
         mod_name == "productive_vocab_median" ~ "Median productive vocabulary size",
-        mod_name == "mean_age" ~ "Mean age"
+        mod_name == "mean_age_months" ~ "Mean age (months)"
       ), 
       ci_lb_round = round(ci_lb, 2), 
       ci_ub_round = round(ci_ub, 2),
@@ -133,7 +133,7 @@ get_MA_params <- function(moderator, df) {
 }
 
 
-v <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+v <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 
 
 generate_moderator_df <- function(moderator,data){
