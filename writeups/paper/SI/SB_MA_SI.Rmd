@@ -267,15 +267,19 @@ The tables below show the estimates for the single-moderator models reported in 
 
 In the tables throughout the supplemental information, we reported the point estimates for the parameters and their 95% confidence intervals in square brackets (i.e., [lower bound, upper bound].) For estimates that reaches a p-value of 0.05, we put an asterisk (*) near the number. For categorical variables, the level reported in the table is the first level appeared in the parentheses. 
 ```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 
 si_mod_print <- generate_moderator_df(MODERATORS, ma_data) 
 
 ```
 
-## Mean age (Days??)
+## Mean age 
 ```{r}
-convert_pretty_print_table(si_mod_print, "mean_age") %>% 
+convert_pretty_print_table(si_mod_print, "mean_age_months") %>%
+  mutate(Parameter = case_when(
+    Parameter == "Mean Age Months" ~ "Mean Age (months)",
+    TRUE ~ Parameter
+  )) %>% 
   kable() %>% 
   kable_styling(font_size = 12)
 ```
@@ -380,17 +384,22 @@ convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>%
 As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no signifcant difference between the outcomes from the two datasets. 
 
 ```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 
 si_mod_print_no_impute <- generate_moderator_df(MODERATORS,filter(ma_data,  data_source != "imputed"))
 
 ```
 
-## Mean age (Days??)
+## Mean age
 ```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "mean_age") %>% 
+convert_pretty_print_table(si_mod_print_no_impute, "mean_age_months") %>% 
+  mutate(Parameter = case_when(
+    Parameter == "Mean Age Months" ~ "Mean Age (months)",
+    TRUE ~ Parameter
+  )) %>% 
   kable() %>% 
   kable_styling(font_size = 12)
+
 ```
 
 ## Median productive vocabulary size
@@ -496,12 +505,16 @@ In the tables below we highlight the rows representing theoretical moderators in
 
 ## With age
 ```{r}
-age_method_m <- fit_method_model("mean_age", ma_data)
-age_print_table <- print_method_model(age_method_m) 
+age_method_m <- fit_method_model("mean_age_months", ma_data)
+age_print_table <- print_method_model(age_method_m) %>% 
+  mutate(Parameter = case_when(
+    Parameter == "Mean Age Months" ~ "Mean Age (months)", 
+    TRUE ~ Parameter
+  ))
 age_print_table %>% 
   kable() %>% 
   kable_styling(font_size = 12) %>% 
-  row_spec(which(age_print_table$Parameter == "Mean age"),bold = T, color = "black", background = "wheat")
+  row_spec(which(age_print_table$Parameter == "Mean age (months)"),bold = T, color = "black", background = "wheat")
 
 
 ```
