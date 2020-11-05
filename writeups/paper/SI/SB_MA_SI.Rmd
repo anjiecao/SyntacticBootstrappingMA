@@ -53,6 +53,100 @@ ma_data <- read_csv(DATA_PATH)
 ma_raw_data <- read_csv(RAW_DATA_PATH)
 ```
 
+# Details of calculating effect size
+
+
+To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum.
+
+Below is a step-by-step example calculation using data in Yuan & Fisher (2009) Experiment. The table presents raw data from Yuan & Fisher (2009, pg 622) Table 1. The values are Mean looking time in seconds, and in parentheses are SE.
+
+
+```{r}
+tibble(
+  "Dialogue Type" = c("Transitive", "Intransitive"),
+  "Sample Size" = c("8", "8"),
+  "Two-participant Event" = c("4.82 (0.43)", "3.33 (0.24)"), 
+  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+When the paper only provides raw looking time data, we converted the data into proportion of correct looking time and the variances following the formulae below. For children hearing transitive sentences, the correct scene was the Two-participant Event. For children hearing intransitive sentences, the correct scene was the One-participant Event. Standard Deviations were calculated by scaling the raw SE first, and then multiplied by the square roots of the number of participants."
+
+\begin{aligned}
+Mean_{Proportion} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
+SD_{Proportion} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N}\\
+\\
+\\
+\end{aligned}
+
+\begin{aligned}
+Mean_{transitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
+  &= \frac{4.82}{4.82 + 2.87} \\
+  &= 0.627 \\
+
+SD_{transitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
+  &= \frac{0.43}{4.82 + 2.87} *  \sqrt[2]{8} \\
+  &= 0.158 \\
+
+\\
+\\
+\end{aligned}
+
+\begin{aligned}
+Mean_{intransitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
+  &= \frac{4.12}{3.33 + 4.12} \\
+  &= 0.553 \\
+
+SD_{intransitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
+  &= \frac{0.4}{3.33 + 4.12} *  \sqrt[2]{8} \\
+  &= 0.152 \\
+\\
+\\
+\end{aligned}
+
+Using the standardized data as presented in the table below, we calculate Cohen's d and the variances as follows (the implemetation of the script can be found at XXX)
+
+```{r}
+tibble(
+  "Dialogue Type" = c("Transitive", "Intransitive"),
+    "Sample Size" = c("8", "8"),
+  #"Mean Proportion Calculation" = c("4.82 / (4.82 + 2.87)", "4.12 / (3.33 + 4.12)"), 
+  "Mean Proportion" = c("0.627", "0.553"), 
+  #"Standard Deviation Calculation" = c("(0.43 / (4.82 + 2.87)) * (8^0.5)", "(0.4 / (3.33 + 4.12)) * (8^0.5)"),
+  "Standard Deviation" = c("0.158", "0.152")) %>% kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+
+
+\begin{aligned}
+ d_{transitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
+  &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
+  &= \frac{0.627 - 0.5}{0.158} \\
+  &\approx 0.79 \\
+  \\
+  \\
+  d_{intransitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
+  &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
+  &= \frac{0.553 - 0.5}{0.152} \\
+  &\approx 0.35
+  
+\end{aligned}
+
+
+\begin{aligned}
+var(d_{transitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
+&= \frac{1}{8} + \frac{0.79^2}{2 * 8} \\
+&\approx 0.16 \\
+
+var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
+&= \frac{1}{8} + \frac{0.35^2}{2 * 8} \\
+&\approx 0.13 \\
+\end{aligned}
+
+
+
 # Reported model results  {.tabset}
 
 The tables below show the estimates for the single-moderator models reported in the main text. For the categorical variables, the level reported in the table is the first level appeared in the parentheses. Across all the single-predictor model, the predicate type is significant, such that hearing transitive sentences have a positive effect on the effect size. We also found that median vocabulary size is a marginally significant moderator. 
@@ -448,68 +542,6 @@ intransitive_event_type_table %>%
 
 
 
-# Details of calculating effect size
-
-
-To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum.
-
-Below is a step-by-step example calculation using data in Yuan & Fisher (2009) Experiment 1
-
-
-```{r}
-tibble(
-  "Dialogue Type" = c("Transitive", "Intransitive"),
-  "Sample Size" = c("8", "8"),
-  "Two-participant Event" = c("4.82 (0.43)", "3.33 (0.24)"), 
-  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable(caption = "Raw data from the Yuan & Fisher (2009, pg 622) Table 1. The values are Mean looking time in seconds, and in parentheses are SE.") %>% 
-  kable_styling(font_size = 12)
-```
-
-When the paper only provides raw looking time data, we converted the data into proportion of correct looking time and the variances following the formulae below. 
-
-\begin{aligned}
-Mean_{Proportion} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
-SD_{Proportion} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N}
-\end{aligned}
-```{r}
-tibble(
-  "Dialogue Type" = c("Transitive", "Intransitive"),
-    "Sample Size" = c("8", "8"),
-  #"Mean Proportion Calculation" = c("4.82 / (4.82 + 2.87)", "4.12 / (3.33 + 4.12)"), 
-  "Mean Proportion" = c("0.627", "0.553"), 
-  #"Standard Deviation Calculation" = c("(0.43 / (4.82 + 2.87)) * (8^0.5)", "(0.4 / (3.33 + 4.12)) * (8^0.5)"),
-  "Standard Deviation" = c("0.158", "0.152")) %>% kable(caption = "Converted data from raw looking time to proportion of looking time to the correct scenes. For children hearing transitive sentences, the correct scene was the Two-participant Event. For children hearing intransitive sentences, the correct scene was the One-participant Event. Standard Deviations were calculated by scaling the raw SE first, and then multiplied by the square roots of the number of participants.") %>% 
-  kable_styling(font_size = 12)
-```
-
-Then we calculate Cohen's d and the variances as follows (the implemetation of the script can be found at XXX)
-
-
-
-\begin{aligned}
- d_{transitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
-  &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
-  &= \frac{0.627 - 0.5}{0.158} \\
-  &\approx 0.79 \\
-  \\
-  \\
-  d_{intransitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
-  &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
-  &= \frac{0.553 - 0.5}{0.152} \\
-  &\approx 0.35
-  
-\end{aligned}
-
-
-\begin{aligned}
-var(d_{transitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
-&= \frac{1}{8} + \frac{0.79^2}{2 * 8} \\
-&\approx 0.16 \\
-
-var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
-&= \frac{1}{8} + \frac{0.35^2}{2 * 8} \\
-&\approx 0.13 \\
-\end{aligned}
 
 
 # Sensitivity analysis
