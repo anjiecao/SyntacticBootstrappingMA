@@ -146,404 +146,6 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 \end{aligned}
 
 
-
-# Reported model results  {.tabset}
-
-The tables below show the estimates for the single-moderator models reported in the main text. For the categorical variables, the level reported in the table is the first level appeared in the parentheses. Across all the single-predictor model, the predicate type is significant, such that hearing transitive sentences have a positive effect on the effect size. We also found that median vocabulary size is a marginally significant moderator. 
-```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
-
-si_mod_print <- generate_moderator_df(MODERATORS, ma_data) 
-
-```
-
-## Mean age (Days??)
-```{r}
-convert_pretty_print_table(si_mod_print, "mean_age") %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Median productive vocabulary size
-```{r}
-convert_pretty_print_table(si_mod_print, "productive_vocab_median") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Predicate Type
-```{r}
-convert_pretty_print_table(si_mod_print, "sentence_structure") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Noun phrase type
-```{r}
-convert_pretty_print_table(si_mod_print, "agent_argument_type") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Character identification phase
-```{r}
-convert_pretty_print_table(si_mod_print, "character_identification") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Practice phase 
-```{r}
-convert_pretty_print_table(si_mod_print, "practice_phase") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Synchronicity 
-```{r}
-convert_pretty_print_table(si_mod_print, "presentation_type") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Testing structure 
-```{r}
-convert_pretty_print_table(si_mod_print, "test_mass_or_distributed") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Number of sentence repetitions
-```{r}
-convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-# Reported model results using dataset without imputed values {.tabset}
-As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no signifcant difference between the outcomes from the two datasets. 
-
-```{r}
-MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
-
-si_mod_print_no_impute <- generate_moderator_df(MODERATORS,filter(ma_data,  data_source != "imputed"))
-
-```
-
-## Mean age (Days??)
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "mean_age") %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Median productive vocabulary size
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "productive_vocab_median") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Predicate Type
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Noun phrase type
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Character identification phase
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Practice phase 
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "practice_phase") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Synchronicity 
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "presentation_type") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Testing structure 
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "test_mass_or_distributed") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Number of sentence repetitions
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-# Additional Models: Methodological Moderators with Theoretical Moderators {.tabset}
-Syntactic Bootstrapping studies differ in their implementational details. Here we examine to what extent the influences of the theoretical moderators can be accounted for by the methodological factors. The tables below present the results of models that include all the key methodological moderators and one of the theoretical moderators. The patterns were consistent with the single-predictor theoretical models: predicate type is still a significant predictor of the effect. 
-
-
-## With age
-```{r}
-age_method_m <- fit_method_model("mean_age", ma_data)
-age_print_table <- print_method_model(age_method_m) 
-age_print_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(age_print_table$Parameter == "Mean age"),bold = T, color = "white", background = "cornflowerblue")
-
-
-```
-
-## With productive vocabulary size 
-```{r}
-vocab_method_m <- fit_method_model("productive_vocab_median", ma_data)
-vocab_print_table <- print_method_model(vocab_method_m) 
-vocab_print_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(vocab_print_table$Parameter == "Median productive vocabulary size"),bold = T, color = "white", background = "cornflowerblue")
-
-```
-
-## With predicate type
-```{r}
-sentence_structure_method_m <- fit_method_model("sentence_structure", ma_data)
-sentence_structure_print_table <- print_method_model(sentence_structure_method_m)
-sentence_structure_print_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Transitive / Intransitive)"),bold = T, color = "white", background = "cornflowerblue")
-
-```
-
-## With Noun phrase type
-```{r}
-argument_type_method_m <- fit_method_model("agent_argument_type", ma_data)
-argument_type_print <- print_method_model(argument_type_method_m) 
-
-argument_type_print%>% 
-  kable() %>% 
-  kable_styling(font_size = 12) %>% 
-  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Pronoun / Nouns)"),bold = T, color = "white", background = "cornflowerblue")
-```
-
-
-
-
-# Additional Models: exploratory moderators {.tabset}
-The tables here present some exploratory moderators. The level represented in the table is the first one in the parenthesis. 
-```{r include=FALSE}
-ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
-INTRANSITIVE <- c("patient_argument_type")
-additional_main <- generate_moderator_df(ADDITIONAL_MODERATORS, ma_data)
-intransitive <- generate_moderator_df(INTRANSITIVE, filter(ma_data, sentence_structure == "transitive"))
-additional_main <- bind_rows(additional_main, intransitive) %>% 
-  select(this_moderator, n, 
-         estimate_print_full, z_print, p_print, p, moderator_p,
-         mod_estimate_print_full, mod_CI_print, mod_z_print, mod_p_print) %>% 
-  mutate(
-    intercept = estimate_print_full, 
-    moderator = mod_estimate_print_full,
-    intercept_z_val = gsub("= ","", z_print), 
-    intercept_p_val = gsub("= ", "", p_print),
-    mod_z_val = gsub("= ", "", mod_z_print),
-    mod_p_val = gsub("= ", "", mod_p_print)
-  )
-
-```
-
-## Patient argument type for transitive sentence 
-
-In the main analysis, we presented the results of the model for the relationship between effect size and the agent argument type. We found that having nouns or pronouns int he agent argument does not significantly predict the effect size. Here, we presented a similar analysis of the influence of the patient argument type. Because by definition English intransitive sentences do not have patient argument, we focus on the subset of studies that used the transitive sentences ($N$ = `r filter(additional_main, this_moderator == "patient_argument_type")$n`)
-
-```{r}
-patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type") %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Patient Argument Type" ~ "Patient Argument Type (Pronoun / Noun)",
-      TRUE ~ Parameter
-    )
-  )
-
-patient_argument_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-
-
-## Stimuli Modality
-
-We found that the presentation modality of the stimuli was not a significant predictor of the effect size. In other words, studies that presented young children with animation clips had similar effect sizes as studies using video clips. The model statistics are shown below. Note that the stimuli modality and the stimuli actor levels had a lot of overlapping studies, so researchers should interpret this result with caution. 
-
-
-```{r}
-stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality") %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Stimuli Modality" ~ "Stimuli Modality (Video / Animation)",
-      TRUE ~ Parameter
-    )
-  )
-stimuli_argument_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-
-## Stimuli actors
-There is a marginal effect of stimuli actor. Studies with human actors as protagonists in the events had relatively smaller effect sizes as studies using puppets, human actors in animal suits, or using animated geometrical shapes. This might due to the relatively higher visual complexity associated with stimuli using real human actors.  
-
-```{r}
-stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")  %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Stimuli Actor" ~ "Stimuli Actor (Person / Non-person)",
-      TRUE ~ Parameter
-    )
-  )
-stimuli_actor_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Type of event {.tabset}
-Studies differed in the type of transitive events and intransitive events they presented. Previous studies have shown that young children's looking behaviors in Inter-modal Preferential Looking Paradigm were very sensitive to the subtle perceptual differences in the visual stimuli (Delle Luche, Durrant, Poltrock, & Floccia, 2015; Fernald, Zangl, Portillo, & Marchman, 2008). Therefore, we coded the types of events presented in the visual stimuli. There were two types of transitive events: direct causal action and indirect causal action. The former involved the agent directly acting on the patient and causing the patient to move. The latter involved a mean-end sequence leading to the caused action of the patient. For example, the agent may pull a band on the patient's waist and caused it to move. There were also two types of intransitive events used in the literature. One involved a single actor acting, such as jumping up and down. The other involved two actors presented without any causal action. 
-
-Our model suggested that neither of the variables was predictive of the effect sizes. 
-
-
-
-### Transitive Event type
-```{r}
-transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")  %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Transitive Event Type" ~ "Transitive Event Type (Indirect caused action / Direct caused action)",
-      TRUE ~ Parameter
-    )
-  )
-
-
-transitive_event_type_table %>% 
-  kable()%>% 
-  kable_styling(font_size = 12)
-```
-### Intransitive event type
-```{r}
-intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")  %>% 
-  mutate(
-    Parameter = case_when(
-      Parameter == "Intransitive Event Type" ~ "Intransitive Event Type (Parallel actions / One action)",
-      TRUE ~ Parameter
-    )
-  )
-
-intransitive_event_type_table %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-
-
-
-
-
 # Sensitivity analysis
 
 ```{r}
@@ -659,12 +261,294 @@ significance_funnel(
 ```
 
 
-# Heat Map {.tabset}
+# Main model results  {.tabset}
+
+The tables below show the estimates for the single-moderator models reported in the main text. Across all the single-predictor model, the predicate type is significant, such that hearing transitive sentences have a positive effect on the effect size. We also found that median vocabulary size is a marginally significant moderator. 
+
+In the tables throughout the supplemental information, we reported the point estimates for the parameters and their 95% confidence intervals in square brackets (i.e., [lower bound, upper bound].) For estimates that reaches a p-value of 0.05, we put an asterisk (*) near the number. For categorical variables, the level reported in the table is the first level appeared in the parentheses. 
+```{r}
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+
+si_mod_print <- generate_moderator_df(MODERATORS, ma_data) 
+
+```
+
+## Mean age (Days??)
+```{r}
+convert_pretty_print_table(si_mod_print, "mean_age") %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Median productive vocabulary size
+```{r}
+convert_pretty_print_table(si_mod_print, "productive_vocab_median") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Predicate Type
+```{r}
+convert_pretty_print_table(si_mod_print, "sentence_structure") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Noun phrase type
+```{r}
+convert_pretty_print_table(si_mod_print, "agent_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Character identification phase
+```{r}
+convert_pretty_print_table(si_mod_print, "character_identification") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Practice phase 
+```{r}
+convert_pretty_print_table(si_mod_print, "practice_phase") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Synchronicity 
+```{r}
+convert_pretty_print_table(si_mod_print, "presentation_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Testing structure 
+```{r}
+convert_pretty_print_table(si_mod_print, "test_mass_or_distributed") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Number of sentence repetitions
+```{r}
+convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+# Main models results using dataset without imputed values {.tabset}
+As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no signifcant difference between the outcomes from the two datasets. 
+
+```{r}
+MODERATORS <- c( "NULL", "mean_age","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+
+si_mod_print_no_impute <- generate_moderator_df(MODERATORS,filter(ma_data,  data_source != "imputed"))
+
+```
+
+## Mean age (Days??)
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "mean_age") %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Median productive vocabulary size
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "productive_vocab_median") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Predicate Type
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Noun phrase type
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Character identification phase
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Practice phase 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "practice_phase") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Synchronicity 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "presentation_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Testing structure 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "test_mass_or_distributed") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Number of sentence repetitions
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+# Models with Methodological Moderators and Theoretical Moderators {.tabset}
+Syntactic Bootstrapping studies differ in their implementational details. Here we examine to what extent the influences of the theoretical moderators can be accounted for by the methodological factors. The tables below present the results of models that include all the key methodological moderators and one of the theoretical moderators. The patterns were consistent with the single-predictor theoretical models: predicate type is still a significant predictor of the effect. 
+
+In the tables below we highlight the rows representing theoretical moderators in yellow.
+
+## With age
+```{r}
+age_method_m <- fit_method_model("mean_age", ma_data)
+age_print_table <- print_method_model(age_method_m) 
+age_print_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(age_print_table$Parameter == "Mean age"),bold = T, color = "black", background = "wheat")
+
+
+```
+
+## With productive vocabulary size 
+```{r}
+vocab_method_m <- fit_method_model("productive_vocab_median", ma_data)
+vocab_print_table <- print_method_model(vocab_method_m) 
+vocab_print_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(vocab_print_table$Parameter == "Median productive vocabulary size"),bold = T,  color = "black", background = "wheat")
+
+```
+
+## With predicate type
+```{r}
+sentence_structure_method_m <- fit_method_model("sentence_structure", ma_data)
+sentence_structure_print_table <- print_method_model(sentence_structure_method_m)
+sentence_structure_print_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Transitive / Intransitive)"),bold = T, color = "black", background = "wheat")
+
+```
+
+## With Noun phrase type
+```{r}
+argument_type_method_m <- fit_method_model("agent_argument_type", ma_data)
+argument_type_print <- print_method_model(argument_type_method_m) 
+
+argument_type_print%>% 
+  kable() %>% 
+  kable_styling(font_size = 12) %>% 
+  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Pronoun / Nouns)"),bold = T, color = "black", background = "wheat")
+```
+
+
+
+
+# Additional Moderators 
+## Relationship between moderators {.tabset}
 
 The heatmaps below showed the overlappings between moderators. Each cell corresponds to the co-occurrence between two moderator levels. Brighter colors indicate a higher frequency of co-occurrence, and darker colors indicate lower frequency. You can hover your mouse on the heatmap to see the corresponding value and combination of each cell. 
 
 
-## Ordered by Row Average 
+### Ordered by Row Average 
 ```{r fig.width=9.5, fig.height=9.5}
 ALL_CATEGORICAL_VARS <- c("presentation_type",
                       #"agent_argument_type", "patient_argument_type", 
@@ -711,7 +595,7 @@ all_pair_counts <- list(ALL_CATEGORICAL_VARS,
             fontsize_col = 8)
 ```
 
-## Ordered by groups        
+### Ordered by groups        
 ```{r fig.width=9.5, fig.height=9.5}
 ALL_VARS <- colnames(all_counts_wide_matrix)
 ALL_VARS <- c("character_identification/yes", 
@@ -745,6 +629,129 @@ heatmaply(ordered_matrix,
            Rowv = NA, 
           Colv = NA)
 ```
+
+
+
+## Model results {.tabset}
+The tables here present some exploratory moderators. The level represented in the table is the first one in the parenthesis. 
+```{r include=FALSE}
+ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
+INTRANSITIVE <- c("patient_argument_type")
+additional_main <- generate_moderator_df(ADDITIONAL_MODERATORS, ma_data)
+intransitive <- generate_moderator_df(INTRANSITIVE, filter(ma_data, sentence_structure == "transitive"))
+additional_main <- bind_rows(additional_main, intransitive) %>% 
+  select(this_moderator, n, 
+         estimate_print_full, z_print, p_print, p, moderator_p,
+         mod_estimate_print_full, mod_CI_print, mod_z_print, mod_p_print) %>% 
+  mutate(
+    intercept = estimate_print_full, 
+    moderator = mod_estimate_print_full,
+    intercept_z_val = gsub("= ","", z_print), 
+    intercept_p_val = gsub("= ", "", p_print),
+    mod_z_val = gsub("= ", "", mod_z_print),
+    mod_p_val = gsub("= ", "", mod_p_print)
+  )
+
+```
+
+### Patient argument type for transitive sentence 
+
+In the main analysis, we presented the results of the model for the relationship between effect size and the agent argument type. We found that having nouns or pronouns int he agent argument does not significantly predict the effect size. Here, we presented a similar analysis of the influence of the patient argument type. Because by definition English intransitive sentences do not have patient argument, we focus on the subset of studies that used the transitive sentences ($N$ = `r filter(additional_main, this_moderator == "patient_argument_type")$n`)
+
+```{r}
+patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Patient Argument Type" ~ "Patient Argument Type (Pronoun / Noun)",
+      TRUE ~ Parameter
+    )
+  )
+
+patient_argument_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+
+### Stimuli Modality
+
+We found that the presentation modality of the stimuli was not a significant predictor of the effect size. In other words, studies that presented young children with animation clips had similar effect sizes as studies using video clips. The model statistics are shown below. Note that the stimuli modality and the stimuli actor levels had a lot of overlapping studies, so researchers should interpret this result with caution. 
+
+
+```{r}
+stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality") %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Stimuli Modality" ~ "Stimuli Modality (Video / Animation)",
+      TRUE ~ Parameter
+    )
+  )
+stimuli_argument_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+### Stimuli actors
+There is a marginal effect of stimuli actor. Studies with human actors as protagonists in the events had relatively smaller effect sizes as studies using puppets, human actors in animal suits, or using animated geometrical shapes. This might due to the relatively higher visual complexity associated with stimuli using real human actors.  
+
+```{r}
+stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Stimuli Actor" ~ "Stimuli Actor (Person / Non-person)",
+      TRUE ~ Parameter
+    )
+  )
+stimuli_actor_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+### Type of event {.tabset}
+Studies differed in the type of transitive events and intransitive events they presented. Previous studies have shown that young children's looking behaviors in Inter-modal Preferential Looking Paradigm were very sensitive to the subtle perceptual differences in the visual stimuli (Delle Luche, Durrant, Poltrock, & Floccia, 2015; Fernald, Zangl, Portillo, & Marchman, 2008). Therefore, we coded the types of events presented in the visual stimuli. There were two types of transitive events: direct causal action and indirect causal action. The former involved the agent directly acting on the patient and causing the patient to move. The latter involved a mean-end sequence leading to the caused action of the patient. For example, the agent may pull a band on the patient's waist and caused it to move. There were also two types of intransitive events used in the literature. One involved a single actor acting, such as jumping up and down. The other involved two actors presented without any causal action. 
+
+Our model suggested that neither of the variables was predictive of the effect sizes. 
+
+
+
+#### Transitive Event type
+```{r}
+transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Transitive Event Type" ~ "Transitive Event Type (Indirect caused action / Direct caused action)",
+      TRUE ~ Parameter
+    )
+  )
+
+
+transitive_event_type_table %>% 
+  kable()%>% 
+  kable_styling(font_size = 12)
+```
+#### Intransitive event type
+```{r}
+intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")  %>% 
+  mutate(
+    Parameter = case_when(
+      Parameter == "Intransitive Event Type" ~ "Intransitive Event Type (Parallel actions / One action)",
+      TRUE ~ Parameter
+    )
+  )
+
+intransitive_event_type_table %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+
+
+
+
+
 
 
 

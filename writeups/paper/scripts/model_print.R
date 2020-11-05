@@ -53,7 +53,7 @@ print_method_model <- function(model_res){
       ci_ub_round = round(ci_ub, 2),
       
       ci_lb_print = case_when(
-        ci_lb_round == 0 ~ "<.001", 
+        ci_lb_round == 0 ~ ">-.001", 
         TRUE ~ as.character(ci_lb_round)
       ), 
       ci_ub_print = case_when(
@@ -172,7 +172,7 @@ generate_moderator_df <- function(moderator,data){
            mod_estimate.cih_round_three = round(mod_estimate.cih, 3),
            
            mod_estimate.cil_print = case_when(
-             mod_estimate.cil_round_two == 0 ~ "<.001", 
+             mod_estimate.cil_round_two == 0 ~ ">-.001", 
              TRUE ~ as.character(mod_estimate.cil_round_two)
            ), 
            mod_estimate.cih_print = case_when(
