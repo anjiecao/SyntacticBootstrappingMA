@@ -4,7 +4,7 @@ library(tidyverse)
 library(googlesheets4) # package for reading data in spreadsheet directly into R
 library(here) # pakcage for managing paths
 
-#current version downloaded 7AM 10/29/2020 
+#current version downloaded 7AM 11/10/2020 
 
 MA_DATA_GOOGLE_SHEET_ID <- "1boqZgMNk-BfmHEgiMVNhgWG63nfhAauO4PdcVP3TXRo"
 SHEET_NAME <- "Sheet1"
