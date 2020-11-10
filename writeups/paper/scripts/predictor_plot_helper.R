@@ -14,8 +14,8 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
              type = "theoretical", 
              this_moderator = case_when(
                this_moderator == "mean_age_months" ~ "Mean Age (months)", 
-               this_moderator == "sentence_structure" ~ "Predicate Type \n (Transitive / Intransitive)", 
-               this_moderator == "agent_argument_type" ~ "Agent Argument Type \n (Pronoun / Noun)", 
+               this_moderator == "sentence_structure" ~ "Predicate Type \n (Intransitive / Transitive)", 
+               this_moderator == "agent_argument_type" ~ "Agent Argument Type \n (Noun / Pronoun)", 
              ))
     
     
@@ -24,8 +24,8 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       mutate(
         this_moderator = case_when(
           moderator_name == "mean_age_months" ~ "Mean Age \n (months)", 
-          moderator_name == "sentence_structuretransitive" ~ "Predicate Type \n (Transitive / Intransitive)", 
-          moderator_name == "agent_argument_typepronoun" ~ "Agent Argument Type \n (Pronoun / Noun)", 
+          moderator_name == "sentence_structuretransitive" ~ "Predicate Type \n (Intransitive / Transitive)", 
+          moderator_name == "agent_argument_typepronoun" ~ "Agent Argument Type \n (Noun / Pronoun)", 
         ),
         mod_estimate.cih = model_ci_ub, 
         mod_estimate.cil = model_ci_lb
@@ -44,10 +44,10 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
              type = "methodological",
         this_moderator = case_when(
           this_moderator == "n_repetitions_sentence" ~ "Sentence Repetitions ",
-          this_moderator == "character_identification" ~ "Character Identification Phase \n (Yes / No)", 
-          this_moderator == "practice_phase" ~ "Practice Phase \n (Yes / No)",
-          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)",
-          this_moderator == "presentation_type" ~ "Synchronicity \n (Simultaneous / Asynchronous)",
+          this_moderator == "character_identification" ~ "Character Identification Phase \n (No / Yes)", 
+          this_moderator == "practice_phase" ~ "Practice Phase \n (No / Yes)",
+          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure \n (Distributed / Mass)",
+          this_moderator == "presentation_type" ~ "Synchronicity \n (Asynchronous / Simultaneous)",
         )
       ) 
     
@@ -56,10 +56,10 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       mutate(
         this_moderator = case_when(
           moderator_name == "n_repetitions_sentence" ~ "Sentence Repetitions ",
-          moderator_name == "character_identificationyes" ~ "Character Identification Phase \n (Yes / No)", 
-          moderator_name == "practice_phaseyes" ~ "Practice Phase \n (Yes / No)",
-          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure \n (Mass / Distributed)",
-          moderator_name == "presentation_typesimultaneous" ~ "Synchronicity \n (Simultaneous / Asynchronous)",
+          moderator_name == "character_identificationyes" ~ "Character Identification Phase \n (No / Yes)", 
+          moderator_name == "practice_phaseyes" ~ "Practice Phase \n (No / Yes)",
+          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure \n (Distributed / Mass)",
+          moderator_name == "presentation_typesimultaneous" ~ "Synchronicity \n (Asynchronous / Simultaneous)",
         ),
         mod_estimate.cih = model_ci_ub, 
         mod_estimate.cil = model_ci_lb
