@@ -10,11 +10,11 @@ generate_funnel_plot <- function(data){
                    random = ~ 1 | short_cite/same_infant/row_id,
                    method = "REML",
                    data=ma_data)
-  
+
   predicted_val <- predict.rma(model)
   intercept_in_model <-  model$beta[1]
-  
-  
+
+
 ma_funnel <- ma_data %>%
   mutate(
     se = sqrt(d_var_calc),
@@ -58,7 +58,7 @@ ggplot(ma_funnel, aes(x = es, y = -se)) +
              linetype = "dashed", color = "red", size = .8, data = funnel_shape_wide) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey44",  size = .8) +
   scale_y_continuous(labels = function(x){abs(x)}) +
-  geom_point(data = ma_funnel, size = 1.5) +
+  geom_point(data = ma_funnel, size = 1.5,   alpha = .7) +
   theme(text = element_text(size = 11),
         panel.grid.major = element_line(colour = "white", size = 0.2),
         panel.grid.minor = element_line(colour = "white", size = 0.5),

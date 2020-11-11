@@ -80,7 +80,7 @@ knitr::opts_chunk$set(warning = FALSE,
                       fig.pos = "t!")
 knitr::opts_chunk$set(dev = 'pdf')
 
-theme_set(theme_classic())
+theme_set(theme_classic(base_size = 11))
 ```
 
 ```{r constant}
