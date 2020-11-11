@@ -34,7 +34,7 @@ The funnel plot analysis provides some evidence for publication bias, but the in
 
 <!-- I took out the bit about hetergenity since there are ways to address hetergenity using funnel plots - i.e. just include them in the model-->
 
-The goal of the sensitivity analysis is to determine how sensitive the meta-analytic effect size is to "missing" non-significant studies. Critically, because the degree of publication is not known (i.e. the degree to which significant results are more likely to be published, relative to insignificant results), the sensitivity analysis assumes a worst-case publication bias scenario and estimates the meta-analytic effect size under this scenario. The worst-case scenario assumed by the model is that significant studies are infinitely more likely to be published than non-significant studies ^[Technically, the model assumes studies with effect sizes that are statistically significant (*p* < .05) *and* greater than zero are infintely more likey to be published. See Mathur and VanderWeele (2020) for additional details.]. A meta-analytic effect size under this scenario can be estimated by analyzing only those studies with significant effect size estimates.
+The goal of the sensitivity analysis is to determine how sensitive the meta-analytic effect size is to "missing" non-significant studies. Critically, because the degree of publication is not known (i.e. the degree to which significant results are more likely to be published, relative to insignificant results), the sensitivity analysis assumes a worst-case publication bias scenario and estimates the meta-analytic effect size under this scenario. The worst-case scenario assumed by the model is that significant studies are infinitely more likely to be published than non-significant studies ^[Technically, the model assumes studies with effect sizes that are statistically significant (*p* < .05) *and* greater than zero are infintely more likey to be published. See Mathur and VanderWeele (2020) for additional details.]. A meta-analytic effect size under this scenario can be estimated by analyzing only those studies with non-significant effect size estimates.
 
 ```{r}
 ma_data_with_affirm <- ma_data %>%
@@ -164,6 +164,7 @@ ma_data %>%
 ```
 
 ```{r label = "megaPlot", fig.width = 10, fig.height = 5, fig.cap = "Meta-analytic models parameter estimates for (a) theoretical and (b) methodological moderators. Blue points show model estimates from single-predictor model; grey points show model estimates from additive linear model with all moderators included. Ranges correspond to 95% confidence intervals. Levels for categorical variables are given in parentheses, with the first level indicating the base level in the model."}
+
 
 theoretical_mod <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age_months, V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/row_id,

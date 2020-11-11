@@ -44,10 +44,10 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
              type = "methodological",
         this_moderator = case_when(
           this_moderator == "n_repetitions_sentence" ~ "Sentence Repetitions ",
-          this_moderator == "character_identification" ~ "Character Identification Phase \n (Yes / No)",
-          this_moderator == "practice_phase" ~ "Practice Phase \n (Yes / No)",
-          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)",
-          this_moderator == "presentation_type" ~ "Synchronicity \n (Simultaneous / Asynchronous)",
+          this_moderator == "character_identification" ~ "Character Identification Phase \n (No / Yes)",
+          this_moderator == "practice_phase" ~ "Practice Phase \n (No / Yes)",
+          this_moderator == "test_mass_or_distributed" ~ "Testing Procedure Structure \n (Distributed / Mass)",
+          this_moderator == "presentation_type" ~ "Synchronicity \n (Asynchronous / Simultaneous)",
         )
       )
 
@@ -56,10 +56,10 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       mutate(
         this_moderator = case_when(
           moderator_name == "n_repetitions_sentence" ~ "Sentence Repetitions ",
-          moderator_name == "character_identificationyes" ~ "Character Identification Phase \n (Yes / No)",
-          moderator_name == "practice_phaseyes" ~ "Practice Phase \n (Yes / No)",
-          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure \n (Mass / Distributed)",
-          moderator_name == "presentation_typesimultaneous" ~ "Synchronicity \n (Simultaneous / Asynchronous)",
+          moderator_name == "character_identificationyes" ~ "Character Identification Phase \n (No / Yes)",
+          moderator_name == "practice_phaseyes" ~ "Practice Phase \n (No / Yes)",
+          moderator_name == "test_mass_or_distributedmass" ~ "Testing Procedure Structure \n (Distributed / Mass)",
+          moderator_name == "presentation_typesimultaneous" ~ "Synchronicity \n (Asynchronous / Simultaneous)",
         ),
         mod_estimate.cih = model_ci_ub,
         mod_estimate.cil = model_ci_lb

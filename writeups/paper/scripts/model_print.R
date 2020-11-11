@@ -39,13 +39,13 @@ print_method_model <- function(model_res){
     mutate(
       mod_name_print = case_when(
         mod_name == "intrcpt" ~ "Intercept",
-        mod_name == "character_identificationyes" ~ "Character identification phase (Yes / No)", 
-        mod_name == "practice_phaseyes" ~ "Practice phase (Yes / No)", 
-        mod_name == "presentation_typesimultaneous" ~ "Stimuli synchronicity (Simultaneous / Asynchronous)",
-        mod_name == "test_mass_or_distributedmass" ~ "Testing structure (Mass / Distributed)", 
-        mod_name == "agent_argument_typepronoun" ~ "Noun phrase type (Pronoun / Nouns)", 
+        mod_name == "character_identificationyes" ~ "Character identification phase (No / Yes)", 
+        mod_name == "practice_phaseyes" ~ "Practice phase (No / Yes)", 
+        mod_name == "presentation_typesimultaneous" ~ "Stimuli synchronicity (Asynchronous / Simultaneous)",
+        mod_name == "test_mass_or_distributedmass" ~ "Testing structure (Distributed / Mass)", 
+        mod_name == "agent_argument_typepronoun" ~ "Noun phrase type (Noun / Pronoun)", 
         mod_name == "n_repetitions_sentence" ~ "Number of sentence repetitions",
-        mod_name == "sentence_structuretransitive" ~ "Predicate type (Transitive / Intransitive)", 
+        mod_name == "sentence_structuretransitive" ~ "Predicate type (Intransitive / Transitive)", 
         mod_name == "productive_vocab_median" ~ "Median productive vocabulary size",
         mod_name == "mean_age_months" ~ "Mean age (months)"
       ), 

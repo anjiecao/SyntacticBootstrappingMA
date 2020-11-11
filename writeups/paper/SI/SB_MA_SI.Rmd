@@ -265,7 +265,7 @@ significance_funnel(
 
 The tables below show the estimates for the single-moderator models reported in the main text. Across all the single-predictor model, the predicate type is significant, such that hearing transitive sentences have a positive effect on the effect size. We also found that median vocabulary size is a marginally significant moderator. 
 
-In the tables throughout the supplemental information, we reported the point estimates for the parameters and their 95% confidence intervals in square brackets (i.e., [lower bound, upper bound].) For estimates that reaches a p-value of 0.05, we put an asterisk (*) near the number. For categorical variables, the level reported in the table is the first level appeared in the parentheses. 
+In the tables throughout the supplemental information, we reported the point estimates for the parameters and their 95% confidence intervals in square brackets (i.e., [lower bound, upper bound].) For estimates that reaches a p-value of 0.05, we put an asterisk (*) near the number. For categorical variables, the base levels are represented as the first ones appeared in the parentheses. 
 ```{r}
 MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 
@@ -648,7 +648,7 @@ heatmaply(ordered_matrix,
 
 
 ## Model results {.tabset}
-The tables here present some exploratory moderators. The level represented in the table is the first one in the parenthesis. 
+The tables here present some exploratory moderators. The base levels for the categorical moderators are the first ones in the parentheses. 
 ```{r include=FALSE}
 ADDITIONAL_MODERATORS <- c("stimuli_modality", "stimuli_actor",  "transitive_event_type", "intransitive_event_type")
 INTRANSITIVE <- c("patient_argument_type")
