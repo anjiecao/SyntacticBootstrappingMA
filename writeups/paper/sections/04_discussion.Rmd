@@ -4,6 +4,21 @@
 * Transitivity effect is robust - implications for this? Cross-linguistic implications? Text from old intro about multiple possible explanations of this
 
 
+```{r}
+
+
+transitive <- rma.mv(d_calc ~ 1, 
+                  V = d_var_calc,
+                  random = ~ 1 | short_cite/same_infant/row_id,
+                  method = "REML",
+                  data = filter(ma_data, sentence_structure == "transitive"))
+
+
+
+```
+
+
+
 Three decades of research in syntactic bootstrapping has tremedously extended our understanding of early verb acquisition. Here we built upon the previous literature and presented a quantitative synthesis. We aggregating the results from [] unique infants from [] experimental conditions, and we found that despite some evidence for publication bias, there is a small effect size (). We found no effect of age, but there is a weak negative effect of productive vocabulary size. Furthermore, the predicate type is a robust predictor: using transitive sentences at test postively predict the effect size. No methodological moderators considered were significant, suggesting that the myriad implementational differences do not influence the learning outcome. In the following secionts, we considered the implications of our findings. 
 
 
