@@ -65,11 +65,19 @@ MAPPING_STUDIES <- c("Mutual exclusivity",
                      "Cross-situational word learning",
                      "Gaze following")
 
-all_models_res_younger <- map_df(MAPPING_STUDIES, get_model_results_younger_than, 48)
+metalab_data <- download_metalab_data()
+
+all_models_res_younger <- map_df(MAPPING_STUDIES, 
+                                 get_model_results_younger_than, 
+                                 48, 
+                                 metalab_data)
 SB_res_younger <- fit_model(filter(ma_data, mean_age < 30.44 * 48), "Syntactic Bootstrapping")
 all_models_res_younger <- bind_rows(all_models_res_younger, SB_res_younger) 
+
 tidy_all_models_res_younger <-  tidy_metalab_df(all_models_res_younger)
-tidy_all_age_summary <- summarize_metalab_age_younger_than(ma_data, 48)
+tidy_all_age_summary <- summarize_metalab_age_younger_than(ma_data, 
+                                                           48, 
+                                                           metalab_data)
 tidy_models_with_age_younger <- left_join(tidy_all_models_res_younger, 
                                   tidy_all_age_summary, 
                                   by = "dataset_name") 

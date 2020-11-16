@@ -34,11 +34,10 @@ fit_model <- function(data, dataset_name){
 
 }
 
-get_model_results_younger_than <- function(
-  dataset_name, max_age_months){
-
+download_metalab_data <- function(){
+  
   ml_dataset_info <- metalabr::get_metalab_dataset_info()
-
+  
   ME_info <- ml_dataset_info %>%
     filter(name == "Mutual exclusivity")
   SS_info <- ml_dataset_info %>%
@@ -47,7 +46,7 @@ get_model_results_younger_than <- function(
     filter(name == "Cross-situational word learning")
   GF_info <- ml_dataset_info %>%
     filter(name == "Gaze following")
-
+  
   ME_data <- metalabr::get_metalab_data(ME_info) %>%
     mutate(dataset = "Mutual exclusivity")
   SS_data <- metalabr::get_metalab_data(SS_info) %>%
@@ -56,15 +55,25 @@ get_model_results_younger_than <- function(
     mutate(dataset = "Cross-situational word learning")
   GF_data <- metalabr::get_metalab_data(GF_info) %>%
     mutate(dataset = "Gaze following")
-
+  
   ALL_data <- bind_rows(ME_data,
                         SS_data,
                         XS_data,
                         GF_data) %>%
     mutate(mean_age_months = mean_age_1 / 30.44)
+  
+  return(ALL_data)
+  
+}
 
 
-  mod_data <- ALL_data %>%
+get_model_results_younger_than <- function(
+  dataset_name, max_age_months, metalab_data){
+
+  
+
+
+  mod_data <- metalab_data %>%
     filter(dataset == dataset_name, mean_age_months < max_age_months)
 
   mod_results <- fit_model(mod_data, dataset_name)
@@ -99,37 +108,11 @@ tidy_metalab_df <- function(raw_df){
    return(all_models_younger_tidy)
 }
 
-summarize_metalab_age_younger_than <- function(SB_data, max_age_months){
+summarize_metalab_age_younger_than <- function(SB_data, max_age_months, 
+                                               metalab_data){
 
-  ml_dataset_info <- metalabr::get_metalab_dataset_info()
-
-  ME_info <- ml_dataset_info %>%
-    filter(name == "Mutual exclusivity")
-  SS_info <- ml_dataset_info %>%
-    filter(name == "Sound symbolism")
-  XS_info <- ml_dataset_info %>%
-    filter(name == "Cross-situational word learning")
-  GF_info <- ml_dataset_info %>%
-    filter(name == "Gaze following")
-
-  ME_data <- metalabr::get_metalab_data(ME_info) %>%
-    mutate(dataset = "Mutual exclusivity")
-  SS_data <- metalabr::get_metalab_data(SS_info) %>%
-    mutate(dataset = "Sound symbolism")
-  XS_data <- metalabr::get_metalab_data(XS_info) %>%
-    mutate(dataset = "Cross-situational word learning")
-  GF_data <- metalabr::get_metalab_data(GF_info) %>%
-    mutate(dataset = "Gaze following")
-
-  ALL_data <- bind_rows(ME_data,
-                        SS_data,
-                        XS_data,
-                        GF_data)
-
-  age_data_younger <- bind_rows(ME_data,
-                                SS_data,
-                                XS_data,
-                                GF_data) %>%
+  
+  age_data_younger <- metalab_data %>%
     select(dataset, mean_age_1) %>%
     mutate(mean_age_months = mean_age_1 / 30.44) %>%
     filter(mean_age_months < max_age_months)
