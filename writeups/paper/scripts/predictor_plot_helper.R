@@ -81,7 +81,9 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
             group = model)) +
     geom_hline(yintercept = 0, color = "black", linetype="dashed")+
     geom_pointrange(size = 1, position = position_dodge(0.5), alpha = 0) +
-    scale_color_manual(labels = c("Full model", "Single-predictor model"), values = c("grey", "blue")) +
+    scale_color_manual(labels = c("Full model", "Single-predictor model"), 
+                       values = c("grey", "blue"), 
+                       guide = guide_legend(reverse = TRUE)) +
     # geom_line(#data = theoretical_all_df %>% filter(model == "full"),
     #   aes(x = fct_reorder(this_moderator, -mod_estimate),
     #       y = mod_estimate,
