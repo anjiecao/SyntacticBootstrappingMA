@@ -73,38 +73,42 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
   all_df <- bind_rows(mega_df,single_df)
 
   
-  all_df %>% ggplot(aes(x = fct_reorder(this_moderator, -mod_estimate), color = model, 
-            y = mod_estimate, 
-            ymin = mod_estimate.cil, 
-            ymax = mod_estimate.cih, 
-            group = model)) + 
+  all_df %>%
+    ggplot(aes(x = fct_reorder(this_moderator, -mod_estimate), color = model,
+               y = mod_estimate,
+               ymin = mod_estimate.cil,
+               ymax = mod_estimate.cih,
+               group = model)) +
     geom_hline(yintercept = 0, color = "black", linetype="dashed")+
-    geom_pointrange(size = 1, position = position_dodge(0.5), alpha = 0) + 
-    scale_color_manual(labels = c("Full model", "Single-predictor model"), values = c("grey", "red")) + 
-    # geom_line(#data = theoretical_all_df %>% filter(model == "full"), 
+    geom_pointrange(size = 1, position = position_dodge(0.5), alpha = 0) +
+    scale_color_manual(labels = c("Full model", "Single-predictor model"), values = c("grey", "blue")) +
+    scale_color_manual(labels = c("Full model", "Single-predictor model"), 
+                       values = c("grey", "blue"), 
+                       guide = guide_legend(reverse = TRUE)) +
+    # geom_line(#data = theoretical_all_df %>% filter(model == "full"),
     #   aes(x = fct_reorder(this_moderator, -mod_estimate),
-    #       y = mod_estimate, 
+    #       y = mod_estimate,
     #       group = model,
     #       color = model,
     #       alpha = model),
     #   position = position_dodge(0.5),
-    #   #alpha = 0.5, 
-    #   #color = "grey", 
-    #   size = 0.5) + 
+    #   #alpha = 0.5,
+    #   #color = "grey",
+    #   size = 0.5) +
     geom_pointrange(size = 1, position = position_dodge(0.5)) +
-    scale_alpha_manual(values = c(1, 0)) + 
+    scale_alpha_manual(values = c(1, 0)) +
     scale_x_discrete(expand = c(0, .2)) +
     guides(alpha = FALSE) +
     labs(color = "Model type: ") +
-    coord_flip() + 
+    coord_flip() +
     theme(
       axis.line = element_line(size = 1.2),
       axis.ticks = element_line(size = 1),
-      panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-      panel.background = element_blank(), 
+      #panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+      #panel.background = element_blank(),
       legend.position = "right")+
-    xlab("") + 
-    ylab("Estimate") 
+    xlab("") +
+    ylab("Estimate")
   
   
   
