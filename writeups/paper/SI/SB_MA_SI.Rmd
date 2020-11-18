@@ -172,7 +172,7 @@ all_estimate <- as.numeric(all_model$ b)
 
 ```
 
-The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey (Marthur & VanderWeele, 2020). The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effet size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attentuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
+The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey (Marthur & VanderWeele, 2020). The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effet size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attenuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
 
 
 
@@ -313,7 +313,7 @@ convert_pretty_print_table(si_mod_print, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -381,7 +381,7 @@ convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>%
 ```
 
 # Main models results using dataset without imputed values {.tabset}
-As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no signifcant difference between the outcomes from the two datasets. 
+As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no significant difference between the outcomes from the two datasets. 
 
 ```{r}
 MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
@@ -431,7 +431,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
