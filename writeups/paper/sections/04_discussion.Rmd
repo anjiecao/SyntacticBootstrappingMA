@@ -4,7 +4,7 @@
 * Transitivity effect is robust - implications for this? Cross-linguistic implications? Text from old intro about multiple possible explanations of this
 
 
-```{r}
+```{r, eval = F}
 
 
 transitive <- rma.mv(d_calc ~ 1, 

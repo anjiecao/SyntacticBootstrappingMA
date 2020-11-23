@@ -7,7 +7,37 @@ mod_print <- generate_moderator_df(MODERATORS, ma_data)
 #generate_forest_plot(ma_data)
 ```
 
-Figure\ \@ref(fig:forest) shows effect size estimates for all conditions in our sample. The weighted mean effect size was `r filter(mod_print, moderator == "NULL")$estimate_print`, which significantly differed from 0  (*Z* = `r filter(mod_print, moderator == "NULL")$z_print`; *p* `r filter(mod_print,  moderator == "NULL")$p_print`). There was evidence for considerable heterogeneity in effect sizes across our sample (*Q* = `r filter(mod_print, moderator == "NULL")$Q_print`; *p* `r filter(mod_print, moderator == "NULL")$Qp_print`), meaning that there is unexplained variance in effect sizes across studies.
+```{r}
+
+unique_infants <- ma_data %>% 
+  filter(unique_infant == "unique_condition") %>% 
+  filter(adult_participant == "no") %>% 
+  summarize(sum_infants = sum(n_1))  %>%
+  pull(sum_infants)
+
+non_unique_infants <- ma_data %>% 
+  filter(unique_infant == "not_unique") %>% 
+  filter(adult_participant == "no") %>%
+  distinct(short_cite, expt_condition, .keep_all = TRUE) %>% 
+  summarize(sum_infants = sum(n_1)) %>%
+  pull(sum_infants)
+
+different_infants <- unique_infants + non_unique_infants 
+
+mean_age_day <- ma_data %>% 
+  filter(!is.na(mean_age)) %>%
+  summarize(mean_age =  format(round(mean(mean_age), 2))) %>%
+  pull(mean_age) 
+
+mean_age_months <- floor(as.numeric(mean_age_day) / 30.44)
+mean_age_remaining_day <- round((as.numeric(mean_age_day) - mean_age_months * 30.44),0)
+
+sample_size <- ma_data %>%
+  summarize(mean_ss = mean(n_1),
+            sd_ss = sd(n_1))
+```
+
+Our final sample of  `r n_effect_sizes` conditions reflected  `r unique_infants` unique infants (mean age: `r mean_age_months` months; `r mean_age_remaining_day` days), with a mean sample size of `r sample_size$mean_ss` ($SD$ = `r sample_size$sd_ss`) children per condition. Figure\ \@ref(fig:forest) shows effect size estimates for all conditions. The weighted mean effect size was `r filter(mod_print, moderator == "NULL")$estimate_print`, which significantly differed from 0  (*Z* = `r filter(mod_print, moderator == "NULL")$z_print`; *p* `r filter(mod_print,  moderator == "NULL")$p_print`). There was evidence for considerable heterogeneity in effect sizes across our sample (*Q* = `r filter(mod_print, moderator == "NULL")$Q_print`; *p* `r filter(mod_print, moderator == "NULL")$Qp_print`), meaning that there is unexplained variance in effect sizes across studies.
 
 ## Evidential value of the syntactic bootstrapping literature
 
@@ -227,10 +257,9 @@ p_model <- generate_predictor_plot(mod_print, methodological_mod_print, "methodo
 p_model_pane <- p_theoretical + p_model
 
 p_model_pane  
-
 ```
 
-How does the strength of the syntactic bootstrapping effect change across development? We examined two measures of developmental change: age (months) and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p* `r cor_p`). There was no effect of age ($\beta$ = `r filter(mod_print, moderator == "mean_age_months")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age_months")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age_months")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age_months")$mod_p_print`;  Fig. \@ref(fig:development)) or vocabulary ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`) on effect size (Fig. \@ref(fig:megaPlot)a).
+How does the strength of the syntactic bootstrapping effect change across development? We examined two measures of developmental change: age (months) and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p* `r cor_p`). There was no effect of age ($\beta$ = `r filter(mod_print, moderator == "mean_age_months")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age_months")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age_months")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age_months")$mod_p_print`;  Fig. \@ref(fig:development)) or vocabulary size ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`; Fig. \@ref(fig:megaPlot)a).
 
 ### Sentence structure 
 ```{r summarize_sentence_structure}

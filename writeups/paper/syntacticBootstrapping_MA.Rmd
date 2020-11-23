@@ -38,6 +38,7 @@ figurelist        : no
 tablelist         : no
 footnotelist      : no
 lineno            : no
+always_allow_html : true
 #lang              : "english"
 documentclass     : "apa6"
 class             : "man"
