@@ -172,7 +172,7 @@ all_estimate <- as.numeric(all_model$ b)
 
 ```
 
-The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey. The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effet size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attentuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
+The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey (Marthur & VanderWeele, 2020). The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effet size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attenuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
 
 
 
@@ -313,7 +313,7 @@ convert_pretty_print_table(si_mod_print, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -381,7 +381,7 @@ convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>%
 ```
 
 # Main models results using dataset without imputed values {.tabset}
-As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no signifcant difference between the outcomes from the two datasets. 
+As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no significant difference between the outcomes from the two datasets. 
 
 ```{r}
 MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
@@ -431,7 +431,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Nount)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -537,7 +537,7 @@ sentence_structure_print_table <- print_method_model(sentence_structure_method_m
 sentence_structure_print_table %>% 
   kable() %>% 
   kable_styling(font_size = 12) %>% 
-  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Transitive / Intransitive)"),bold = T, color = "black", background = "wheat")
+  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Intransitive / Transitive)"),bold = T, color = "black", background = "wheat")
 
 ```
 
@@ -549,7 +549,7 @@ argument_type_print <- print_method_model(argument_type_method_m)
 argument_type_print%>% 
   kable() %>% 
   kable_styling(font_size = 12) %>% 
-  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Pronoun / Nouns)"),bold = T, color = "black", background = "wheat")
+  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Noun / Pronoun)"),bold = T, color = "black", background = "wheat")
 ```
 
 
@@ -677,7 +677,7 @@ In the main analysis, we presented the results of the model for the relationship
 patient_argument_type_table <- convert_pretty_print_table(additional_main, "patient_argument_type") %>% 
   mutate(
     Parameter = case_when(
-      Parameter == "Patient Argument Type" ~ "Patient Argument Type (Pronoun / Noun)",
+      Parameter == "Patient Argument Type" ~ "Patient Argument Type (Noun / Pronoun)",
       TRUE ~ Parameter
     )
   )
@@ -698,7 +698,7 @@ We found that the presentation modality of the stimuli was not a significant pre
 stimuli_argument_type_table <- convert_pretty_print_table(additional_main, "stimuli_modality") %>% 
   mutate(
     Parameter = case_when(
-      Parameter == "Stimuli Modality" ~ "Stimuli Modality (Video / Animation)",
+      Parameter == "Stimuli Modality" ~ "Stimuli Modality (Animation / Video)",
       TRUE ~ Parameter
     )
   )
@@ -715,7 +715,7 @@ There is a marginal effect of stimuli actor. Studies with human actors as protag
 stimuli_actor_type_table <- convert_pretty_print_table(additional_main, "stimuli_actor")  %>% 
   mutate(
     Parameter = case_when(
-      Parameter == "Stimuli Actor" ~ "Stimuli Actor (Person / Non-person)",
+      Parameter == "Stimuli Actor" ~ "Stimuli Actor (Non-person / Person)",
       TRUE ~ Parameter
     )
   )
@@ -736,7 +736,7 @@ Our model suggested that neither of the variables was predictive of the effect s
 transitive_event_type_table <- convert_pretty_print_table(additional_main, "transitive_event_type")  %>% 
   mutate(
     Parameter = case_when(
-      Parameter == "Transitive Event Type" ~ "Transitive Event Type (Indirect caused action / Direct caused action)",
+      Parameter == "Transitive Event Type" ~ "Transitive Event Type (Direct caused action / Indirect caused action)",
       TRUE ~ Parameter
     )
   )
@@ -751,7 +751,7 @@ transitive_event_type_table %>%
 intransitive_event_type_table <- convert_pretty_print_table(additional_main, "intransitive_event_type")  %>% 
   mutate(
     Parameter = case_when(
-      Parameter == "Intransitive Event Type" ~ "Intransitive Event Type (Parallel actions / One action)",
+      Parameter == "Intransitive Event Type" ~ "Intransitive Event Type (One action / Parallel actions)",
       TRUE ~ Parameter
     )
   )
@@ -827,5 +827,7 @@ ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
 Delle Luche, C., Durrant, S., Poltrock, S., & Floccia, C. (2015). A methodological investigation of the Intermodal Preferential Looking paradigm: Methods of analyses, picture selection and data rejection criteria. Infant Behavior and Development, 40, 151-172
 
 Fernald, A., Zangl, R., Portillo, A. L., & Marchman, V. A. (2008). Looking while listening: Using eye movements to monitor spoken language. Developmental psycholinguistics: On-line methods in children’s language processing, 44, 97.
+
+Mathur, M. B., & VanderWeele, T. J. (2020). Sensitivity analysis for publication bias in meta‐analyses. Journal of the Royal Statistical Society. Series C, Applied Statistics, 69(5), 1091.
 
 

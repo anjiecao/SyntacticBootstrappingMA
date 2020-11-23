@@ -6,7 +6,7 @@ author:
     affiliation   : "1"
     corresponding : yes    # Define only one corresponding author
     address       : "what is this" # <- your physical address at Stanford (something something Jordan Hall - it's a weird relic of when people actually sent stuff in snail mail)
-    email         : "acao@andrew.cmu.edu" # <- probably want your new stanford email
+    email         : "anjiecao@stanford.edu" # <- probably want your new stanford email
   - name          : "Molly Y. Lewis"
     affiliation   : "2"
     email         : ""
