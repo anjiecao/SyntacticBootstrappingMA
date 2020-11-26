@@ -19,7 +19,8 @@ affiliation:
 author_note: |
   okie
 abstract: |
-  so abstract!
+  Learning verbs is more challenging than learning nouns because verbs’ references are ephemeral, ever-changing actions. One proposed verb learning mechanism is Syntactic Bootstrapping, the phenomena that young children can use syntactic information in the sentences to infer the meaning of a novel verb. For example, if a child hears the sentence “The bunny is gorping the duck”, the child can rely on the transitive structure to infer the reference of “gorping” is the causative action the bunny imposes on the duck. This learning strategy is first demonstrated by a seminal study by Naigles (1990), and in the last three decades, there have been a vast number of empirical studies that investigated this phenomena using many variations of the empirical paradigms. Here in this paper we presented the first quantitative of the syntactic bootstrapping literature by using a meta-analytic approach. We found evidence for publication bias, but the bias alone can not account for the albeit small effect size. In addition, we also showed that the effect is only present in studies using transitive sentences, and there was no evidence for an age effect. Furthermore, Methodological variations did not significantly change the effect size. We concluded that the small effect size and the absence of the effect in intransitive conditions raised the issues of generalizability of syntactic bootstrapping. We concluded that more well-powered direct replication of the syntactic bootstrapping study is needed to better understand the nature and the developmental trajectory of syntactic bootstrapping. 
+
   
 keywords          : "language acquisition, syntactic bootstrapping, meta-analysis"
 wordcount         : ""
