@@ -34,7 +34,7 @@ fit_model <- function(data, dataset_name){
 
 }
 
-download_metalab_data <- function(){
+download_metalab_data <- function(METALAB_PATH){
   
   ml_dataset_info <- metalabr::get_metalab_dataset_info()
   
@@ -61,6 +61,9 @@ download_metalab_data <- function(){
                         XS_data,
                         GF_data) %>%
     mutate(mean_age_months = mean_age_1 / 30.44)
+  
+  write.csv(ALL_data, METALAB_PATH)
+  
   
   return(ALL_data)
   

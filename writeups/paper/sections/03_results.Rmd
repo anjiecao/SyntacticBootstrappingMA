@@ -1,4 +1,7 @@
 ```{r generate to-print model results}
+
+
+
 MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence", "n_repetitions_video", "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "visual_stimuli_pair", "test_method","presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 ```
@@ -94,8 +97,12 @@ MAPPING_STUDIES <- c("Mutual exclusivity",
                      "Sound symbolism",
                      "Cross-situational word learning",
                      "Gaze following")
+# version cached Nov29
+#METALAB_PATH <- here("data/metalab/metalab_raw.csv")
+#download_metalab_data(METALAB_PATH)
 
-metalab_data <- download_metalab_data()
+metalab_data <- read_csv(METALAB_PATH)
+
 
 all_models_res_younger <- map_df(MAPPING_STUDIES, 
                                  get_model_results_younger_than, 
