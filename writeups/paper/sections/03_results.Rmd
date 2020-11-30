@@ -1,48 +1,4 @@
 
-```{r}
-library(metalabr)
-ml_dataset_info <- metalabr::get_metalab_dataset_info()
-SB_info <-  ml_dataset_info %>%
-    filter(name == "Syntactic Bootstrapping")
-
-SB_data <- metalabr::get_metalab_data(SB_info)
-
-```
-
-```{r}
-
-
-rma.mv(yi = d_calc, V = d_var_calc,
-                      #random = ~ 1 | data()[["short_cite"]],
-                      random = ~ 1 | short_cite / same_infant / unique_row,
-                      data = SB_data, 
-                      #random = ~ 1 | short_cite / same_infant / row_id, 
-       #data = ma_data,
-       )
-
- rma.mv(yi = d_calc, V = d_var_calc,
-                      #random = ~ 1 | data()[["short_cite"]],
-                      #random = ~ 1 | short_cite / same_infant / unique_row,
-                      #data = SB_data, 
-                      random = ~ 1 | short_cite / same_infant / row_id, 
-       data = ma_data,
-       ) 
-
-```
-```{r}
-SB_data %>% select(short_cite, unique_row) %>% distinct()
-ma_data %>% select(short_cite, row_id) %>% distinct()
-```
-
-
-
-```{r}
-ma_data <- read_csv(DATA_PATH)
-SB_data %>% select(short_cite, d_var_calc)
-ma_data %>% mutate(row_id = as.character(row_id)) %>% select(short_cite, d_var_calc) 
-```
-
-
 
 
 ```{r generate to-print model results}
@@ -145,7 +101,7 @@ MAPPING_STUDIES <- c("Mutual exclusivity",
                      "Cross-situational word learning",
                      "Gaze following")
 # version cached Nov29
-#METALAB_PATH <- here("data/metalab/metalab_raw.csv")
+METALAB_PATH <- here("data/metalab/metalab_raw.csv")
 #download_metalab_data(METALAB_PATH)
 
 metalab_data <- read_csv(METALAB_PATH)

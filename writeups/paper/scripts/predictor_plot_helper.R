@@ -23,7 +23,7 @@ generate_predictor_plot <- function(single_model_df, all_model_df, type){
       filter(moderator_name != "intrcpt", moderator_name != "productive_vocab_median") %>% 
       mutate(
         this_moderator = case_when(
-          moderator_name == "mean_age_months" ~ "Mean Age \n (months)", 
+          moderator_name == "mean_age_months" ~ "Mean Age (months)", 
           moderator_name == "sentence_structuretransitive" ~ "Predicate Type \n (Intransitive / Transitive)", 
           moderator_name == "agent_argument_typepronoun" ~ "Agent Argument Type \n (Noun / Pronoun)", 
         ),
