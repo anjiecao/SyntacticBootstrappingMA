@@ -79,7 +79,8 @@ knitr::opts_chunk$set(warning = FALSE,
                       message = FALSE, 
                       cache = FALSE,
                       echo = FALSE,
-                      fig.pos = "t!")
+                      fig.pos = "t!"
+                      )
 knitr::opts_chunk$set(dev = 'pdf')
 
 theme_set(theme_classic(base_size = 11))

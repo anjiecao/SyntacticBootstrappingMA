@@ -9,8 +9,8 @@ MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_
 mod_print <- generate_moderator_df(MODERATORS, ma_data)
 ```
 
-```{r label = "forest", fig.pos = "!t", fig.cap = "Each row in the forrest plot represents an individual effect size. The black circles correspond to individual condition using transitive sentences. The black triangles correspond to individual condition using intransitive sentences. The size of the circles and triangles indicate their weights, and the horizontal error bars show the 95% confidence intervals. The red diamond at the bottom is the meta-analytic effect size aggregated across all conditions included in the literature.",fig.width = 45, fig.height = 60}
-#generate_forest_plot(ma_data)
+```{r label = "forest", fig.pos = "!t", fig.cap = "Each row in the forrest plot represents an individual effect size. The black circles correspond to individual condition using transitive sentences. The black triangles correspond to individual condition using intransitive sentences. The size of the circles and triangles indicate their weights, and the horizontal error bars show the 95% confidence intervals. The red diamond at the bottom is the meta-analytic effect size aggregated across all conditions included in the literature.",fig.width = 5, fig.height = 7.5}
+generate_forest_plot(ma_data)
 ```
 
 ```{r}
