@@ -81,7 +81,7 @@
   required:     no
   
 - field:        character_identification
-  description:  whether the testing procedure includes a phase where the children were introduced to the characters in the scenes
+  description:  whether the testing procedure includes a phase where the children were introduced to the characters in the scenes.
   type:         options
   options:
       - yes
@@ -89,7 +89,7 @@
   required:     no
   
 - field:        practice_phase
-  description:  whether the testing procedure includes a phase where the children were prompted to identify familiar actions
+  description:  whether the testing procedure includes a phase where the children were prompted to identify familiar actions.
   type:         options
   options:
       - yes
