@@ -833,14 +833,15 @@ ma_data %>%
 
 # Power analysis 
 ```{r}
-#pwr_no_mod_model <- rma(d_calc, 
-#                        vi = d_var_calc,
-#                 data = ma_data, method = "REML")
-
-pwr_no_mod_model <- rma.mv(d_calc~1, 
-                           random = ~ 1 |short_cite/same_infant/row_id, 
-                           v = d_var_calc,
+pwr_no_mod_model <- rma(d_calc, 
+                       vi = d_var_calc,
                  data = ma_data, method = "REML")
+
+# pwr_no_mod_model <- rma.mv(d_calc~1, 
+#                            V  = d_var_calc,
+#                            random = ~ 1 |short_cite/same_infant/row_id, 
+#                            
+#                  data = ma_data, method = "REML")
 
 
 
