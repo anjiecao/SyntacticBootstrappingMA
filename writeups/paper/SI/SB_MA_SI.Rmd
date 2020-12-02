@@ -831,6 +831,49 @@ ma_data %>%
   labs(title = "Histogram of the Sample Size Distribution")
 ```
 
+# Power analysis 
+```{r}
+#pwr_no_mod_model <- rma(d_calc, 
+#                        vi = d_var_calc,
+#                 data = ma_data, method = "REML")
+
+pwr_no_mod_model <- rma.mv(d_calc~1, 
+                           random = ~ 1 |short_cite/same_infant/row_id, 
+                           v = d_var_calc,
+                 data = ma_data, method = "REML")
+
+
+
+d_pwr <- pwr_no_mod_model$b[,1][["intrcpt"]]
+pwr_80 <- pwr::pwr.p.test(
+  h = d_pwr, 
+  sig.level = .05, 
+  power = .8)$n
+
+
+max_n <- min(max(60,
+                     pwr::pwr.p.test(h = d_pwr,
+                                     sig.level = .05,
+                                     power = .9)$n),
+                 200)
+
+pwrs <- data.frame(ns = seq(5, max_n, 5),
+                   ps = pwr::pwr.p.test(h = d_pwr,
+                                        n = seq(5, max_n, 5),
+                   sig.level = .05)$power,
+                   stringsAsFactors = FALSE)
+
+qplot(ns, ps, geom = c("point","line"),
+          data = pwrs) +
+      geom_hline(yintercept = .8, lty = 2) +
+      geom_vline(xintercept = pwr_80, lty = 3) +
+      ylim(c(0,1)) +
+      xlim(c(0,max_n)) +
+      ylab("Power to reject the null at p < .05") +
+      xlab("Number of participants (N)")
+```
+
+
 
 
 
