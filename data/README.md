@@ -61,23 +61,7 @@
 	* d - cohens d
 	* d_var - variance on d
 
-[3] `metalab/Metalab Challenge Data - Syntactic Bootstrapping - Sheet1.csv` - output of `analysis/munge_anonymize_data.R`. It is the data from all 12 experiments in the rawest form. The only processing that has been done on this data is binding files from all the experiments together, adding an experiment id column, and anonymizing the subject ids. Each row corresponds to one participant.
+[3] `metalab/SyntacticBootstrapping - Data.csv` - source data currently used in Metalab (December 2020). You can access the live version [here](https://docs.google.com/spreadsheets/d/1NQka41XhYMIrCk427mEWiqgNjQVKReKUo4d9e-s1rKs/edit?usp=sharing)
 
-	* ApprovalTime/AutoApprovalTime/AssignmentId/HITId/Assignment/AssignmentStatus - misc turk variables
-	* AcceptTime/SubmitTime - actual time of acceptance and completetion of the task
-	* exp - original experiment number	
-	* subids - anonymized subject id
-	* trainBlock_T* - block name (varied depending on whether the experiment was blocked or pseudo-random; * = trial num)
-	* trainPics_T* - list of training exemplars for that trial (* = trial num)
-	* condition_T* - condition name (* = trial num)
-	* category_T* -  target category of that trial (vegetables, animals, vehicles; * = trial num)
-	* word_T* - novel word used on that trial (* = trial num)
-	* selected_T* - list of testing exemplars selected for that trial (* = trial num)
-	* enjoyment/asses/comments - post-task questions (Did you enjoy the task?/Were you confused?)
-	* gender/age/language/education/ - post-task demographic questions
 
-[4] `metalab/metalab_raw.csv` - output of `analysis/munge_anonymize_data.R`. This file contains all the data processed into long form so that each row corresponds to one trial. This is the file that is used in data analysis.
-
-	
-
-[5] `anonymized/no_dups_data_munged_A.csv` - output of `analysis/munge_anonymize_data_no_dups.R`. This is the same as all_data_munged_A.csv, except that duplicate participants have been removed.
+[4] `metalab/metalab_raw.csv` - output of the function `download_metalab_data` in `writeups/paper/scripts/metalab_plot_helper.R`. This function uses `metalabr` package and download data for mutual exclusivity, cross-situational learning, gaze-following, and sound symbolism. 
