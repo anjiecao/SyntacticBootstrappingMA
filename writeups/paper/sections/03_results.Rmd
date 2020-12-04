@@ -202,13 +202,9 @@ How does the strength of the syntactic bootstrapping effect compare to that of o
 
 Figure \@ref(fig:metalab) shows the meta-analytic effect size for syntactic bootstrapping and each of the other four word learning strategies.  The syntactic bootstrapping effect size (`r filter(mod_print, moderator == "NULL")$estimate_print`) was comparable in size to that of sound symbolism (*d* = `r filter(ML_print, dataset_name == "Sound symbolism")$estimate_print_full`; Mean age: `r round(filter(tidy_all_age_summary, dataset == "Sound symbolism")$mean_age_in_month, 1)` Months) and cross-situational learning (*d* = `r filter(ML_print, dataset_name == "Cross-situational word learning")$estimate_print_full`; Mean age: `r round(filter(tidy_all_age_summary, dataset == "Cross-situational word learning")$mean_age_in_month, 1)` Months ), and less than a quarter of the size of both mutual exclusivity (*d* = `r filter(ML_print, dataset_name == "Mutual exclusivity")$estimate_print_full`; Mean age: `r round( filter(tidy_all_age_summary, dataset == "Mutual exclusivity")$mean_age_in_month, 1)` Months) and gaze following (*d* = `r filter(ML_print, dataset_name == "Gaze following")$estimate_print_full`; Mean age: `r round(filter(tidy_all_age_summary, dataset == "Gaze following")$mean_age_in_month, 1)` Months). Importantly, the small effect size of syntactic bootstrapping relative to mutual exclusivity and gaze following cannot  be due alone to differences in the ages of the samples in these different meta-analyses, since participants in the syntactic bootstrapping meta-analysis were older on average than those in the gaze following meta-analysis, and roughly the same age as those in the mutual exclusivity meta-analysis. 
 
-<!--The discrepancy might be caused by the other word learning strategies were studied exclusively with nouns. THIS IS AN IMPORTANT POINT, but let's move this to the GD -->
-
-
 ## Theoretical Moderators
 
 We next asked whether the overall effect size estimate was moderated by our theoretical moderators of interest: development-related moderators (vocabulary and age), and sentence structure moderators (predicate and noun phrase types).
-
 
 ### Development
 
@@ -288,11 +284,8 @@ To compare the effects of all theoretical moderators, we fit an additive model w
 
 In summary, we find that predicate type is a significant predictor of the effect size: conditions with transitive sentences were associated with larger effect sizes than those tested with intransitive sentences. No other theoretical variable significantly moderated the syntactic bootstrapping effect.
 
-
 ## Methodological Moderators 
 
 One limiting factor in interpreting the moderating  role of theoretical variables is that there was appreciable variability across studies in the exact method used in testing children. It is possible that this methodological variability conceals true underlying moderating influences. For example, if researchers adapt their method to the age of the children they are targeting,  developmental change in the strength of the effect may not be detectable [@bergmann2018promoting]. 
 
 To evaluate this possibility, we asked whether the five different methodological variables (practice phase, sentence repetitions, character identification phase, synchronicity, testing procedure structure) moderated the syntactic bootstrapping effect. None of these methodological variables were significant moderators of the effect in a single predictor model (Fig. \@ref(fig:megaPlot); see SI, Sec.3 for exact estimates). In an additive linear model with all five methodological predictors, there was a marginally significant effect of testing procedure structure ($\beta$ = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_estimate_print_full`, *SE* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_SE_print`, *z* = `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_z_print`, *p* `r filter(methodological_mod_print, moderator_name == "test_mass_or_distributedmass")$mod_p_print`), with mass testing designs tending to have larger effect sizes than distributed designs. This finding suggests that children tested in a procedure with only one train-test pair performed better than those tested in procedure with multiple train-test pairs. Finally, we asked how these methodological moderators related to our theoretical moderators of interest. Controlling for methodological variables did not qualitatively change the role of any of the theoretical moderators (see SI, Sec.5).  Taken together, these analyses suggest that methodological variables do not play a large influencing role on the size of the syntactic bootstrapping effect. 
-
-<!-- rather than list all the (null, not-very-interesting) estimates in the main text, lets add tables to the SI with the exact values from the theoretical and methodological plots --> 
