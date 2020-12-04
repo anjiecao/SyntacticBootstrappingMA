@@ -833,15 +833,12 @@ ma_data %>%
 
 # Power analysis 
 ```{r}
-pwr_no_mod_model <- rma(d_calc, 
-                       vi = d_var_calc,
-                 data = ma_data, method = "REML")
 
-# pwr_no_mod_model <- rma.mv(d_calc~1, 
-#                            V  = d_var_calc,
-#                            random = ~ 1 |short_cite/same_infant/row_id, 
-#                            
-#                  data = ma_data, method = "REML")
+pwr_no_mod_model <- rma.mv(d_calc~1, 
+                            V  = d_var_calc,
+                            random = ~ 1 |short_cite/same_infant/row_id, 
+                            
+                  data = ma_data, method = "REML")
 
 
 
@@ -876,6 +873,12 @@ qplot(ns, ps, geom = c("point","line"),
 
 
 
+```{r}
+pwr::pwr.p.test(h = d_pwr, 
+           n = mean_sample_size, 
+           sig.level = .05
+           )$power
+```
 
 
 **References**
