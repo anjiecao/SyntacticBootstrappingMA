@@ -18,6 +18,7 @@ subtitle: Supplementary Information
 ```{r setup, include = F}
 # load packages
 library(tidyverse)
+library(pwr)
 library(knitr)
 library(here)
 library(kableExtra)
