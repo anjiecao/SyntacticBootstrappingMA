@@ -88,7 +88,7 @@ generate_forest_plot <- function(data){
     scale_size(guide = 'none', range = c(0.3,3)) + 
     scale_shape_manual(breaks = c("cumulative", "intransitive","transitive"),
                        values=c(18,16, 17)) +
-    guides(colour = guide_legend(override.aes = list(size=2))) + 
+    guides(colour = guide_legend(override.aes = list(size=3))) + 
     #guides(color = guide_legend(override.aes = list(shape = 18, shape = 16, shape = 17))) + 
     geom_linerange(aes(ymin = cil, ymax = ciu, color = sentence_structure), show.legend = FALSE) + 
     geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = ciu),
@@ -110,15 +110,16 @@ generate_forest_plot <- function(data){
     labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
     theme(text = element_text(size=label_size),
           legend.position="bottom",
-          legend.text=element_text(size=label_size),
+          legend.text=element_text(size=label_size*1.5),
           plot.margin = unit(c(1,1,1,1), "lines"),
           legend.title = element_blank(),
           panel.background = element_blank(),
           #panel.background = element_rect(fill = "white", colour = "grey50"),
           axis.title.y = element_blank(),
+          axis.title.x = element_text(size=label_size*1.5),
           axis.text.y = element_text(colour = label_colors, 
                                      size = label_size), 
-          axis.text.x = element_text(size = label_size * 1.5)) 
+          axis.text.x = element_text(size = label_size * 2)) 
   
 
 }
