@@ -4,9 +4,9 @@ shorttitle        : "Syntactic Bootstrapping MA"
 author:  
   - name          : "Anjie Cao"
     affiliation   : "1"
-    corresponding : yes    # Define only one corresponding author
-    address       : "what is this" # <- your physical address at Stanford (something something Jordan Hall - it's a weird relic of when people actually sent stuff in snail mail)
-    email         : "anjiecao@stanford.edu" # <- probably want your new stanford email
+    corresponding : yes    
+    address       : "450 Jane Stanford Way, Stanford, 94305"
+    email         : "anjiecao@stanford.edu" 
   - name          : "Molly Y. Lewis"
     affiliation   : "2"
     email         : ""
@@ -17,7 +17,7 @@ affiliation:
   - id            : "2"
     institution   : "Department of Psychology, Carnegie Mellon Unviversity"
 author_note: |
-  okie
+ 
 abstract: |
   How do children infer the meaning of a novel verb? One prominent proposal is that children rely on  syntactic information in the linguistic context, a phenomenon known as “syntactic bootstrapping” (Naigles, 1990). For example,  given the sentence “The bunny is gorping the duck”, a child could use knowledge of English syntactic roles to infer that "gorping" refers to an action where the bunny is acting in some way on a duck. Here, we examine the strength of the syntactic bootstrapping effect, its developmental trajectory and generalizability using meta-analytic methods.  Despite its theoretical prominence, we find that  the syntactic bootstrapping is relatively small (*d* = .24), though significantly different from zero. The effect is comparable in size to cross-situational learning and sound symbolism but smaller than mutual-exclusivity and gaze-following. Further, we find that the effect does not strengthen with development, and is present only for  studies using transitive sentences. An examination of a range of methodological factors suggests that the effect is not strongly influenced by methodological implementation. In the General Discussion, we discuss implications of our findings for theories of verb learning and make recommendations for future research.  
   

@@ -74,13 +74,16 @@ generate_forest_plot <- function(data){
   
   mm_to_point = 18/6.5
   label_size = 5
-  
+  x_axis_title <- expression(paste("Cohen\'s ", italic('d')))
   
   # set the neighbourhood levels in the order the occur in the data frame
   label_colors <- forest_data$label_color[order(forest_data$plot_label)]
   
   forest_data %>%  # First sort by val. This sort the dataframe but NOT the factor levels
     ggplot(aes(x = plot_label, y = d_calc)) + 
+    geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2, size =.3) + 
+    geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
+               color = "red", linetype = 2, size = .3) + 
     geom_point(data = forest_data,
                aes(size=(n_1/100), shape = sentence_structure, color = sentence_structure)) + 
     scale_color_manual(breaks = c("cumulative", "intransitive","transitive"),
@@ -97,16 +100,13 @@ generate_forest_plot <- function(data){
                  size = 0.2,
                  arrow = arrow(length = unit(0.02, "inches")),
                  data = filter(forest_data,ciu == 3))+
-    geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2) + 
-    geom_hline(aes(yintercept = filter(forest_data, sentence_structure == "cumulative")$d_calc), 
-               color = "red", linetype = 2) + 
     geom_text(aes(label = print_full, x = plot_label, y = 4.2), 
               size = label_size / mm_to_point, colour = label_colors) + 
     scale_y_continuous(breaks = seq(-10, 7, 1))+ 
     coord_cartesian(clip = 'on') + 
     coord_flip() + 
     ylim(-1.8, 5)+ #doesn't seem to help a lot 
-    ylab("Cohen's d") +
+    ylab(x_axis_title) +
     labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
     theme(text = element_text(size=label_size),
           legend.position="bottom",
