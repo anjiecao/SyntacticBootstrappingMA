@@ -105,7 +105,7 @@ SD_{intransitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[
 \\
 \end{aligned}
 
-Using the standardized data as presented in the table below, we calculate Cohen's d and the variances as follows (the implemetation of the script can be found at XXX)
+Using the standardized data as presented in the table below, we calculate Cohen's d and the variances as follows (the implementation of the script can be found at XXX)
 
 ```{r}
 tibble(
@@ -173,7 +173,7 @@ all_estimate <- as.numeric(all_model$ b)
 
 ```
 
-The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey (Marthur & VanderWeele, 2020). The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effet size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attenuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
+The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey (Marthur & VanderWeele, 2020). The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effect size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attenuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
 
 
 
@@ -810,27 +810,7 @@ ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
 
 
 
-# Distribution of Sample Size 
 
-```{r}
-mean_sample_size <- ma_data %>% 
-  pull(n_1) %>% 
-  mean()
-
-```
-
-The historgram below shows the distribution of the sample sizes. The red line represents the mean sample size of the syntactic bootstrapping literature (N = `r mean_sample_size`). This is far below the sample size needed to reach 80% power (N = 104). 
-
-```{r}
-
-
-ma_data %>% 
-  ggplot(aes(x = n_1))+
-  geom_histogram(binwidth = 3)+ 
-  geom_vline(data = ma_data,xintercept = mean_sample_size, color = "red")+ 
-  xlab("Sample size (per condition)")+
-  labs(title = "Histogram of the Sample Size Distribution")
-```
 
 # Power analysis 
 ```{r}
@@ -842,14 +822,23 @@ pwr_no_mod_model <- rma.mv(d_calc~1,
                   data = ma_data, method = "REML")
 
 
+mean_sample_size <- mean(ma_data$n_1)
 
 d_pwr <- pwr_no_mod_model$b[,1][["intrcpt"]]
 pwr_80 <- pwr::pwr.p.test(
   h = d_pwr, 
   sig.level = .05, 
   power = .8)$n
+current_power <- pwr::pwr.p.test(h = d_pwr, 
+           n = mean_sample_size, 
+           sig.level = .05
+           )$power
 
 
+```
+
+We conducted a power analysis using the `pwr` package. The x-axis represents the number of participants in each condition, and the y-axis represents the estimated power based on the power of current estimated meta-analytic effect size. The horizontal black dotted line represents 80% power, and the vertical black dotted lines represent the number of participants needed to reach 80% power (*N* = `r round(pwr_80, 0)`). The red lines represents the current power (`r round(current_power * 100, 2)`%) based on the approximate mean sample sizes (*N* = `r round(mean_sample_size, 0)`) of the conditions included in the meta-analysis.
+```{r}
 max_n <- min(max(60,
                      pwr::pwr.p.test(h = d_pwr,
                                      sig.level = .05,
@@ -866,6 +855,8 @@ qplot(ns, ps, geom = c("point","line"),
           data = pwrs) +
       geom_hline(yintercept = .8, lty = 2) +
       geom_vline(xintercept = pwr_80, lty = 3) +
+      geom_hline(yintercept = current_power, lty = 2, color = "red") +
+      geom_vline(xintercept = mean_sample_size, lty = 3, color = "red")+
       ylim(c(0,1)) +
       xlim(c(0,max_n)) +
       ylab("Power to reject the null at p < .05") +
@@ -874,12 +865,6 @@ qplot(ns, ps, geom = c("point","line"),
 
 
 
-```{r}
-pwr::pwr.p.test(h = d_pwr, 
-           n = mean_sample_size, 
-           sig.level = .05
-           )$power
-```
 
 
 **References**
