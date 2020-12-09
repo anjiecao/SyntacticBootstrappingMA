@@ -176,16 +176,11 @@ tidy_models_with_age_younger %>%
                   y = label_y, 
                   color = color, 
                  ), size = 2)+
-    #ggrepel::geom_text_repel(aes(label = dataset_name), size = 2.5, point.padding = .35, min.segment.length = 1) +
-    #geom_text(aes(label = dataset_name), hjust = 0.5, vjust = -.5, size = 3) +
     geom_linerange(aes(ymin = estimate.cil, 
                        ymax = estimate.cih),size = 0.5) +
     geom_hline(yintercept = 0, color = "black", linetype="dashed")+
     scale_size_continuous(name = expression(paste(italic(N), " conditions"))) +
     ggtitle("Effect size estimates of word learning phenomena") +
-    #theme(
-    # axis.line = element_line(size = 1.2),
-    # axis.ticks = element_line(size = 1)) +
     xlab("Mean Age (months)") + 
     ylab(expression(paste("Effect Size (Cohen's ", italic(d), ")")))
 
@@ -221,9 +216,6 @@ ma_data %>%
   geom_smooth(method = "lm",
               aes(x = mean_age, y = d_calc),
               ) +
-  #geom_smooth(method = "lm",
-  #            aes(x = developmental_predictor, y = pred,
-  #                color = "Model's Predicted Values")) +
   ggtitle("Syntactic bootstrapping effect across development") +
   xlab("Mean Age (months)") + 
   ylab(expression(paste("Effect Size (Cohen's ", italic(d), ")")))   +
@@ -262,7 +254,7 @@ p_model_pane <- p_theoretical + p_model
 p_model_pane  
 ```
 
-How does the strength of the syntactic bootstrapping effect change across development? We examined two measures of developmental change: age (months) and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p* `r cor_p`). There was no effect of age ($\beta$ = `r filter(mod_print, moderator == "mean_age_months")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age_months")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age_months")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age_months")$mod_p_print`;  Fig. \@ref(fig:development)) or vocabulary size ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`).
+How does the strength of the syntactic bootstrapping effect change across development? We examined two measures of developmental change: age (months) and vocabulary size. These two measures were strongly correlated with each other (*r*(`r age_vocab_cor$parameter`) = `r round(age_vocab_cor$estimate, digits = 2)`, *p* `r cor_p`). There was no effect of age ($\beta$ = `r filter(mod_print, moderator == "mean_age_months")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "mean_age_months")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "mean_age_months")$mod_z_print`, *p* `r filter(mod_print, moderator == "mean_age_months")$mod_p_print`;  Fig. \@ref(fig:development)) or vocabulary size ($\beta$ = `r filter(mod_print, moderator == "productive_vocab_median")$mod_estimate_print_full`, *SE* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_SE_print`, *z* = `r filter(mod_print, moderator == "productive_vocab_median")$mod_z_print`, *p* `r filter(mod_print, moderator == "productive_vocab_median")$mod_p_print`).
 
 ### Sentence structure 
 ```{r summarize_sentence_structure}
