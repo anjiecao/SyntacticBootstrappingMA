@@ -6,6 +6,7 @@ RAW_DATA_PATH <- here("data/raw/syntactic_bootstrapping_raw_data.csv")
 ma_data <- read_csv(DATA_PATH)
 ```
 
+
 ## Literature Search  
 
 ```{r literature search - search procedure}
@@ -33,7 +34,7 @@ full_text_assesed_for_eligibility <- 503 + 166
 final_inclusion <- read_csv(RAW_DATA_PATH) %>% 
   filter(paper_eligibility == "include") %>%
   distinct(unique_id) %>%
-  count()
+  count() - 1 # minus one because we decided to count the two conditions from Naigles's unpublished study (visit5, visit 6 as one paper)
 
 screen_exclusions <- total_records_screened - full_text_assesed_for_eligibility
 full_text_assesed_exclusion <- full_text_assesed_for_eligibility -
@@ -46,13 +47,13 @@ We conducted a literature search of the syntactic bootstrapping literature follo
 ```{r literature}
 n_papers <- ma_data %>%
   distinct(unique_id) %>%
-  nrow()
+  nrow() - 1 # minus one because we decided to count the two conditions from Naigles's unpublished study (visit5, visit 6 as one paper)
 ```
   
   
 We restricted our final sample to papers that satisfied the following criteria: First, the experimental paradigm involved a two-alternative forced-choice task in which  participants were instructed to identify the scene that matched the linguistic stimuli. Second, the visual stimuli were two events displayed side-by-side on a computer monitor. One event depicted a causative action (e.g., one agent causes the other to move), and the other a non-causative action (e.g. two agents move simultaneously but do not causally interact with each other). We included studies with either videos of live actors or animated clips. Third, the linguistic stimuli included at least one novel verb embedded in a syntactically informative frame. For example, "Look, it's kradding!" embeds the novel verb in an intransitive syntactic frame that is informative about the meaning of the novel verb "kradding". In contrast, "Look, kradding!" does not provide informative syntactic information.  Finally, we restricted our sample to studies with English-speaking, typically-developing children. Papers that satisfied these constraints reflected a range of methodological implementations which we examine systematically below (see Moderators section). Our final sample included  `r n_papers` papers, indicated by an asterisks in the references.
 
-```{r prisma, fig.cap = "PRISMA plot showing literature review process. Values indicate number of papers at each stage of the review review process. Our meta-analysis included a final sample of 18 papers."}
+```{r prisma, fig.cap = "PRISMA plot showing literature review process. Values indicate number of papers at each stage of the review review process. Our meta-analysis included a final sample of 17 papers."}
 prisma2(found = format(records_identified_google_scholar + records_identified_forward_search, big.mark = ","), 
         found_other = records_identified_review_reference + records_identified_experts_in_the_field,
         no_dupes = total_records_screened, 

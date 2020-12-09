@@ -117,6 +117,8 @@ CRIT_99 <- 2.58
 # References
 
 ---
+nocite: | 
+  @arunachalam2013out, @arunachalam2013two, @arunachalam2019semantic, @he2020two, @jyotishi2017, @messenger2015learning, @scott2017lookit, @naiglesUnpub
 ...
   
 ```{r appendix}
