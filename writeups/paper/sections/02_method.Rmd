@@ -78,7 +78,7 @@ n_effect_sizes <- ma_data %>%
   nrow()
 ```
 
-For each paper, we entered metadata about the paper (e.g., citation), information to calculate effect sizes, and information about moderators. We entered a separate effect size for each experimental manipulation and age group per paper ("condition"). Most papers therefore contained multiple conditions, corresponding to multiple effect sizes in our meta-analysis. Our final sample included `r n_effect_sizes` conditions. 
+For each paper, we entered metadata about the paper (e.g., citation), information to calculate effect sizes, and information about moderators. We entered a separate effect size for each experimental manipulation and age group per paper (we refer to these as "conditions"). Most papers therefore contained multiple conditions, corresponding to multiple effect sizes in our meta-analysis. Our final sample included `r n_effect_sizes` conditions. 
 
 ```{r data_source_summary}
 data_source_summary <- ma_data %>% 
@@ -103,7 +103,7 @@ num_imputed <- data_source_summary %>%
 ```
 
 ### Calculating individual effect sizes
-For each condition, we recorded the sample size, the  mean proportion correct responses, and the across-participant standard deviation of proportion correct responses. The mean and standard deviation were obtained from one of  four sources: (i) text or tables in the results section (*N* = `r num_text_or_table`); (ii) plots (*N* =`r num_plot`); (iii) crrespondence with the original authors (*N* = `r num_author_contact`); and (iv) imputation using values from studies with similar designs (*N* = `r num_imputed`, @hirsh1996young; the missing standard deviation values were imputed from @naigles1990children). Previous work suggests using imputed values from highly similar studies improves the accuracy of effect size estimates [@furukawa2006imputing]. The reported results do not qualitatively change when conditions from @hirsh1996young are excluded from our sample (see SI, Sec. 4). 
+For each condition, we recorded the sample size, the  mean proportion correct responses, and the across-participant standard deviation of proportion correct responses. The mean and standard deviation were obtained from one of  four sources: (i) text or tables in the results section (*N* = `r num_text_or_table`); (ii) plots (*N* =`r num_plot`); (iii) crrespondence with the original authors (*N* = `r num_author_contact`); and (iv) imputation using values from studies with similar designs (*N* = `r num_imputed`, @hirsh1996young; the missing standard deviation values were imputed from @naigles1990children). Previous work suggests using imputed values from highly similar studies improves the accuracy of effect size estimates [@furukawa2006imputing]. The reported results do not qualitatively change when conditions from @hirsh1996young are excluded from our sample (see SI, Sec. 4)\footnote{Supplemental Information available at XXX}. 
 
 ```{r data_preprocessing}
 num_has_raw <- ma_data %>% 
@@ -177,4 +177,4 @@ In addition to the theoretical variables, we coded a range of methodological var
 
 ## Analytic Approach 
 
-We analyzed the data using multi-level random effect models implemented in the metafor package in R [@viechtbauer2010]. The random effect structure included groupings by paper and participant group in order to account for the clustering of effect sizes in our sample. The sensitivity analysis was conducted using the PublicationBias package in R [@mathur2020sensitivity]. Moderator variables were included as additive fixed effects. All estimate ranges correspond to 95% confidence intervals, unless otherwise noted.  Data and analysis scripts are available at https://github.com/anjiecao/SyntacticBootstrappingMA, and the dataset can be interactively explored at XXXX. 
+We analyzed the data using multi-level random effect models implemented in the metafor package in R [@viechtbauer2010]. The random effect structure included groupings by paper and participant group in order to account for the clustering of effect sizes in our sample. The sensitivity analysis was conducted using the PublicationBias package in R [@mathur2020sensitivity]. Moderator variables were included as additive fixed effects. All estimate ranges correspond to 95% confidence intervals, unless otherwise noted.  Data and analysis scripts are available in the project repository (https://github.com/anjiecao/SyntacticBootstrappingMA), and the dataset can be interactively explored on Metalab (http://metalab.stanford.edu/).
