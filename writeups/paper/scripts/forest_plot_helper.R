@@ -20,6 +20,8 @@ abbreviate_label <- function(original_label){
 
 
 generate_forest_plot <- function(data){
+  ma_data <- data
+  
   individual_data <- ma_data %>% 
     select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,sentence_structure) %>% 
     rowwise() %>% 

@@ -16,11 +16,170 @@ library(tidyverse)
 library(here)
 library(metafor)
 
+source(here("writeups/paper/scripts/prisma_diagram.R"))
+source(here("writeups/paper/scripts/model_print.R"))
+source(here("writeups/paper/scripts/forest_plot_helper.R"))
+source(here("writeups/paper/scripts/funnel_plot_helper.R"))
+source(here("writeups/paper/scripts/predictor_plot_helper.R"))
+source(here("writeups/paper/scripts/metalab_plot_helper.R"))
+
 ALT_PATH <- here("exploratory_analyses/06_alt_ES/alt_ES.csv")
+
+
+
 alt_raw <- read_csv(ALT_PATH) %>% 
   rowid_to_column()
 alt_raw
 ```
+
+# same anlaysis smaller set
+```{r}
+alt_raw_id <- alt_raw %>% 
+  filter(alternative_calc == "between") %>% 
+  select(unique_id) %>% 
+  pull
+
+all_paper_trans <- read_csv(here("data/processed/syntactic_bootstrapping_tidy_data.csv")) %>% 
+  filter(unique_id %in% alt_raw_id) %>% 
+  filter(sentence_structure == "transitive")
+
+generate_funnel_plot(all_paper_trans)
+```
+
+
+```{r}
+alpha = 0.05
+
+model <- rma.mv(d_calc, 
+                  V = d_var_calc,
+                  random = ~ 1 | short_cite/same_infant/row_id,
+                  method = "REML",
+                  data = all_paper_trans)
+
+this_moderator_estimate <- model$b[1]
+  this_moderator_SE <- model$se[1]
+  this_moderator_estimate.cil <- model$ci.lb[1]
+  this_moderator_estimate.cih <- model$ci.ub[1]
+  this_moderator_z <- model$zval[1]
+  this_moderator_p <- model$pval[1]
+
+abbreviate_label <- function(original_label){
+  label_vec <- unlist(strsplit(original_label, ","))
+  # get the first label 
+  first_author_name <- label_vec[[1]]
+  year <- gsub("(-).*","",tail(label_vec, n=1))
+  number_label <- gsub(".*-","",tail(label_vec, n=1))
+  abbreviated_label <- paste0(first_author_name, " et al.,", year, "-", number_label)
+  #print(number_label)
+  #print(abbreviated_label)
+}
+
+individual_data <- all_paper_trans %>% 
+    select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label) %>% 
+    rowwise() %>% 
+    mutate(cil = d_calc - qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc),
+           cil = case_when(
+             (cil < -8) ~ -8, # truncate error bar for visibility reason 
+             TRUE ~ cil
+           ),
+           ciu = d_calc +
+             qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc), 
+           ciu = case_when(
+             (ciu > 3 ) ~ 3, # truncate error bar for visibility reason 
+             TRUE ~ ciu
+           ),
+           sentence_structure = "individual",
+           meta = "no", 
+           label_color = "black",
+           print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""),
+           plot_label = case_when(
+             str_count(plot_label,",") >= 4 ~ abbreviate_label(plot_label),
+             TRUE ~ plot_label
+           )
+)
+
+cumulative_data <- tibble_row(
+  short_cite = "Meta-Analytic Effect Size",
+           plot_label = "Meta-Analytic Effect Size",
+           d_calc = this_moderator_estimate, 
+           d_var_calc = NA, 
+           n_1 = 99, 
+           expt_num = "", 
+           expt_condition = "",
+           cil = this_moderator_estimate.cil, 
+           ciu = this_moderator_estimate.cih, 
+           sentence_structure = "cumulative",
+           print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""), 
+  meta = "yes", 
+           label_color = "red"
+)
+
+forest_data_all_trans <- bind_rows(individual_data, cumulative_data)
+
+```
+
+```{r}
+  forest_data_all_trans$sentence_structure <- as.factor(forest_data_all_trans$sentence_structure)
+  forest_data_all_trans$meta <- as.factor(forest_data_all_trans$meta)
+  forest_data_all_trans <- forest_data_all_trans %>% 
+    rowid_to_column() %>% 
+    mutate(
+      rowid = if_else(rowid == 0, 99, as.double(rowid)) #to always put the MA ES at bottom
+    )  %>% 
+    group_by(sentence_structure) %>% arrange(-rowid, .by_group = TRUE)
+  forest_data_all_trans$plot_label <- factor(forest_data_all_trans$plot_label, levels = forest_data_all_trans$plot_label)
+  
+  
+  mm_to_point = 18/6.5
+  label_size = 5
+  x_axis_title <- expression(paste("Cohen\'s ", italic('d')))
+  
+  # set the neighbourhood levels in the order the occur in the data frame
+  label_colors <- forest_data_all_trans$label_color[order(forest_data_all_trans$plot_label)]
+  
+  forest_data_all_trans %>%  # First sort by val. This sort the dataframe but NOT the factor levels
+    ggplot(aes(x = plot_label, y = d_calc)) + 
+    geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2, size =.3) + 
+    geom_hline(aes(yintercept = filter(forest_data_all_trans, sentence_structure == "cumulative")$d_calc), 
+               color = "red", linetype = 2, size = .3) + 
+    geom_point(data = forest_data_all_trans,
+               aes(size=(n_1/100), shape = sentence_structure, color = sentence_structure)) + 
+    scale_color_manual(breaks = c("cumulative", "individual"),
+                       values = c("red", "black"))+ 
+    scale_size(guide = 'none', range = c(0.3,3)) + 
+    scale_shape_manual(breaks = c("cumulative", "individual"),
+                       values=c(18,16, 17)) +
+    guides(colour = guide_legend(override.aes = list(size=3))) + 
+    geom_linerange(aes(ymin = cil, ymax = ciu, color = sentence_structure), show.legend = FALSE) + 
+    geom_segment(aes(x = plot_label, y = d_calc, xend = plot_label, yend = ciu),
+                 linejoin = "round", 
+                 lineend = "round", 
+                 size = 0.2,
+                 arrow = arrow(length = unit(0.02, "inches")),
+                 data = filter(forest_data_all_trans,ciu == 3))+
+    geom_text(aes(label = print_full, x = plot_label, y = 4.2), 
+              size = label_size / mm_to_point, colour = label_colors) + 
+    scale_y_continuous(breaks = seq(-10, 7, 1))+ 
+    coord_cartesian(clip = 'on') + 
+    coord_flip() + 
+    ylim(-1.8, 5)+ #doesn't seem to help a lot 
+    ylab(x_axis_title) +
+    labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
+    theme(text = element_text(size=label_size),
+          legend.position="bottom",
+          legend.text=element_text(size=label_size*1.5),
+          plot.margin = unit(c(1,1,1,1), "lines"),
+          legend.title = element_blank(),
+          panel.background = element_blank(),
+          #panel.background = element_rect(fill = "white", colour = "grey50"),
+          axis.title.y = element_blank(),
+          axis.title.x = element_text(size=label_size*1.5),
+          axis.text.y = element_text(colour = label_colors, 
+                                     size = label_size), 
+          axis.text.x = element_text(size = label_size * 2)) 
+  
+```
+
 
 
 
