@@ -19,17 +19,8 @@ generate_forest_plot(ma_data)
 ```{r}
 
 unique_infants <- ma_data %>% 
-  filter(same_infant != "naigles2011") %>% 
   summarize(sum_infants = sum(n_1))  %>%
   pull(sum_infants)
-
-non_unique_infants <- ma_data %>% 
-  filter(same_infant == "naigles2011") %>% 
-  distinct(short_cite, expt_condition, .keep_all = TRUE) %>% 
-  summarize(sum_infants = sum(n_1)) %>%
-  pull(sum_infants)
-
-different_infants <- unique_infants + non_unique_infants 
 
 mean_age_day <- ma_data %>% 
   filter(!is.na(mean_age)) %>%
