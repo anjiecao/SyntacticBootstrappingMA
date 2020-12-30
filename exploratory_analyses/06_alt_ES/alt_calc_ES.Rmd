@@ -639,3 +639,24 @@ p_val <- reg_result$pval[2]
 reg_result
 ```
 
+# published or not is not moderator 
+```{r}
+PUB_PATH <- here("exploratory_analyses/06_alt_ES/published_moderator.csv")
+
+pub_data <- read_csv(PUB_PATH)
+
+pub_moderator <- rma.mv(d_calc ~ published,  d_var_calc,  
+                         random = ~ 1 | short_cite/same_infant/row_id, data=pub_data) # 
+
+
+```
+## published results 
+```{r}
+generate_funnel_plot(filter(pub_data, published == "yes"))
+```
+## unpublished results 
+```{r}
+generate_funnel_plot(filter(pub_data, published == "no"))
+
+```
+

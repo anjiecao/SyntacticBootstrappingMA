@@ -4,7 +4,7 @@ library(tidyverse)
 library(googlesheets4) # package for reading data in spreadsheet directly into R
 library(here) # pakcage for managing paths
 
-#current version downloaded 7AM 11/10/2020 
+#current version downloaded 2PM 12/29/2020 
 
 MA_DATA_GOOGLE_SHEET_ID <- "1boqZgMNk-BfmHEgiMVNhgWG63nfhAauO4PdcVP3TXRo"
 SHEET_NAME <- "Sheet1"
@@ -18,9 +18,6 @@ read_raw_data_and_clean <- function(sheet_id, sheet_name, outpath){
                         col_types = "ccccccccccccccdccdddccccccccccccccddddccdcdddddddddddcccccccd")
   tidy_es <- ma_data %>%
     mutate(mean_age = str_remove(mean_age, ",")) %>%
-    select(-c(d_calc, 
-             d_var_calc, 
-             es_method)) %>% 
     write_csv(OUTPATH)
 
 }
