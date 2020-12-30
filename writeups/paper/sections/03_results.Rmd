@@ -19,14 +19,12 @@ generate_forest_plot(ma_data)
 ```{r}
 
 unique_infants <- ma_data %>% 
-  filter(unique_infant == "unique_condition") %>% 
-  filter(adult_participant == "no") %>% 
+  filter(same_infant != "naigles2011") %>% 
   summarize(sum_infants = sum(n_1))  %>%
   pull(sum_infants)
 
 non_unique_infants <- ma_data %>% 
-  filter(unique_infant == "not_unique") %>% 
-  filter(adult_participant == "no") %>%
+  filter(same_infant == "naigles2011") %>% 
   distinct(short_cite, expt_condition, .keep_all = TRUE) %>% 
   summarize(sum_infants = sum(n_1)) %>%
   pull(sum_infants)
