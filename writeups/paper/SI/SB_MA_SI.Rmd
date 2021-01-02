@@ -182,14 +182,14 @@ double_forest_data_withorder <- double_forest_data %>%
       rowid = if_else(es_type == "cumulative", 99, as.double(rowid)), #to always put the MA ES at bottom
       point_shape = if_else(es_type == "cumulative", 18, 16), 
       point_color = case_when(
-        es_type == "cumulative" && calc_type == "within" ~ "black",
-        es_type == "cumulative" && calc_type == "between" ~ "red",
-        calc_type == "between" ~ "red", 
-        calc_type == "within" ~ "black"
+        es_type == "cumulative" && calc_type == "within" ~ "green",
+        es_type == "cumulative" && calc_type == "between" ~ "pink",
+        calc_type == "between" ~ "pink", 
+        calc_type == "within" ~ "green"
       ), 
       label_color = case_when(
-        es_type == "cumulative" ~  "red", 
-        es_type == "individual" ~ "black"
+        es_type == "cumulative" ~  "green", 
+        es_type == "individual" ~ "pink"
       )
     ) %>% 
     group_by(calc_type) %>% arrange(-rowid, .by_group = FALSE)
@@ -199,6 +199,10 @@ double_forest_data_withorder <- double_forest_data %>%
   x_axis_title <- expression(paste("Cohen\'s ", italic('d')))
     
 
+pd <- position_dodge(1)
+
+  
+  
 double_forest_data_withorder %>%  # First sort by val. This sort the dataframe but NOT the factor levels
     ggplot(aes(x = fct_reorder(plot_label, -rowid),
                y = d_calc,
@@ -209,28 +213,20 @@ double_forest_data_withorder %>%  # First sort by val. This sort the dataframe b
                )) + 
     geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2, size =.3) + 
     geom_hline(aes(yintercept = filter(double_forest_data_withorder, es_type == "cumulative", calc_type == "within")$d_calc), 
-              color = "black", linetype = 2, size = .3) + 
+              color = "#00BFC4", linetype = 2, size = .3) + 
    geom_hline(aes(yintercept = filter(double_forest_data_withorder, es_type == "cumulative", calc_type == "between")$d_calc), 
-              color = "red", linetype = 2, size = .3) +
+              color = "#F8766D", linetype = 2, size = .3) +
     geom_pointrange(size = .5, 
                     shape = double_forest_data_withorder$point_shape,
                     aes(color = double_forest_data_withorder$calc_type),
-                    position = position_dodge(1), 
+                    position = pd, 
                     alpha = 1, 
                     ) + 
-    scale_color_manual(breaks = c("between", "within"),
-                       values = c("red", "black"))+ 
-    geom_text(aes(label = print_full, 
-                  x = plot_label, y = 4.2,
-                   color = double_forest_data_withorder$calc_type), 
-              position = position_dodge(1),
-              size = label_size / mm_to_point, 
-             ) +
    scale_color_manual(breaks = c("between", "within"),
-                       values = c("red", "black"))+ 
+                       values = c("#F8766D", "#00BFC4"))+ 
     coord_cartesian(clip = 'on') + 
     coord_flip() + 
-    ylim(-1.8, 5)+ 
+    ylim(-1.8, 4)+ 
     ylab(x_axis_title) +
     labs(color  = "Effect Size Type",shape = "Effect Size Type") + # merge two legends 
     theme(text = element_text(size=label_size),
