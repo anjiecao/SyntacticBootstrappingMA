@@ -59,12 +59,9 @@ ma_raw_data <- read_csv(RAW_DATA_PATH)
 
 ```
 
-# Details of calculating effect size
+# Details of effect size calculation
 
-
-To standardize the effect size calculation, we converted some reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator). The raw standard deviations were also converted to the corresponding values by being divided by the sum.
-
-Below is a step-by-step example calculation using data in Yuan & Fisher (2009) Experiment. The table presents raw data from Yuan & Fisher (2009, pg 622) Table 1. The values are Mean looking time in seconds, and in parentheses are SE.
+Here we demonstrate our method for calculating effect sizes by describing a step-by-step  calculation for conditions in an example paper, Yuan & Fisher (2009). The table below shows the orignal data reported in the source paper (Table 1, pg 622 of Yuan & Fisher, 2009). The values are mean looking time in seconds (and corresponding SE).
 
 
 ```{r}
@@ -72,18 +69,13 @@ tibble(
   "Dialogue Type" = c("Transitive", "Intransitive"),
   "Sample Size" = c("8", "8"),
   "Two-participant Event" = c("4.82 (0.43)", "3.33 (0.24)"), 
-  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% kable() %>% 
+  "One-participant Event" = c("2.87 (0.51)", "4.12 (0.40)")) %>% 
+  kable() %>% 
   kable_styling(font_size = 12)
 ```
 
-When the paper only provides raw looking time data, we converted the data into proportion of correct looking time and the variances following the formulae below. For children hearing transitive sentences, the correct scene was the Two-participant Event. For children hearing intransitive sentences, the correct scene was the One-participant Event. Standard Deviations were calculated by scaling the raw SE first, and then multiplied by the square roots of the number of participants."
+To standardize the effect size calculation, we converted the reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator).  For children hearing transitive sentences, the correct scene was the two-participant event; for children hearing intransitive sentences, the correct scene was the one-participant event. Standard errors were converted using a similar method.
 
-\begin{aligned}
-Mean_{Proportion} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
-SD_{Proportion} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N}\\
-\\
-\\
-\end{aligned}
 
 \begin{aligned}
 Mean_{transitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
@@ -110,9 +102,9 @@ SD_{intransitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[
 \\
 \end{aligned}
 
-Using the standardized data as presented in the table below, we calculate Cohen's d and the variances as follows (the implementation of the script can be found at XXX)
+Using these standardize  we calculated Cohen's *d* and the variances as follows (the implementation of the script can be found at XXX).
 
-```{r}
+```{r, include = F}
 tibble(
   "Dialogue Type" = c("Transitive", "Intransitive"),
     "Sample Size" = c("8", "8"),
@@ -152,9 +144,10 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 \end{aligned}
 
 
-# Comparison between between subjects effect sizes and within subjects effect size
 
-The forest plot below compares the two ways of calculating effect sizes, using a subset of experimental conditions. The subset was chosen because in the original paper the main analyses presented for these conditions were between-group calculation. In other words, the original analyses compared the porportion of looking time at the causative events between transitive conditions and intransitive conditions. Effect sizes calculated using these methods were denoted by the red dots. We also presented the effect sizes calculated using the against-chance method on the same subset of the experimental conditions. These effect sizes are denoted with black dots. The against-chance method is a more conservative way of estimating the effect size. As the forest plot shows, the meta-analytic effect size using the between-group calculation is larger than the meta-analytic effect size using the against-chance method. 
+# Comparison of between- vs. within- subject effect size estimates
+
+The forest plot below compares the two ways of calculating effect sizes for the subset of experimental conditions that use a between-group analysis in the original paper.  In other words, the original analyses compared the proportion of looking time at the causative events between transitive conditions and intransitive conditions. Effect sizes calculated using this method are denoted by the pink points. We also present the effect sizes calculated using the against-chance method on the same subset of the experimental conditions. These effect sizes are denoted with green points. The against-chance method is a more conservative way of estimating the effect size. As the forest plot shows, the meta-analytic effect size using the between-group calculation is larger than the meta-analytic effect size using the against-chance method. 
 
 
 ```{r fig.height= 10}
@@ -307,9 +300,8 @@ significance_funnel(
 
 # Main model results  {.tabset}
 
-The tables below show the estimates for the single-moderator models reported in the main text. Across all the single-predictor model, the predicate type is significant, such that hearing transitive sentences have a positive effect on the effect size. We also found that median vocabulary size is a marginally significant moderator. 
+The tables below show the estimates for all single-moderator models reported in the main text. The tables present point estimates for the model parameters and their 95% confidence intervals (i.e., [lower bound, upper bound]). Asterisks (*) indicate significance at the .05 level. For categorical variables, the base levels are represented as the first ones appeared in the parentheses. 
 
-In the tables throughout the supplemental information, we reported the point estimates for the parameters and their 95% confidence intervals in square brackets (i.e., [lower bound, upper bound].) For estimates that reaches a p-value of 0.05, we put an asterisk (*) near the number. For categorical variables, the base levels are represented as the first ones appeared in the parentheses. 
 ```{r}
 MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence",  "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
 
@@ -427,7 +419,7 @@ convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>%
 ```
 
 # Main models results using dataset without imputed values {.tabset}
-As mentioned in the method sections, for studies missing relevant statistics, we imputed values from studies with similar design (e.g. Hirsh-Pasek, Golinkoff,& Naigles, 1996). The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. There was no significant difference between the outcomes from the two datasets. 
+For one paper missing relevant sufficient data to calculate an effect size (Hirsh-Pasek, Golinkoff,& Naigles, 1996), we imputed values from studies with similar design. The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. The two sets of models did not differ qualitatively. 
 
 ```{r}
 MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence",  "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
@@ -545,9 +537,9 @@ convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>%
 ```
 
 # Models with Methodological Moderators and Theoretical Moderators {.tabset}
-Syntactic Bootstrapping studies differ in their implementational details. Here we examine to what extent the influences of the theoretical moderators can be accounted for by the methodological factors. The tables below present the results of models that include all the key methodological moderators and one of the theoretical moderators. The patterns were consistent with the single-predictor theoretical models: predicate type is still a significant predictor of the effect. 
+Syntactic bootstrapping studies differ in their implementational details. Here we examine the extent to which influences of the theoretical moderators can be accounted for by the methodological factors. The tables below present the results of models that include a single theoretical moderator along with all the methodological moderators in additive models. The row corresponding to the theoretical moderator is highlighted in yellow.   The effect of the theoretical moderators is qualtiatively identical to the models without the methodological moderators included.
 
-In the tables below we highlight the rows representing theoretical moderators in yellow.
+
 
 ## With age
 ```{r}
@@ -601,12 +593,14 @@ argument_type_print%>%
 
 
 
-# Additional Moderators 
+# Additional Methodological Moderators 
 ## Relationship between moderators {.tabset}
 
-We coded additional moderators, including the modality of, the actors in and the event types in the visual stimuli. Stimuli modality has two levels: videos and animations. We coded this moderator following the details provided in the method sections of the papers. Stimuli actors have two levels, human actors and non-human actors. Studies using visual stimuli with human actors wearing animal suits were coded as using non-human actors. To capture the event types of the visual stimuli, we coded the transitive action stimuli and the intransitive action stimuli separately. The transitive event has two levels: direct caused action and indirect caused action. The event was coded as using direct caused action if the agent in the action directly acted upon the patient. It was coded as using indirect caused action if the agent caused the patient to move via another medium. For example, the agent may pull a band on the patient's waist causing her to move. Likewise, the intransitive event also has two levels: one action versus parallel actions. Here we coded the levels by number of participants presented on the screen. An intransitive event was coded as "one action" if and only if there was only one agent presented on the screen. If an event involves more than one actor in the intransitive event (e.g. two actors doing parallel actions or one actor with one stander-by), then the event was coded as parallel-actions.
+We coded a number of additional methodolgical variables that substantially overlap with those in the paper. We report them here for completeness.
 
-These additional moderators were not included in the main analyses because of their close relationships between each other and with the main moderators. The heatmaps below showed the overlappings between moderators. Each cell corresponds to the co-occurrence between two moderator levels. Brighter colors indicate a higher frequency of co-occurrence, and darker colors indicate lower frequency. You can hover your mouse on the heatmap to see the corresponding value and combination of each cell. 
+The additional coded moderators were as follows. [...] including the modality of, the actors in and the event types in the visual stimuli. Stimuli modality has two levels: videos and animations. We coded this moderator following the details provided in the method sections of the papers. Stimuli actors have two levels, human actors and non-human actors. Studies using visual stimuli with human actors wearing animal suits were coded as using non-human actors. To capture the event types of the visual stimuli, we coded the transitive action stimuli and the intransitive action stimuli separately. The transitive event has two levels: direct caused action and indirect caused action. The event was coded as using direct caused action if the agent in the action directly acted upon the patient. It was coded as using indirect caused action if the agent caused the patient to move via another medium. For example, the agent may pull a band on the patient's waist causing her to move. Likewise, the intransitive event also has two levels: one action versus parallel actions. Here we coded the levels by number of participants presented on the screen. An intransitive event was coded as "one action" if and only if there was only one agent presented on the screen. If an event involves more than one actor in the intransitive event (e.g. two actors doing parallel actions or one actor with one stander-by), then the event was coded as parallel-actions.
+
+These additional moderators were not included in the main analyses because of their close relationships between each other and with the main moderators. The heatmaps below showed the overlap between moderators. Each cell corresponds to the co-occurrence between two moderator levels. Brighter colors indicate a higher frequency of co-occurrence, and darker colors indicate lower frequency. You can hover your mouse on the heatmap to see the corresponding value and combination of each cell. 
 
 
 ### Ordered by Row Average 
@@ -812,9 +806,9 @@ intransitive_event_type_table %>%
 
 # Variability in visual stimuli as a function of age
 
-There was some evidence for researchers adapting the level of visual complexity in the visual stimuli according to children's age. We collected the available visual stimuli from the papers and the supporting materials. Schematic illustrations of the visual stimuli were used when the actual screenshots were not provided. Screenshots of the text descriptions of the events were used when the visual stimuli were unavailable. Note that because some papers' publishers converted to the visual stimuli to black-and-white, we decided to grayscale all visual stimuli for easier visual comparison.  
+To assess the relationship between visual stimuli complexity and partipant age, we collected sample visual stimuli for each conditoin in our sample  Schematic illustrations of the visual stimuli were used when the actual screenshots were not provided. Screenshots of the text descriptions of the events were used when the visual stimuli were unavailable. Note that because some papers' publishers converted to the visual stimuli to black-and-white, we decided to grayscale all visual stimuli for easier visual comparison.  
 
-It is easy to see in the plot that studies for particularly young children used significantly simpler visual stimuli. This adaptation might be partly responsible for the lack of age effect observed in our samples.  
+With the exception of studies from one paper targeting the youngest participants in our sample (Jin, 2015), there was little systematic variability in the complexity of visual stimuli as a function of age. This suggests that adaptation of visual stimuli to participants' age is unlikely to be the cause of the lack of developmental change of the strength of the effect. 
 
 
 ```{r}
@@ -882,7 +876,7 @@ current_power <- pwr::pwr.p.test(h = d_pwr,
 
 ```
 
-We conducted a power analysis using the `pwr` package. The x-axis represents the number of participants in each condition, and the y-axis represents the estimated power based on the power of current estimated meta-analytic effect size. The horizontal black dotted line represents 80% power, and the vertical black dotted lines represent the number of participants needed to reach 80% power (*N* = `r round(pwr_80, 0)`). The red lines represents the current power (`r round(current_power * 100, 2)`%) based on the approximate mean sample sizes (*N* = `r round(mean_sample_size, 0)`) of the conditions included in the meta-analysis.
+We conducted a power analysis using the `pwr` package (CITE). The x-axis represents the number of participants in each condition, and the y-axis represents the estimated power based on the power of  estimated meta-analytic effect size (REPORT IT AGAIN HERE). The horizontal black dotted line represents 80% power, and the vertical black dotted lines represent the number of participants needed to reach 80% power (*N* = `r round(pwr_80, 0)`). The red lines represents the current power (`r round(current_power * 100, 2)`%) based on the approximate mean sample sizes (*N* = `r round(mean_sample_size, 0)`) of the conditions included in the meta-analysis.
 ```{r}
 max_n <- min(max(60,
                      pwr::pwr.p.test(h = d_pwr,
