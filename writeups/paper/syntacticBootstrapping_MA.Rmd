@@ -33,7 +33,7 @@ header-includes:
   - \AtBeginEnvironment{tabular}{\singlespacing}
   - \usepackage{pbox}
   - \usepackage{hyphsubst}
-  - \floatplacement{figure}{t!} # make every figure with caption = t
+#  - \floatplacement{figure}{h} # make every figure with caption = t
 figsintext        : yes
 figurelist        : no
 tablelist         : no
@@ -79,8 +79,7 @@ source(here("writeups/paper/scripts/metalab_plot_helper.R"))
 knitr::opts_chunk$set(warning = FALSE, 
                       message = FALSE, 
                       cache = FALSE,
-                      echo = FALSE,
-                      fig.pos = "t!"
+                      echo = FALSE
                       )
 knitr::opts_chunk$set(dev = 'pdf')
 
