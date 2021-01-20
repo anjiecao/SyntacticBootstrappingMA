@@ -1,5 +1,6 @@
 ---
-title: 'Quantifying the syntactic bootstrapping effect in verb learning: A meta-analytic synthesis'
+title: 'Quantifying the syntactic bootstrapping effect in verb learning: A meta-analytic
+  synthesis'
 author: "Anjie Cao and Molly Lewis"
 date: "`r Sys.Date()`"
 output:
@@ -9,6 +10,8 @@ output:
     theme: paper
     toc: yes
     toc_float: no
+  pdf_document:
+    toc: yes
 subtitle: Supplementary Information
 ---
 
@@ -17,6 +20,7 @@ subtitle: Supplementary Information
 
 ```{r setup, include = F}
 # load packages
+library(tinytex)
 library(tidyverse)
 library(pwr)
 library(knitr)
@@ -59,6 +63,127 @@ ma_raw_data <- read_csv(RAW_DATA_PATH)
 
 ```
 
+# Main models results using dataset without imputed values {.tabset}
+For one paper missing relevant sufficient data to calculate an effect size (Hirsh-Pasek, Golinkoff, & Naigles, 1996), we imputed values from studies with similar design. The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. The two sets of models did not differ qualitatively. 
+
+
+```{r}
+MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence",  "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
+
+si_mod_print_no_impute <- generate_moderator_df(MODERATORS,filter(ma_data,  data_source != "imputed"))
+
+```
+
+## Mean age
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "mean_age_months") %>% 
+  mutate(Parameter = case_when(
+    Parameter == "Mean Age Months" ~ "Mean Age (months)",
+    TRUE ~ Parameter
+  )) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+
+```
+
+## Median productive vocabulary size
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "productive_vocab_median") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Predicate Type
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Noun phrase type
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Character identification phase
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Practice phase 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "practice_phase") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Synchronicity 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "presentation_type") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Testing structure 
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "test_mass_or_distributed") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+## Number of sentence repetitions
+```{r}
+convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>% 
+  mutate(
+    Parameter = case_when(
+    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
+    TRUE ~ Parameter)
+  ) %>% 
+  kable() %>% 
+  kable_styling(font_size = 12)
+```
+
+
+
 # Details of effect size calculation
 
 Here we demonstrate our method for calculating effect sizes by describing a step-by-step  calculation for conditions in an example paper, Yuan & Fisher (2009). The table below shows the original data reported in the source paper (Table 1, pg 622 of Yuan & Fisher, 2009). The values are mean looking time in seconds (and corresponding SE).
@@ -77,30 +202,6 @@ tibble(
 To standardize the effect size calculation, we converted the reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator).  For children hearing transitive sentences, the correct scene was the two-participant event; for children hearing intransitive sentences, the correct scene was the one-participant event. Standard errors were converted using a similar method.
 
 
-\begin{aligned}
-Mean_{transitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
-  &= \frac{4.82}{4.82 + 2.87} \\
-  &= 0.627 \\
-
-SD_{transitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
-  &= \frac{0.43}{4.82 + 2.87} *  \sqrt[2]{8} \\
-  &= 0.158 \\
-
-\\
-\\
-\end{aligned}
-
-\begin{aligned}
-Mean_{intransitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
-  &= \frac{4.12}{3.33 + 4.12} \\
-  &= 0.553 \\
-
-SD_{intransitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
-  &= \frac{0.4}{3.33 + 4.12} *  \sqrt[2]{8} \\
-  &= 0.152 \\
-\\
-\\
-\end{aligned}
 
 Using these standardize  we calculated Cohen's *d* and the variances as follows (the implementation of the script can be found at https://github.com/anjiecao/SyntacticBootstrappingMA/blob/master/analysis/scripts/02_calculate_es.R).
 
@@ -117,31 +218,49 @@ tibble(
 
 
 
+\begin{align}
+Mean_{transitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
+  &= \frac{4.82}{4.82 + 2.87} \\
+  &= 0.627 \\
+SD_{transitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
+  &= \frac{0.43}{4.82 + 2.87} *  \sqrt[2]{8} \\
+  &= 0.158 \\
+\end{align}
 
-\begin{aligned}
+
+
+\begin{align}
+Mean_{intransitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
+  &= \frac{4.12}{3.33 + 4.12} \\
+  &= 0.553 \\
+SD_{intransitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
+  &= \frac{0.4}{3.33 + 4.12} *  \sqrt[2]{8} \\
+  &= 0.152 \\
+\end{align}
+
+
+
+\begin{align}
  d_{transitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
   &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
   &= \frac{0.627 - 0.5}{0.158} \\
   &\approx 0.79 \\
-  \\
-  \\
   d_{intransitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
   &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
   &= \frac{0.553 - 0.5}{0.152} \\
   &\approx 0.35
-  
-\end{aligned}
+\end{align}
 
 
-\begin{aligned}
+
+\begin{align}
 var(d_{transitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 &= \frac{1}{8} + \frac{0.79^2}{2 * 8} \\
 &\approx 0.16 \\
-
 var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 &= \frac{1}{8} + \frac{0.35^2}{2 * 8} \\
 &\approx 0.13 \\
-\end{aligned}
+\end{align}
 
 
 
@@ -179,6 +298,97 @@ generate_double_forest_plot(double_forest_data)
 ```
 
 
+
+# Relationship between additional methodological moderators{.tabset}
+
+We coded a number of additional methodological variables that substantially overlap with those in the paper. We report them here for completeness.
+
+The additional coded moderators were as follows. First, we coded the modality of the visual stimuli. Stimuli modality has two levels: videos and animations. We coded this moderator following the details provided in the method sections of the papers. Stimuli actors have two levels, human actors and non-human actors. Studies using visual stimuli with human actors wearing animal suits were coded as using non-human actors. Second, we coded the types of the events presented in the visual stimuli. To capture the event types with details, we coded the transitive action stimuli and the intransitive action stimuli separately. For transitive action stimuli, we coded two levels: direct caused action and indirect caused action. The event was coded as using direct caused action if the agent in the action directly acted upon the patient. It was coded as using indirect caused action if the agent caused the patient to move via another medium. For example, the agent may pull a band on the patient's waist causing her to move. Likewise, the intransitive event also has two levels: one action versus parallel actions. Here we coded the levels by number of participants presented on the screen. An intransitive event was coded as "one action" if and only if there was only one agent presented on the screen. If an event involves more than one actor in the intransitive event (e.g. two actors doing parallel actions or one actor with one stander-by), then the event was coded as parallel-actions.
+
+These additional moderators were not included in the main analyses because of their close relationships between each other and with the main moderators. The heatmaps below showed the overlap between moderators. Each cell corresponds to the co-occurrence between two moderator levels. Brighter colors indicate a higher frequency of co-occurrence, and darker colors indicate lower frequency. You can hover your mouse on the heatmap to see the corresponding value and combination of each cell. 
+
+
+## Ordered by Row Average 
+```{r fig.width=9.5, fig.height=9.5}
+ALL_CATEGORICAL_VARS <- c("presentation_type",
+                      #"agent_argument_type", "patient_argument_type", 
+                     "stimuli_modality", "stimuli_actor", "character_identification",   "practice_phase", "test_mass_or_distributed", "transitive_event_type", "intransitive_event_type")
+
+
+get_cross_counts <- function(args, df){
+  var1 = args[[1]]
+  var2 = args[[2]]
+  
+  if (var1 != var2){
+  
+  df %>%
+    select_(var1, var2) %>%
+    rename(v1 = var1, 
+          v2 = var2) %>%
+    count(v1, v2) %>%
+    mutate(v1_long = glue("{var1}/{v1}"),
+           v2_long = glue("{var2}/{v2}"))  %>%
+    select(v1_long, v2_long, n) 
+
+  }
+}
+
+all_pair_counts <- list(ALL_CATEGORICAL_VARS,
+                        ALL_CATEGORICAL_VARS) %>%
+  cross() %>%
+  map_df(get_cross_counts, ma_data) %>%
+  complete(v1_long, v2_long, fill = list(n = 0)) %>%
+  filter(v1_long != v2_long)
+
+
+  all_counts_wide <- all_pair_counts %>%
+    pivot_wider(names_from = v2_long, values_from = n) 
+  
+
+  all_counts_wide_matrix <- all_counts_wide %>%
+    select(-v1_long) %>%
+    as.matrix()
+  
+  row.names(all_counts_wide_matrix) <-  as.character(all_counts_wide$v1_long)
+  heatmaply(all_counts_wide_matrix,
+            fontsize_row = 8,
+            fontsize_col = 8)
+```
+
+## Ordered by groups        
+```{r fig.width=9.5, fig.height=9.5}
+ALL_VARS <- colnames(all_counts_wide_matrix)
+ALL_VARS <- c("character_identification/yes", 
+              "character_identification/no", 
+              "practice_phase/yes", 
+              "practice_phase/no", 
+              "transitive_event_type/direct_caused_action",
+              "transitive_event_type/indirect_caused_action", 
+              "intransitive_event_type/one_action", 
+              "intransitive_event_type/parallel_actions" , 
+              "presentation_type/asynchronous", 
+              "presentation_type/simultaneous", 
+              "test_mass_or_distributed/mass", 
+              "test_mass_or_distributed/distributed", 
+              "stimuli_actor/person", 
+              "stimuli_actor/non_person", 
+              "stimuli_modality/video", 
+              "stimuli_modality/animation"
+              )
+
+ordered_matrix <- all_counts_wide_matrix %>% 
+  as.data.frame() %>% 
+  rownames_to_column() %>% 
+  slice(match(ALL_VARS, rowname)) %>% 
+  column_to_rownames("rowname") %>% 
+  select(all_of(ALL_VARS))
+
+heatmaply(ordered_matrix,
+            fontsize_row = 8,
+            fontsize_col = 8,
+           Rowv = NA, 
+          Colv = NA)
+```
 
 
 
@@ -418,124 +628,6 @@ convert_pretty_print_table(si_mod_print, "n_repetitions_sentence") %>%
   kable_styling(font_size = 12)
 ```
 
-# Main models results using dataset without imputed values {.tabset}
-For one paper missing relevant sufficient data to calculate an effect size (Hirsh-Pasek, Golinkoff, & Naigles, 1996), we imputed values from studies with similar design. The tables below report the model results from fitting the exact same models on the dataset excluding the imputed study. The two sets of models did not differ qualitatively. 
-
-
-```{r}
-MODERATORS <- c( "NULL", "mean_age_months","productive_vocab_median", "sentence_structure", "agent_argument_type", "patient_argument_type", "n_repetitions_sentence",  "stimuli_modality", "stimuli_actor", "transitive_event_type","intransitive_event_type", "presentation_type","character_identification", "practice_phase", "test_mass_or_distributed", "n_train_test_pair", "n_test_trial_per_pair" )
-
-si_mod_print_no_impute <- generate_moderator_df(MODERATORS,filter(ma_data,  data_source != "imputed"))
-
-```
-
-## Mean age
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "mean_age_months") %>% 
-  mutate(Parameter = case_when(
-    Parameter == "Mean Age Months" ~ "Mean Age (months)",
-    TRUE ~ Parameter
-  )) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-
-```
-
-## Median productive vocabulary size
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "productive_vocab_median") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Predicate Type
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Noun phrase type
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Character identification phase
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Practice phase 
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "practice_phase") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Synchronicity 
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "presentation_type") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Testing structure 
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "test_mass_or_distributed") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
-## Number of sentence repetitions
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "n_repetitions_sentence") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "N Repetitions Sentence" ~ "Number of sentence repetitions", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
 
 # Models with methodological moderators and theoretical moderators {.tabset}
 Syntactic bootstrapping studies differ in their implementational details. Here we examine the extent to which influences of the theoretical moderators can be accounted for by the methodological factors. The tables below present the results of models that include a single theoretical moderator along with all the methodological moderators in additive models. The row corresponding to the theoretical moderator is highlighted in yellow.   The effect of the theoretical moderators is qualitatively identical to the models without the methodological moderators included.
@@ -553,7 +645,7 @@ age_print_table <- print_method_model(age_method_m) %>%
 age_print_table %>% 
   kable() %>% 
   kable_styling(font_size = 12) %>% 
-  row_spec(which(age_print_table$Parameter == "Mean age (months)"),bold = T, color = "black", background = "wheat")
+  row_spec(which(age_print_table$Parameter == "Mean age (months)"),bold = T, color = "black", background = "#f5deb3")
 
 
 ```
@@ -565,7 +657,7 @@ vocab_print_table <- print_method_model(vocab_method_m)
 vocab_print_table %>% 
   kable() %>% 
   kable_styling(font_size = 12) %>% 
-  row_spec(which(vocab_print_table$Parameter == "Median productive vocabulary size"),bold = T,  color = "black", background = "wheat")
+  row_spec(which(vocab_print_table$Parameter == "Median productive vocabulary size"),bold = T,  color = "black", background = "#f5deb3")
 
 ```
 
@@ -576,7 +668,7 @@ sentence_structure_print_table <- print_method_model(sentence_structure_method_m
 sentence_structure_print_table %>% 
   kable() %>% 
   kable_styling(font_size = 12) %>% 
-  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Intransitive / Transitive)"),bold = T, color = "black", background = "wheat")
+  row_spec(which(sentence_structure_print_table$Parameter == "Predicate type (Intransitive / Transitive)"),bold = T, color = "black", background = "#f5deb3")
 
 ```
 
@@ -588,102 +680,11 @@ argument_type_print <- print_method_model(argument_type_method_m)
 argument_type_print%>% 
   kable() %>% 
   kable_styling(font_size = 12) %>% 
-  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Noun / Pronoun)"),bold = T, color = "black", background = "wheat")
+  row_spec(which(argument_type_print$Parameter == "Noun phrase type (Noun / Pronoun)"),bold = T, color = "black", background = "#f5deb3")
 ```
 
 
 
-
-# Relationship between additional methodological moderators{.tabset}
-
-We coded a number of additional methodological variables that substantially overlap with those in the paper. We report them here for completeness.
-
-The additional coded moderators were as follows. First, we coded the modality of the visual stimuli. Stimuli modality has two levels: videos and animations. We coded this moderator following the details provided in the method sections of the papers. Stimuli actors have two levels, human actors and non-human actors. Studies using visual stimuli with human actors wearing animal suits were coded as using non-human actors. Second, we coded the types of the events presented in the visual stimuli. To capture the event types with details, we coded the transitive action stimuli and the intransitive action stimuli separately. For transitive action stimuli, we coded two levels: direct caused action and indirect caused action. The event was coded as using direct caused action if the agent in the action directly acted upon the patient. It was coded as using indirect caused action if the agent caused the patient to move via another medium. For example, the agent may pull a band on the patient's waist causing her to move. Likewise, the intransitive event also has two levels: one action versus parallel actions. Here we coded the levels by number of participants presented on the screen. An intransitive event was coded as "one action" if and only if there was only one agent presented on the screen. If an event involves more than one actor in the intransitive event (e.g. two actors doing parallel actions or one actor with one stander-by), then the event was coded as parallel-actions.
-
-These additional moderators were not included in the main analyses because of their close relationships between each other and with the main moderators. The heatmaps below showed the overlap between moderators. Each cell corresponds to the co-occurrence between two moderator levels. Brighter colors indicate a higher frequency of co-occurrence, and darker colors indicate lower frequency. You can hover your mouse on the heatmap to see the corresponding value and combination of each cell. 
-
-
-## Ordered by Row Average 
-```{r fig.width=9.5, fig.height=9.5}
-ALL_CATEGORICAL_VARS <- c("presentation_type",
-                      #"agent_argument_type", "patient_argument_type", 
-                     "stimuli_modality", "stimuli_actor", "character_identification",   "practice_phase", "test_mass_or_distributed", "transitive_event_type", "intransitive_event_type")
-
-
-get_cross_counts <- function(args, df){
-  var1 = args[[1]]
-  var2 = args[[2]]
-  
-  if (var1 != var2){
-  
-  df %>%
-    select_(var1, var2) %>%
-    rename(v1 = var1, 
-          v2 = var2) %>%
-    count(v1, v2) %>%
-    mutate(v1_long = glue("{var1}/{v1}"),
-           v2_long = glue("{var2}/{v2}"))  %>%
-    select(v1_long, v2_long, n) 
-
-  }
-}
-
-all_pair_counts <- list(ALL_CATEGORICAL_VARS,
-                        ALL_CATEGORICAL_VARS) %>%
-  cross() %>%
-  map_df(get_cross_counts, ma_data) %>%
-  complete(v1_long, v2_long, fill = list(n = 0)) %>%
-  filter(v1_long != v2_long)
-
-
-  all_counts_wide <- all_pair_counts %>%
-    pivot_wider(names_from = v2_long, values_from = n) 
-  
-
-  all_counts_wide_matrix <- all_counts_wide %>%
-    select(-v1_long) %>%
-    as.matrix()
-  
-  row.names(all_counts_wide_matrix) <-  as.character(all_counts_wide$v1_long)
-  heatmaply(all_counts_wide_matrix,
-            fontsize_row = 8,
-            fontsize_col = 8)
-```
-
-## Ordered by groups        
-```{r fig.width=9.5, fig.height=9.5}
-ALL_VARS <- colnames(all_counts_wide_matrix)
-ALL_VARS <- c("character_identification/yes", 
-              "character_identification/no", 
-              "practice_phase/yes", 
-              "practice_phase/no", 
-              "transitive_event_type/direct_caused_action",
-              "transitive_event_type/indirect_caused_action", 
-              "intransitive_event_type/one_action", 
-              "intransitive_event_type/parallel_actions" , 
-              "presentation_type/asynchronous", 
-              "presentation_type/simultaneous", 
-              "test_mass_or_distributed/mass", 
-              "test_mass_or_distributed/distributed", 
-              "stimuli_actor/person", 
-              "stimuli_actor/non_person", 
-              "stimuli_modality/video", 
-              "stimuli_modality/animation"
-              )
-
-ordered_matrix <- all_counts_wide_matrix %>% 
-  as.data.frame() %>% 
-  rownames_to_column() %>% 
-  slice(match(ALL_VARS, rowname)) %>% 
-  column_to_rownames("rowname") %>% 
-  select(all_of(ALL_VARS))
-
-heatmaply(ordered_matrix,
-            fontsize_row = 8,
-            fontsize_col = 8,
-           Rowv = NA, 
-          Colv = NA)
-```
 
 
 
