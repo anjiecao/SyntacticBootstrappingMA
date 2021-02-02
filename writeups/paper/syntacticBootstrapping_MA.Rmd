@@ -16,8 +16,8 @@ affiliation:
     institution   : "Department of Psychology, Stanford University"
   - id            : "2"
     institution   : "Department of Psychology, Carnegie Mellon Unviversity"
-author_note: |
-note: "Data Availability Statement: All data and analysis scripts are available at https://github.com/anjiecao/SyntacticBootstrappingMA."
+author_note: "Data Availability Statement: All data and analysis scripts are available at https://github.com/anjiecao/SyntacticBootstrappingMA."
+
  
 abstract: |
   How do children infer the meaning of a novel verb? One prominent proposal is that children rely on syntactic information in the linguistic context, a phenomenon known as “syntactic bootstrapping” (Naigles, 1990). For example, given the sentence “The bunny is gorping the duck”, a child could use knowledge of English syntactic roles to infer that “gorping” refers to an action where the bunny is acting in some way on a duck. Here, we examine the strength of the syntactic bootstrapping effect, its developmental trajectory and generalizability using meta-analytic methods. Across 60 experiments in the literature (*N* = 849 participants), we find a reliable syntactic bootstrapping effect (*d* = .24). Yet, despite its theoretical prominence, the syntactic bootstrapping effect is relatively small, comparable in size to cross-situational learning and sound symbolism, but smaller than mutual-exclusivity and gaze-following. Further, we find that the effect does not strengthen over development, and is present only for studies that use transitive sentences. An examination of a range of methodological factors suggests that the effect is not strongly influenced by methodological implementation. In the General Discussion,  we consider implications of our findings for theories of verb learning and make recommendations for future research.  
@@ -26,8 +26,8 @@ abstract: |
 
   
   
-keywords          : "language acquisition, syntactic bootstrapping, meta-analysis"
-wordcount         : "7499"
+keywords          : "language acquisition, syntactic bootstrapping, meta-analysis, verb learning"
+wordcount         : "7811"
 bibliography      : ["references.bib"]
 csl               : "apa6-meta.csl"
 header-includes:
@@ -37,7 +37,7 @@ header-includes:
   - \AtBeginEnvironment{tabular}{\singlespacing}
   - \usepackage{pbox}
   - \usepackage{hyphsubst}
-#  - \floatplacement{figure}{h} # make every figure with caption = t
+ # - \floatplacement{figure}{t} # make every figure with caption = t
 figsintext        : yes
 figurelist        : no
 tablelist         : no
@@ -119,7 +119,7 @@ CRIT_99 <- 2.58
 
 ---
 nocite: | 
-  @arunachalam2013out, @arunachalam2013two, @arunachalam2019semantic, @he2020two, @jyotishi2017, @messenger2015learning, @scott2017lookit, @naiglesUnpub
+  @arunachalam2013out, @arunachalam2013two, @arunachalam2019semantic, @he2020two, @jyotishi2017, @messenger2015learning, @scott2017lookit, @naiglesUnpub, @fenson2000short
 ...
   
 ```{r appendix}

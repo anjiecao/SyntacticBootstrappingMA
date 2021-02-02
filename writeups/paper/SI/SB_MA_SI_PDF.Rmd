@@ -106,7 +106,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "productive_vocab_median") %>
 convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    Parameter == "Sentence Structure" ~ "Predicate type (Intransitive / Transitive)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -118,7 +118,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Noun / Pronoun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -130,7 +130,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    Parameter == "Character Identification" ~ "Character identification phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -142,7 +142,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %
 convert_pretty_print_table(si_mod_print_no_impute, "practice_phase") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    Parameter == "Practice Phase" ~ "Practice phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -166,7 +166,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "presentation_type") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "test_mass_or_distributed") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Distributed / Mass)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -204,7 +204,7 @@ tibble(
 
 To standardize the effect size calculation, we converted the reported raw results to the proportion of correct responses. For looking time studies, when the paper only reported the raw looking time in seconds, we calculated the proportion of correct response by dividing the mean looking time toward the matching scene by the sum of looking time toward the matching scenes and non-matching scenes (i.e., excluding the look away time from the denominator).  For children hearing transitive sentences, the correct scene was the two-participant event; for children hearing intransitive sentences, the correct scene was the one-participant event. Standard errors were converted using a similar method.
 
-Using these standardize  we calculated Cohen's *d* and the variances as follows (the implementation of the script can be found at XXXXXX).
+We calculated Cohen's *d* and the variances as follows (the implementation of the script can be found at XXXXXX).
 
 ```{r, include = F}
 tibble(
@@ -218,25 +218,25 @@ tibble(
 ```
 
 
-\begin{align}
+\begin{align*}
 Mean_{transitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
   &= \frac{4.82}{4.82 + 2.87} \\
   &= 0.627 \\
 SD_{transitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
   &= \frac{0.43}{4.82 + 2.87} *  \sqrt[2]{8} \\
   &= 0.158 \\
-\end{align}
+\end{align*}
 
-\begin{align}
+\begin{align*}
 Mean_{intransitive} &= \frac{Time_{correct}}{Time_{correct} + Time_{incorrect}} \\
   &= \frac{4.12}{3.33 + 4.12} \\
   &= 0.553 \\
 SD_{intransitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[2]{N} \\
   &= \frac{0.4}{3.33 + 4.12} *  \sqrt[2]{8} \\
   &= 0.152 \\
-\end{align}
+\end{align*}
 
-\begin{align}
+\begin{align*}
  d_{transitive} &= \frac{M_1 - M_2}{\sigma_{pooled}} \\
   &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
   &= \frac{0.627 - 0.5}{0.158} \\
@@ -247,17 +247,17 @@ SD_{intransitive} &= \frac{SE_{Raw}}{Time_{correct} + Time_{incorrect}} * \sqrt[
   &= \frac{M_{correct} - M_{chance}}{\sigma_{correct}} \\
   &= \frac{0.553 - 0.5}{0.152} \\
   &\approx 0.35
-\end{align}
+\end{align*}
 
 
-\begin{align}
+\begin{align*}
 var(d_{transitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 &= \frac{1}{8} + \frac{0.79^2}{2 * 8} \\
 &\approx 0.16 \\
 var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 &= \frac{1}{8} + \frac{0.35^2}{2 * 8} \\
 &\approx 0.13 \\
-\end{align}
+\end{align*}
 
 
 
@@ -265,7 +265,7 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 
 # Comparison of between- vs. within- subject effect size estimates
 
-The forest plot below compares the two ways of calculating effect sizes for the subset of experimental conditions that use a between-group analysis in the original paper.  In other words, the original analyses compared the proportion of looking time at the causative events between transitive conditions and intransitive conditions. Effect sizes calculated using this method are denoted by the pink points. We also present the effect sizes calculated using the against-chance method on the same subset of the experimental conditions. These effect sizes are denoted with green points. The against-chance method is a more conservative way of estimating the effect size. As the forest plot shows, the meta-analytic effect size using the between-group calculation is larger than the meta-analytic effect size using the against-chance method. 
+The forest plot below compares the two ways of calculating effect sizes for the subset of experimental conditions that use a between-group analysis in the original paper.  In these papers, the original analyses compared the proportion of looking time at the causative events between transitive conditions and intransitive conditions. Effect sizes calculated using this method are denoted by the pink points. We also present the effect sizes calculated using the within-subject (against-chance) method on the same subset of the experimental conditions. These effect sizes are denoted with green points. The against-chance method is a more conservative way of estimating the effect size. As the forest plot shows, the meta-analytic effect size using the between-group calculation is larger than the meta-analytic effect size using the against-chance method. 
 
 
 ```{r fig.height= 10}
@@ -308,7 +308,7 @@ These additional moderators were not included in the main analyses because of th
 
 
 ## Ordered by Row Average 
-```{r fig.width=9.5, fig.height=9.5}
+```{r fig.width=11.5, fig.height=9.5}
 ALL_CATEGORICAL_VARS <- c("presentation_type",
                       #"agent_argument_type", "patient_argument_type", 
                      "stimuli_modality", "stimuli_actor", "character_identification",   "practice_phase", "test_mass_or_distributed", "transitive_event_type", "intransitive_event_type")
@@ -349,13 +349,16 @@ all_pair_counts <- list(ALL_CATEGORICAL_VARS,
     as.matrix()
   
   row.names(all_counts_wide_matrix) <-  as.character(all_counts_wide$v1_long)
+  
+  
   heatmaply(all_counts_wide_matrix,
-            fontsize_row = 8,
-            fontsize_col = 8)
+            fontsize_row = 5, 
+            fontsize_col = 5,
+            key.title = "Number of\nco-occurrence")
 ```
 
 ## Ordered by groups        
-```{r fig.width=9.5, fig.height=9.5}
+```{r fig.width=11, fig.height=9.5}
 ALL_VARS <- colnames(all_counts_wide_matrix)
 ALL_VARS <- c("character_identification/yes", 
               "character_identification/no", 
@@ -382,11 +385,15 @@ ordered_matrix <- all_counts_wide_matrix %>%
   column_to_rownames("rowname") %>% 
   select(all_of(ALL_VARS))
 
+
+
+ 
 heatmaply(ordered_matrix,
-            fontsize_row = 8,
-            fontsize_col = 8,
-           Rowv = NA, 
-          Colv = NA)
+            Rowv = FALSE, 
+            Colv = FALSE, 
+            fontsize_row = 5, 
+            fontsize_col = 5,
+            key.title = "Number of\nco-occurrence")
 ```
 
 
@@ -418,7 +425,7 @@ all_estimate <- as.numeric(all_model$ b)
 
 ```
 
-The plot below shows a modified funnel plot, or "significance funnel" where significant studies are shown in orange and non-significant studies are shown in grey (Marthur & VanderWeele, 2020). The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effect size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attenuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
+The plot below shows a modified funnel plot, or "significance funnel", where significant studies are shown in orange and non-significant studies are shown in grey (Marthur & VanderWeele, 2020). The x-axis shows effect size estimates, and the y-axis shows estimated standard error for each estimate. Studies lying on the grey line have a p-value of .05. The black diamond shows the meta-analytic effect size estimate for all studies; the grey diamond shows the meta-analytic effect size estimate for significant studies only (the "worst-case" publication scenario). Note that the worst case scenario appreciable attenuates the effect size estimate, but does not attenuate the point estimate to 0 (worst case estimate: `r worst_case_estimate_print`).
 
 
 
@@ -507,7 +514,7 @@ significance_funnel(
 ```
 
 
-# Main model results  {.tabset}
+# Main model results {.tabset}
 
 The tables below show the estimates for all single-moderator models reported in the main text. The tables present point estimates for the model parameters and their 95% confidence intervals (i.e., [lower bound, upper bound]). Asterisks (*) indicate significance at the .05 level. For categorical variables, the base levels are represented as the first ones appeared in the parentheses. 
 
@@ -548,7 +555,7 @@ convert_pretty_print_table(si_mod_print, "productive_vocab_median") %>%
 convert_pretty_print_table(si_mod_print, "sentence_structure") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    Parameter == "Sentence Structure" ~ "Predicate type (Intransitive / Transitive)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -560,7 +567,7 @@ convert_pretty_print_table(si_mod_print, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Noun / Pronoun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -572,7 +579,7 @@ convert_pretty_print_table(si_mod_print, "agent_argument_type") %>%
 convert_pretty_print_table(si_mod_print, "character_identification") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    Parameter == "Character Identification" ~ "Character identification phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -584,7 +591,7 @@ convert_pretty_print_table(si_mod_print, "character_identification") %>%
 convert_pretty_print_table(si_mod_print, "practice_phase") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    Parameter == "Practice Phase" ~ "Practice phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -596,7 +603,7 @@ convert_pretty_print_table(si_mod_print, "practice_phase") %>%
 convert_pretty_print_table(si_mod_print, "presentation_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
+    Parameter == "Presentation Type" ~ "Synchronicity \n (Asynchronous / Simultaneous)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -608,7 +615,7 @@ convert_pretty_print_table(si_mod_print, "presentation_type") %>%
 convert_pretty_print_table(si_mod_print, "test_mass_or_distributed") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Distributed / Mass)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -689,7 +696,7 @@ argument_type_print%>%
 
 # Variability in visual stimuli as a function of age
 
-To assess the relationship between visual stimuli complexity and participant age, we collected sample visual stimuli for each condition in our sample  Schematic illustrations of the visual stimuli were used when the actual screenshots were not provided. Screenshots of the text descriptions of the events were used when the visual stimuli were unavailable. Note that because some papers' publishers converted to the visual stimuli to black-and-white, we decided to grayscale all visual stimuli for easier visual comparison.  
+To assess the relationship between visual stimuli complexity and participant age, we collected sample visual stimuli for each condition in our sample. Schematic illustrations of the visual stimuli were used when the actual screenshots were not provided. Screenshots of the text descriptions of the events were used when the visual stimuli were unavailable. Note that because some papers' publishers converted the visual stimuli to black-and-white, we decided to grayscale all visual stimuli for easier visual comparison.  
 
 With the exception of studies from one paper targeting the youngest participants in our sample (Jin, 2015), there was little systematic variability in the complexity of visual stimuli as a function of age. This suggests that adaptation of visual stimuli to participants' age is unlikely to be the cause of the lack of developmental change of the strength of the effect. 
 
@@ -797,10 +804,10 @@ qplot(ns, ps, geom = c("point","line"),
 
 Champely, S., Ekstrom, C., Dalgaard, P., Gill, J., Weibelzahl, S., Anandkumar, A., ... & De Rosario, M. H. (2018). Package ‘pwr’. R package version, 1(2).
 
-Hirsh-Pasek, K., Golinkoff, R. M., & Naigles, L. (1996). Young children’s use of syntactic frames to derive meaning. The origins of grammar: Evidence from early language comprehension, 123-158.
+Hirsh-Pasek, K., Golinkoff, R. M., & Naigles, L. (1996). Young children’s use of syntactic frames to derive meaning. *The Origins of Grammar: Evidence from Early Language Comprehension*, 123–158.
 
 Jin, K. S. (2015). The role of syntactic and discourse information in verb learning (Doctoral dissertation, University of Illinois at Urbana-Champaign).
 
 Mathur, M. B., & VanderWeele, T. J. (2020). Sensitivity analysis for publication bias in meta‐analyses. Journal of the Royal Statistical Society. Series C, Applied Statistics, 69(5), 1091.
 
-Yuan, S., & Fisher, C. (2009). “Really? She blicked the baby?” Two-year-olds learn combinatorial facts about verbs by listening. Psychological science, 20(5), 619-626.
+Yuan, S., & Fisher, C. (2009). “Really? She blicked the baby?” Two-year-olds learn combinatorial facts about verbs by listening. *Psychological Science, 20*(5), 619-626.

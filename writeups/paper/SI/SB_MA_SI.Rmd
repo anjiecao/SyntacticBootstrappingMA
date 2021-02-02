@@ -74,36 +74,12 @@ si_mod_print_no_impute <- generate_moderator_df(MODERATORS,filter(ma_data,  data
 
 ```
 
-## Mean age
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "mean_age_months") %>% 
-  mutate(Parameter = case_when(
-    Parameter == "Mean Age Months" ~ "Mean Age (months)",
-    TRUE ~ Parameter
-  )) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-
-```
-
-## Median productive vocabulary size
-```{r}
-convert_pretty_print_table(si_mod_print_no_impute, "productive_vocab_median") %>% 
-  mutate(
-    Parameter = case_when(
-    Parameter == "Productive Vocab Median" ~ "Median productive vocabulary size", 
-    TRUE ~ Parameter)
-  ) %>% 
-  kable() %>% 
-  kable_styling(font_size = 12)
-```
-
 ## Predicate Type
 ```{r}
 convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    Parameter == "Sentence Structure" ~ "Predicate type (Intransitive / Transitive)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -115,7 +91,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Noun / Pronoun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -127,7 +103,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "agent_argument_type") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    Parameter == "Character Identification" ~ "Character identification phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -139,7 +115,7 @@ convert_pretty_print_table(si_mod_print_no_impute, "character_identification") %
 convert_pretty_print_table(si_mod_print_no_impute, "practice_phase") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    Parameter == "Practice Phase" ~ "Practice phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -163,12 +139,13 @@ convert_pretty_print_table(si_mod_print_no_impute, "presentation_type") %>%
 convert_pretty_print_table(si_mod_print_no_impute, "test_mass_or_distributed") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Distributed / Mass)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
   kable_styling(font_size = 12)
 ```
+
 
 ## Number of sentence repetitions
 ```{r}
@@ -549,7 +526,7 @@ convert_pretty_print_table(si_mod_print, "productive_vocab_median") %>%
 convert_pretty_print_table(si_mod_print, "sentence_structure") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Sentence Structure" ~ "Predicate type (Transitive / Intransitive)", 
+    Parameter == "Sentence Structure" ~ "Predicate type (Intransitive / Transitive)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -561,7 +538,7 @@ convert_pretty_print_table(si_mod_print, "sentence_structure") %>%
 convert_pretty_print_table(si_mod_print, "agent_argument_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Agent Argument Type" ~ "Noun phrase type (Pronoun / Noun)", 
+    Parameter == "Agent Argument Type" ~ "Noun phrase type (Noun / Pronoun)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -573,7 +550,7 @@ convert_pretty_print_table(si_mod_print, "agent_argument_type") %>%
 convert_pretty_print_table(si_mod_print, "character_identification") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Character Identification" ~ "Character identification phase \n (Yes / No)", 
+    Parameter == "Character Identification" ~ "Character identification phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -585,7 +562,7 @@ convert_pretty_print_table(si_mod_print, "character_identification") %>%
 convert_pretty_print_table(si_mod_print, "practice_phase") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Practice Phase" ~ "Practice phase \n (Yes / No)", 
+    Parameter == "Practice Phase" ~ "Practice phase \n (No / Yes)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -597,7 +574,7 @@ convert_pretty_print_table(si_mod_print, "practice_phase") %>%
 convert_pretty_print_table(si_mod_print, "presentation_type") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Presentation Type" ~ "Synchronicity \n (Simultaneous / Asynchronous)", 
+    Parameter == "Presentation Type" ~ "Synchronicity \n (Asynchronous / Simultaneous)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
@@ -609,7 +586,7 @@ convert_pretty_print_table(si_mod_print, "presentation_type") %>%
 convert_pretty_print_table(si_mod_print, "test_mass_or_distributed") %>% 
   mutate(
     Parameter = case_when(
-    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Mass / Distributed)", 
+    Parameter == "Test Mass Or Distributed" ~ "Testing Procedure Structure \n (Distributed / Mass)", 
     TRUE ~ Parameter)
   ) %>% 
   kable() %>% 
