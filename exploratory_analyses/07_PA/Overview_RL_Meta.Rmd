@@ -1,0 +1,735 @@
+---
+title: "Meta-analysis of infant abstract rule learning studies"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    code_folding: hide
+    highlight: tango
+    number_sections: yes
+    theme: spacelab
+    toc: yes
+authors: Hugh Rabagliati, Brock Ferguson, Casey Lew-Williams
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(cache=TRUE)
+knitr::opts_chunk$set(cache.lazy=FALSE)
+library(compute.es)
+library(metafor)
+library(meta)
+library(ggplot2)
+options(width = 800)
+library(cowplot)
+library(forcats)
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(poibin)
+library(RColorBrewer)
+library(viridis)
+```
+
+
+```{r import_ma_from_google, echo = FALSE, include = FALSE}
+
+
+library(googlesheets)
+# Note that to use this code, you will have to copy the Google Sheet "RuleLearning MA Template"
+# into your Google Drive. This sheet can be found on the OSF repository. You'll need to sign
+# into your Google Drive account via googlesheets before you can access the data via R.
+
+#ma_file <- gs_title("RuleLearning MA Template")
+#ma_worksheet <- gs_read(ss=ma_file, ws = "Data_MA", skip=0)
+
+ma_worksheet <- read_csv(here("exploratory_analyses/07_PA/rl_ma.csv"))
+
+# Transform F into t statistics
+ma_worksheet$t_calc <- ma_worksheet$t
+ma_worksheet[is.na(ma_worksheet$t),]$t_calc <- sqrt(ma_worksheet[is.na(ma_worksheet$t),]$F)
+
+# Ensure transformed t stats are negative if there is a Fam Pref
+ma_worksheet[is.na(ma_worksheet$t) & ma_worksheet$PreferenceType == "Familiarity",]$t_calc <- -1 * ma_worksheet[is.na(ma_worksheet$t) & ma_worksheet$PreferenceType == "Familiarity",]$t_calc 
+ma_worksheet$p <- 2*pt(-abs(ma_worksheet$t_calc), df=(ma_worksheet$n_1-1))
+
+# Calculate r following Csibra et al (2016), DevPsych, Appendix B
+r_calc <- ma_worksheet[is.na(ma_worksheet$r) & !is.na(ma_worksheet$SD_1),] 
+
+r_calc$r <- (r_calc$SD_1^2 + r_calc$SD_2^2 - 
+               (r_calc$n_1 * (r_calc$x_1 - r_calc$x_2)^2/r_calc$t_calc^2)
+             )/(2 * r_calc$SD_1 * r_calc$SD_2) 
+
+ma_worksheet[is.na(ma_worksheet$r) & !is.na(ma_worksheet$SD_1),]$r <- r_calc$r
+
+# use a weighted mean for correlation for studies where we don't have SD
+ma_worksheet[is.na(ma_worksheet$r) ,]$r <- weighted.mean(ma_worksheet[!is.na(ma_worksheet$r),]$r, w = 1/ma_worksheet[!is.na(ma_worksheet$r),]$n_1) 
+
+meta_data <- ma_worksheet
+
+raw.es = tes(meta_data$t_calc,meta_data$n_1,meta_data$n_1,verbose = FALSE)
+raw.es$study = meta_data$study_ID
+raw.es$modality = ordered(meta_data$Modality)
+raw.es$age = meta_data$mean_age_1
+raw.es$age_months <- raw.es$age/30.44
+raw.es$expt = meta_data$expt_num
+raw.es$lab = meta_data$Lab
+raw.es$t <- meta_data$t_calc
+raw.es$r <- meta_data$r
+raw.es$semantics <- meta_data$Semantics
+raw.es$CoarseStimulus <- meta_data$CoarseStimulusCode
+raw.es$method <- ordered(meta_data$method)
+raw.es$semantics <- ordered(raw.es$semantics, levels = c("Meaningless","Meaningful"))
+raw.es$p <- meta_data$p
+raw.es$x_1 <- meta_data$x_1
+raw.es$x_2 <- meta_data$x_2
+raw.es$SD_1 <- meta_data$SD_1
+raw.es$SD_2 <- meta_data$SD_2
+
+raw.es$training_rule <- ordered(meta_data$TrainingRule, levels = c("ABA","AAB","ABB"))
+raw.es$training_rule_rep <- NA
+raw.es[raw.es$training_rule %in% c("AAB","ABB"),]$training_rule_rep <- "Redup"
+raw.es[raw.es$training_rule %in% c("ABA"),]$training_rule_rep <- "No_Redup"
+raw.es$training_rule_rep <- ordered(raw.es$training_rule_rep, levels = c("No_Redup","Redup"))
+
+raw.es$training_rule_AAB <- NA
+raw.es[raw.es$training_rule %in% c("AAB"),]$training_rule_AAB <- "AAB"
+raw.es[raw.es$training_rule %in% c("ABB"),]$training_rule_AAB <- "ABB"
+raw.es$training_rule_AAB <- ordered(raw.es$training_rule_AAB, levels = c("AAB","ABB"))
+
+# Recalc cohen's d assuming a correlation between measure 1 and measure 2.
+raw.es$d <- (raw.es$x_1 - raw.es$x_2)/sqrt((raw.es$SD_2^2 + raw.es$SD_1^2)/2)
+
+raw.es[is.na(raw.es$d),]$d  <- raw.es[is.na(raw.es$d),]$t * sqrt(2*(1-raw.es[is.na(raw.es$d),]$r)/raw.es[is.na(raw.es$d),]$n.1)
+
+raw.es$d.se <- sqrt((2 * (1 - raw.es$r)/raw.es$n.1) + 
+                      (raw.es$d^2)/(2 * raw.es$n.1))
+raw.es$comp_g = raw.es$d * (1 - 3/(4 * raw.es$n.1 - 5))
+raw.es$comp_g.se = sqrt(((2 * (1 - raw.es$r))/raw.es$n.1)+
+                          raw.es$comp_g^2/(2*raw.es$n.1))
+
+ran.ef.raw <- rma.mv(comp_g,V= (comp_g.se)^2, random = ~ study|lab,data = raw.es)
+
+
+
+```
+# Meta-Analysis
+
+We're gathering studies that have examined learning of abstract rules (e.g., ABA vs ABB) from both speech and non-speech stimuli. Included studies so far come from `r length(unique(ma_worksheet$Lab))` different labs, and include:
+
+  * Dawson & Gerken (2009) in *Cognition* (tones and chords)
+  * Saffran et al (2007) in *Cognition* (dogs and cats)
+  * Thiessen (2012) in *LLD* (shapes and speech sounds)
+  * Johnson et al (2009) in *Infancy* (shapes)
+  * Bulf et al (2015) in *Frontiers* (faces)
+  * Frank et al (2009) in *Developmental Science* (shapes and speech sounds)
+  * Ferguson et al (2016) in *Nature Comms* (tones)
+  * Tsui et al (2016) in *Developmental Science* (faces, or faces plus speech sounds)
+  * Rabagliati et al (2012) in *PLOS One* (gestures)
+  * Marcus et al (2007) in *Psychological Science* (nonspeech sounds)
+  * Marcus et al (1999) in *Science* (speech)
+  * Gerken et al (2015) in *Developmental Science* (speech)
+  * Gerken (2006) in *Cognition* (speech)
+  * Gerken (2010) in *Cognition* (speech)
+  * Pons & Toro (2010) in *Cognition* (speech)
+  * Ferguson et al (2015) in *Proc Cog Sci* (shapes)
+  * Gervain & Werker (2013) in *JCL* (speech)
+  * Bahlmann & Levelt (2016), unpublished MSc thesis
+  * van Leeuven & Levelt (2016), unpublished MSc thesis
+  * Bulf et al (2017), *Nature Comms*
+
+If you know more studies, please contact us! You can email [hugh.rabagliati@ed.ac.uk](mailto:hugh.rabagliati@ed.ac.uk).
+
+A Google Sheet containing a current list of included and excluded papers can be found [here](https://docs.google.com/spreadsheets/d/1O-BJlnG64N9mzZikXFWwTgq3rmbLqN_m0d8yDpjxuwA/edit#gid=0).
+
+A Google Sheet containing our current datasheet can be found  [here](https://docs.google.com/spreadsheets/d/1CWPZ9zz_fec8WkBFmasVO4nVnJqk87HkFvCig6HKNqA/edit#gid=0). Note that there is one sheet for meta-analysis, and one sheet for *p* curve analysis.
+
+A PRISMA flowchart can be found [here](https://osf.io/v6rkj/).
+
+For each of these papers, we enter each study that was conducted into the meta-analysis. Where the authors have broken up the studies into multiple parts (e.g., reporting learning for ABB and for AAB, reporting learning for infants of different ages), or have been able to give us that information, then we have entered each separate part as a separate entry (e.g., Experiment 1a and Experiment 1b). 
+
+
+Note that, for entries where we don't have an empirical estimate of the between conditions correlation, we calculate it based on Appendix B in Csibra et al. (2016), *Dev Psych*. Where we can't calculate that (e.g., due to missing SDs), we interpolate as the mean of all r's weighted by the inverse sample size.
+
+![](./images/r_derivation.png)
+
+## Combined speech & nonspeech analysis, with stimulus type as a moderator
+
+### Basic random effects regression
+We first run a simple random effects meta regression, with no moderators, in which papers (e.g., Marcus et al. 1999) are clustered under PIs (e.g., Marcus lab). Clustering is determined by author position of PI within the paper (e.g., for papers on which both Johnson and Marcus are authors, they would be assigned to the Johnson lab if Johnson is first author, or if Johnson is last author and Marcus is not first author. If Johnson is second author and Marcus is last author, the papers would be assigned to Marcus lab).
+
+The meta-regression indicates that, overall, the effect size for rule learning studies is greater than zero. We plot forest and funnel plots for this first random effects regression.
+
+```{r metalab_data_overall_forest, echo=FALSE,fig.height = 15}
+z<- 1
+ran.ef.raw
+
+forest(ran.ef.raw,
+       slab = raw.es$study,
+       mlab = "All Experiments",
+       xlab = "Hedges' g")
+par(font = 2)
+#text(-6, 17.55, "Experiments (raw data)")
+#text(5, 17.55, "Cohen's d [95% CI]")
+par(font = 1)
+
+
+```
+
+```{r metalab_data_overall_funnel, echo=FALSE}
+
+funnel_data <- funnel(ran.ef.raw)
+funnel_data$CoarseStimulus = raw.es$CoarseStimulus
+funnel_data$age_months = raw.es$age_months
+funnel(ran.ef.raw)
+
+# Build my own funnel plot
+
+gg_funnel <- function(ran.ef.model,funnel.data,title){
+  library(cowplot)
+  estimate = ran.ef.model$b
+  se = ran.ef.model$se
+  se.seq=seq(0, round(max(funnel.data$y),digits=2), 0.001)
+  ll95 = estimate-(1.96*se.seq)
+  ul95 = estimate+(1.96*se.seq)
+  df_funnel = data.frame(ll95, ul95, se.seq, estimate)
+  fp = ggplot(aes(x = y, y = x), data = funnel.data) +
+    xlab('Standard Error') + 
+    ylab(expression(paste("Observed Outcome (Hedges ",italic(g),")",sep="")))+
+    geom_line(aes(x = se.seq, y = ll95), linetype = 'dotted', data = df_funnel) +
+    geom_line(aes(x = se.seq, y = ul95), linetype = 'dotted', data = df_funnel) +
+    geom_line(aes(x = se.seq,y=estimate), data = df_funnel)+
+    geom_ribbon(data=df_funnel, 
+          aes(x = se.seq, y = ll95,ymin=ll95,ymax=ul95), fill="grey", alpha="0.3")+
+    geom_point(size=2.5, aes(color = CoarseStimulus)) +
+    xlim(c(0.55,0))+
+    scale_x_reverse()+
+    scale_y_continuous(breaks=seq(-1.25,2,0.25))+
+    theme_cowplot()+
+    background_grid(major = "y", minor = "none")+
+    scale_y_continuous(breaks = seq(floor(min(funnel.data$x)), ceiling(max(funnel.data$x)), by = 0.5))+
+    scale_color_discrete(name = "")+
+    ggtitle(title)+
+    theme(plot.title = element_text(face="plain")) +
+    theme(legend.position="bottom") +
+     coord_flip()
+  return(fp)
+  }
+overall_funnel_plot <- gg_funnel(ran.ef.raw,funnel_data, title = "Overall Analysis")
+overall_funnel_plot
+```
+
+
+There are at least two things to note here. 
+
+* First, there is considerable heterogeneity in the studies that have gone into the regression. That suggests that there are multiple moderators present (e.g., speech vs nonspeech contrast, age effects, and other factors that might affect rule learning).  
+* Second, the funnel plot is somewhat asymmetric, which could be taken as evidence for publication bias. This asymmetry is certainly not knock-down evidence, however, as funnel plot asymmetries are quite hard to interpret ([see this DataColada post](http://datacolada.org/58)).
+* A more minor issue -- why do we see the "curves" of points (e.g., in the bottom right)? I believe that this is because most of our studies have the same sample size (16), and we are using a constant adjustment for between-condition, within-subject, correlations when we calculate variance from the *d* statistics. (Michael Frank p.c. confirmed this, May 2017)
+
+Next, we run a moderated random effects metaregression, with age and stimulus type (speech/nonspeech) as a fixed effect. We label any study that uses speech as a **Speech** study, even if it is a multiple modality study (e.g., both speech and shapes). We want to know if the discrimination effect size is greater for speech than for nonspeech.
+
+
+### Age and stimulus type (speech vs non-speech) as moderators
+
+```{r metalab_moderated_overall_regression, echo=FALSE}
+
+
+
+ran.ef.moderated_lab_by_paper <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ scale(age) * modality, random = ~ study|lab,data = raw.es, method = "ML")
+ran.ef.moderated_lab_by_paper
+
+meta_table <- function(rma.ma_output){
+  rowname_labels = rownames(coef(summary(rma.ma_output)))
+  rowname_labels[1] = "intercept"
+  table = data.frame(
+    "b" = paste(
+      signif(coef(summary(rma.ma_output))[,1],2),
+      "(",
+      signif(coef(summary(rma.ma_output))[,2],2),
+      ")",sep = ""
+      ),
+    "z" = signif(coef(summary(rma.ma_output))[,3],2),
+    "p" = signif(coef(summary(rma.ma_output))[,4],2),
+    "c.i." = paste(
+      "[",signif(coef(summary(rma.ma_output))[,5],2),",",
+      signif(coef(summary(rma.ma_output))[,6],2),"]",
+      sep = ""
+      ),
+    row.names = rowname_labels
+    )
+  return(table)
+}
+
+kable(meta_table(ran.ef.moderated_lab_by_paper))
+```
+
+
+Note that the effect size is larger for studies that use speech as stimuli. Interestingly, the effect size decreases as age increases. It is not clear if this reflects something about the child's learning abilities, or reflects that studies with older infants tend to test more subtle experimental contrasts.  
+
+Next, we draw forest plots and funnel plots.
+
+
+```{r metalab_moderated_overall_regression_forest, echo=FALSE, fig.height=10}
+
+forest(ran.ef.moderated_lab_by_paper,
+       slab = raw.es$study,
+       mlab = "All Experiments",
+       xlab = "Hedges' g")
+par(font = 2)
+#text(-6, 17.55, "Experiments (raw data)")
+#text(5, 17.55, "Cohen's d [95% CI]")
+par(font = 1)
+```
+
+```{r metalab_moderated_overall_regression_funnel, echo=FALSE}
+
+funnel(ran.ef.moderated_lab_by_paper)
+
+```
+
+Bubble plots of the different studies. Lines are the predicted effect sizes from the meta-regression which used age and modality as predictor variables. The table below shows predicted effect sizes 
+
+```{r metalab_moderated_overall_regression_bubble, echo=FALSE}
+
+preds <- predict(ran.ef.moderated_lab_by_paper, newmods = cbind(rep(seq(-2.5,4,by = 0.25),2),
+                                                                rep(contrasts(raw.es$modality), each = length(seq(-2.5,4,by = 0.25))),
+                                                                rep(seq(-2.5,4,by = 0.25),2) * rep(contrasts(raw.es$modality), 
+                                                                                                   each = length(seq(-2.5,4,by = 0.25)))
+                                                                ), 
+                 addx = TRUE)
+
+preds_graph <- data.frame(comp_g = preds$pred, modality = rep(c("Nonspeech","Speech"), each = length(seq(-2.5,4,by = 0.25))), 
+                          age = rep(seq(-2.5,4,by = 0.25),2),
+                          ci.lower = preds$ci.lb, ci.upper = preds$ci.ub)
+
+preds_graph$age_months <- ((attr(scale(raw.es$age),'scaled:scale') * preds_graph$age) + attr(scale(raw.es$age),'scaled:center'))/30.44
+
+# Get predicted effect size for 7-month-olds in each condition
+preds_example <- data.frame(modality = c("Nonspeech","Speech"), 
+                            age = ((7.5*30.44) - attr(scale(raw.es$age),'scaled:center'))/
+                              (attr(scale(raw.es$age),'scaled:scale'))
+)
+example_predictions <- predict(ran.ef.moderated_lab_by_paper, newmods = cbind(
+                                                                              preds_example$age,
+                                                                              contrasts(raw.es$modality),
+                                                                              preds_example$age * contrasts(raw.es$modality)),
+                               addx = TRUE)
+
+preds_example$prediction = example_predictions$pred
+preds_example$se = example_predictions$se
+preds_example$ci.lb = example_predictions$ci.lb
+preds_example$ci.ub = example_predictions$ci.ub
+
+preds_graph$modality <- ordered(preds_graph$modality, levels= c("Speech","Nonspeech"))
+raw.es$modality <- ordered(raw.es$modality, levels= c("Nonspeech","Speech"))
+
+modality_bubble_graph <- ggplot(raw.es, aes(age_months,comp_g))+
+  geom_point(aes(color = modality, size = 1/comp_g.se, shape = modality)) +
+  scale_size(guide="none")+
+  geom_line(data =preds_graph,aes(color = modality),lwd=1.5, show.legend = FALSE) +
+  theme(legend.position = c(0.25, 0.9), legend.background = element_rect(color = "black", size = 2))
+# I think there's a ggplot2 bug where geom_ribbon's fill argument doesn't
+# Notice how color's have previously been assigned, so have to hack this.
+preds_graph$modality <- ordered(preds_graph$modality, levels= c("Nonspeech","Speech"))
+modality_bubble_graph <- modality_bubble_graph +
+  geom_ribbon(data=preds_graph,aes(ymin=ci.lower,ymax=ci.upper, fill=modality),alpha=0.1, show.legend = FALSE) +
+  ggtitle(expression("Effect sizes by age and stimulus type"))+
+  ylab("Effect size (g)") + 
+  xlab("Age in months")+
+  theme_cowplot()+
+  theme(legend.position = c(0.75, 0.8), legend.background = element_rect(color = "black", size = 1.5))+
+  guides(colour = guide_legend(override.aes = list(size=3)))+
+  labs(col="")+
+  scale_colour_discrete(name = "", breaks=c("Speech", "Nonspeech"),
+                            labels=c("Speech", "Not Speech")) +
+  scale_shape_manual(name = "",values = c(15,19), breaks=c("Speech", "Nonspeech"),
+                            labels=c("Speech", "Not Speech"))
+
+modality_bubble_graph
+
+
+
+kable(preds_example, caption = "predicted effects for 7-month-olds")
+```
+
+
+#### Estimated power for this analysis
+
+```{r, age_speech_power, echo = FALSE}
+
+ran.ef.moderated_lab_by_paper <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ scale(age) * modality, random = ~ study|lab,data = raw.es, method = "ML")
+ran.ef.moderated_lab_by_paper
+
+
+X = model.matrix(ran.ef.moderated_lab_by_paper)
+# And for a mixed model procedure and a moderate degree of heterogeneity
+V_star = diag(raw.es$comp_g.se^2 + 2*(raw.es$comp_g.se^2)/3)
+SIGMA_star = solve(crossprod(X,solve(V_star))%*%X)
+
+criterial_value_on_z = qnorm(0.975)
+predictor_names = c("Age","Stimulus type","Age by Stim.")
+
+estimated_power = tibble(
+  es = rep(seq(0.01,0.25,0.001),3),
+  predictor = rep(predictor_names, each = length(es)/length(predictor_names)),
+  es_variance = rep(c(SIGMA_star[2,2],SIGMA_star[3,3],SIGMA_star[4,4]), each = length(es)/length(predictor_names)),
+  power = 1 - pnorm(criterial_value_on_z - es/sqrt(es_variance))+
+      pnorm(-criterial_value_on_z - es/sqrt(es_variance))
+)
+estimated_power$predictor  = factor(estimated_power$predictor, 
+                                    labels = c("Age","Stimulus type","Age by Stim."))
+stimulus_power = ggplot(estimated_power,aes(x = es, y = power, lty = predictor, color = predictor))+
+  geom_line(lwd = 1.5)+theme_cowplot()+xlab("Effect size")+ylab("Power")+
+  theme(legend.title=element_blank(), legend.position = c(0.5,0.5))+
+  scale_color_manual(values = 
+                c(brewer.pal(5,"Set1")[1],brewer.pal(5,"Set1")[3],brewer.pal(5,"Set1")[4]))
+stimulus_power
+
+```
+
+
+### Adding semantics to the moderated random effects regression
+
+Finally, we run an additional moderated random effects metaregression, where we include age, stimulus type and a dummy for whether the stimuli are, or are not, considered "ecologically meaningful", a term that Saffran et al (2006) use to describe their dog stimuli. This is obviously a subjective classification -- we would argue that speech is meaningful, gestures are meaningful, images of kinds (dogs, cats, faces) are meaningful, Ferguson's communicative potential manipulation makes stimuli meaningful. 
+
+We ran this regression in three different ways. First, we included simple dummies for stimulus type and semantics. Because these variables are quite strongly correlated, we should be nervous of those results. Next, we ran a regression that tested if stimulus type predicted variance above-and-beyond semantics. We residualised stimulus type against semantics, and used that as our stimulus type predictor. Finally, we ran the reverse regression. If meaningfulness accounts for all the effect of speech, then residualized stimulus type should not have an effect, but residualized meaningfulness should have an effect.
+
+We show the full results from the regression with stimulus type residulaized against semantics (which is reported in the paper), plus tables for each of the three regressions, plus forest and funnel plots
+
+```{r metalab_moderated_overall_regression_mod_meaning, echo=FALSE}
+
+ran.ef.moderated_lab_by_paper_mod_sem <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ scale(age) * modality + scale(age) * semantics, random = ~ study|lab,data = raw.es, method = "ML")
+
+ran.ef.moderated_lab_by_paper_mod_sem
+kable(meta_table(ran.ef.moderated_lab_by_paper_mod_sem), caption = "Baseline regression")
+
+resid_speech <- resid(lm(as.numeric(raw.es$modality)~as.numeric(raw.es$semantics)))
+ran.ef.moderated_lab_by_paper_residualized_mod_sem <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ scale(age) * resid_speech + scale(age) * semantics, random = ~ study|lab,data = raw.es, method = "ML")
+kable(meta_table(ran.ef.moderated_lab_by_paper_residualized_mod_sem),caption = "Result with residualized stimulus type")
+
+resid_meaning <- resid(lm(as.numeric(raw.es$semantics)~as.numeric(raw.es$modality)))
+ran.ef.moderated_lab_by_paper_mod_resid_sem <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ scale(age) * modality + scale(age) * resid_meaning, random = ~ study|lab,data = raw.es, method = "ML")
+kable(meta_table(ran.ef.moderated_lab_by_paper_mod_resid_sem),caption = "Result with residualized semantics")
+
+```
+
+```{r metalab_meaning_moderated_overall_regression_bubble, echo=FALSE}
+t<- 1
+ran.ef.moderated_lab_by_paper_sem_only <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ scale(age) *  semantics, random = ~ study|lab,data = raw.es, method = "ML")
+
+preds.sem <- predict(ran.ef.moderated_lab_by_paper_sem_only, newmods = cbind(rep(seq(-2,4,by = 0.25),2),
+                                                                             rep(contrasts(raw.es$modality), 
+                                                                                 each = length(seq(-2,4,by = 0.25))),
+                                                                             rep(seq(-2,4,by = 0.25),2) * rep(contrasts(raw.es$modality), 
+                                                                                 each = length(seq(-2,4,by = 0.25)))
+                                                                             ),
+                     addx = TRUE)
+
+preds_graph.sem <- data.frame(comp_g = preds.sem$pred, semantics = rep(c("Meaningless","Meaningful"), each = length(seq(-2,4,by = 0.25))), 
+                          age = rep(seq(-2,4,by = 0.25),2),
+                          ci.lower = preds.sem$ci.lb, ci.upper = preds.sem$ci.ub)
+
+preds_graph.sem$semantics <- ordered(preds_graph.sem$semantics, levels = c("Meaningless","Meaningful"))
+preds_graph.sem$age_months <- ((attr(scale(raw.es$age),'scaled:scale') * preds_graph.sem$age) + attr(scale(raw.es$age),'scaled:center'))/30.44
+
+# Get predicted effect size for 7-month-olds in each condition
+preds_example.sem <- data.frame(modality = c("Meaningless","Meaningful"), 
+                            age = ((7.5*30.44) - attr(scale(raw.es$age),'scaled:center'))/
+                              (attr(scale(raw.es$age),'scaled:scale'))
+)
+example_predictions.sem <- predict(ran.ef.moderated_lab_by_paper_sem_only, newmods = cbind(
+                                                                              preds_example.sem$age,
+                                                                              contrasts(raw.es$modality),
+                                                                              preds_example.sem$age * contrasts(raw.es$modality)),
+                               addx = TRUE)
+
+preds_example.sem$prediction = example_predictions.sem$pred
+preds_example.sem$se = example_predictions.sem$se
+preds_example.sem$ci.lb = example_predictions.sem$ci.lb
+preds_example.sem$ci.ub = example_predictions.sem$ci.ub
+
+meaningful_bubble_graph <- ggplot(raw.es, aes(age_months,comp_g))+
+  geom_point(aes(color = semantics, size = 1/comp_g.se, shape = semantics)) +
+  scale_size(guide="none")+
+  geom_line(data =preds_graph.sem,aes(color = semantics),lwd=1.5, show.legend = FALSE) +
+  geom_ribbon(data=preds_graph.sem,aes(ymin=ci.lower,ymax=ci.upper, fill = semantics),alpha=0.1,show.legend = FALSE) +
+  ggtitle(expression("Effect sizes by age and meaningfulness"))+
+  ylab("Effect size (g)") + 
+  xlab("Age in months")+
+  theme_cowplot()+
+  theme(legend.position = c(0.75, 0.8), legend.background = element_rect(color = "black", size = 1.5))+
+  guides(colour = guide_legend(override.aes = list(size=3)))+
+  labs(col="")+
+  scale_colour_discrete(breaks=c("Meaningful", "Meaningless"),
+                            labels=c("Meaningful", "Not Meaningful")) +
+  scale_shape_manual(name = "",values = c(15,19), breaks=c("Meaningful", "Meaningless"),
+                            labels=c("Meaningful", "Not Meaningful"))
+
+meaningful_bubble_graph
+
+kable(preds_example.sem, caption = "predicted effects for 7-month-olds")
+```
+
+Finally, we test if the model that includes semantics provides a better fit -- the test is significant.
+```{r metalab_moderated_overall_regression_mod_meaning_anova, echo=FALSE}
+
+anova(ran.ef.moderated_lab_by_paper,ran.ef.moderated_lab_by_paper_mod_sem)
+
+```
+
+
+
+#### Estimated power for this analysis
+
+```{r, age_sem_speech_power, echo = FALSE}
+
+X = model.matrix(ran.ef.moderated_lab_by_paper_residualized_mod_sem)
+# And for a mixed model procedure and a moderate degree of heterogeneity
+V_star = diag(raw.es$comp_g.se^2 + (2*raw.es$comp_g.se^2)/3)
+SIGMA_star = solve(crossprod(X,solve(V_star))%*%X)
+
+criterial_value_on_z = qnorm(0.975)
+predictor_names = c("Age","Stimulus type","Semantics","Age by Stim.","Age by Sem.")
+
+estimated_power = tibble(
+  es = rep(seq(0.01,0.4,0.001),5),
+  predictor = rep(predictor_names, each = length(es)/length(predictor_names)),
+  es_variance = rep(c(SIGMA_star[2,2],SIGMA_star[3,3],SIGMA_star[4,4],SIGMA_star[5,5],SIGMA_star[6,6]), each = length(es)/length(predictor_names)),
+  power = 1 - pnorm(criterial_value_on_z - es/sqrt(es_variance))+
+      pnorm(-criterial_value_on_z - es/sqrt(es_variance))
+)
+estimated_power$predictor = factor(estimated_power$predictor,labels = c("Age","Stimulus type","Meaningfulness","Age by Stim.","Age by Mean."))
+
+semantics_power = ggplot(estimated_power,aes(x = es, y = power, lty = predictor,color = predictor))+
+  geom_line(lwd = 1.5) +theme_cowplot()+xlab("Effect size")+ylab("Power")+
+  theme(legend.title=element_blank(), legend.position = c(0.5,0.35))+
+  scale_color_manual(values = 
+                c(brewer.pal(5,"Set1")[1],brewer.pal(5,"Set1")[3],brewer.pal(5,"Set1")[2],brewer.pal(5,"Set1")[4],brewer.pal(5,"Set1")[5]))
+
+semantics_power
+```
+
+
+
+### Training rule analyses
+
+#### Analysis comparing repeated/non-repeated rules
+
+ABA is set as the baseline. 
+
+* `r length(subset(raw.es, training_rule == "ABA")$training_rule)` entries do not have reduplication (ABA)
+* `r length(subset(raw.es, training_rule %in% c("AAB","ABB"))$training_rule)` entries do have reduplication (AAB, ABB)
+* `r length(subset(raw.es, is.na(training_rule))$training_rule)` entries do not have a coded rule
+
+
+```{r metalab_moderated_by_training rule_rep, echo=FALSE}
+ran.ef.moderated_lab_by_training_rule_rep <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ training_rule_rep + scale(age) + semantics, random = ~ study|lab,data = raw.es, method = "ML")
+ran.ef.moderated_lab_by_training_rule_rep
+```
+
+
+##### Estimated power for this analysis
+```{r, repetition_power, echo = FALSE}
+a=1
+X = model.matrix(ran.ef.moderated_lab_by_training_rule_rep)
+
+# And for a mixed model procedure and a moderate degree of heterogeneity
+V_star = diag(raw.es[!is.na(raw.es$training_rule_rep),]$comp_g.se^2 + (2*raw.es[!is.na(raw.es$training_rule_rep),]$comp_g.se^2)/3)
+SIGMA_star = solve(crossprod(X,solve(V_star))%*%X)
+
+criterial_value_on_z = qnorm(0.975)
+predictor_names = c("Age","Repeated Rule","Semantics")
+
+estimated_power = tibble(
+  es = rep(seq(0.01,0.3,0.01),3),
+  predictor = rep(predictor_names, each = length(es)/length(predictor_names)),
+  es_variance = rep(c(SIGMA_star[2,2],SIGMA_star[3,3],SIGMA_star[4,4]), each = length(es)/length(predictor_names)),
+  power = 1 - pnorm(criterial_value_on_z - es/sqrt(es_variance))+
+      pnorm(-criterial_value_on_z - es/sqrt(es_variance))
+)
+estimated_power$predictor = factor(estimated_power$predictor,labels =  c("Age","Repeated Rule","Semantics"))
+repeated_power = ggplot(estimated_power,aes(x = es, y = power, lty = predictor,color = predictor))+
+  geom_line(lwd = 1.5)+theme_cowplot()+xlab("Effect size")+ylab("Power")+
+  theme(legend.title=element_blank(), legend.position = c(0.5,0.5))+
+  scale_color_manual(values = 
+                c(brewer.pal(5,"Set1")[1],brewer.pal(5,"Set1")[3],brewer.pal(5,"Set1")[2]))
+
+repeated_power
+```
+
+
+
+##### Analysis comparing all AAB and ABB rules
+
+AAB is set as the baseline. 
+
+* `r length(subset(raw.es, training_rule == "AAB")$training_rule)` entries are AAB
+* `r length(subset(raw.es, training_rule == "ABB")$training_rule)` entries are ABB
+
+```{r metalab_moderated_by_training rule, echo=FALSE}
+ran.ef.moderated_lab_by_training_rule_AAB <- rma.mv(comp_g,V= (comp_g.se)^2,mods = ~ training_rule_AAB + scale(age) + semantics, random = ~ study|lab,data = raw.es, method = "ML")
+ran.ef.moderated_lab_by_training_rule_AAB
+```
+
+
+##### Estimated power for this analysis
+```{r, repetition_placement_power, echo = FALSE}
+
+X = model.matrix(ran.ef.moderated_lab_by_training_rule_AAB)
+
+# And for a mixed model procedure and a moderate degree of heterogeneity
+V_star = diag(raw.es[!is.na(raw.es$training_rule_AAB),]$comp_g.se^2 + (2*raw.es[!is.na(raw.es$training_rule_AAB),]$comp_g.se^2)/3)
+SIGMA_star = solve(crossprod(X,solve(V_star))%*%X)
+
+criterial_value_on_z = qnorm(0.975)
+predictor_names = c("Age","ABB vs. AAB","Semantics")
+
+estimated_power = tibble(
+  es = rep(seq(0.01,0.45,0.01),3),
+  predictor = rep(predictor_names, each = length(es)/length(predictor_names)),
+  es_variance = rep(c(SIGMA_star[2,2],SIGMA_star[3,3],SIGMA_star[4,4]), each = length(es)/length(predictor_names)),
+  power = 1 - pnorm(criterial_value_on_z - es/sqrt(es_variance))+
+      pnorm(-criterial_value_on_z - es/sqrt(es_variance))
+)
+estimated_power$predictor = factor(estimated_power$predictor,labels =  c("Age","ABB vs. AAB","Semantics"))
+placement_power = ggplot(estimated_power,aes(x = es, y = power, lty = predictor,color = predictor))+
+  geom_line(lwd = 1.5)+theme_cowplot()+xlab("Effect size")+ylab("Power")+
+  theme(legend.title=element_blank(), legend.position = c(0.55,0.4))+
+  scale_color_manual(values = 
+                c(brewer.pal(5,"Set1")[1],brewer.pal(5,"Set1")[3],brewer.pal(5,"Set1")[2]))
+placement_power
+a=1
+```
+
+## Omnibus Power graphs
+
+```{r overall_power_graphs, echo=FALSE}
+overall_power_graph <- plot_grid(
+  stimulus_power,semantics_power,repeated_power,placement_power,
+  labels = "AUTO"
+)
+overall_power_graph
+a=1
+save_plot("overall_power_figure.tiff", overall_power_graph,
+          ncol = 2, # we're saving a grid plot of 2 columns
+          nrow = 2 # and 2 rows
+         
+          )
+a=0
+```
+
+
+
+# p Curve analysis
+
+We have also run p curve analyses using edited code from the [Simonsohn et al p curve app](http://www.p-curve.com). 
+
+```{r simonsohn_p_curve, echo=FALSE}
+source('./p_curve/pcurve_app4.052.r')
+
+pcurve_table <- data.frame(p.value = double(),Observed=double(), Pwr33=double(), Flat=double(),Condition=character())
+for (i in c("familiarity","meaningful","nonmeaningful","nonspeech","novelty","overall","speech")){
+  table <- pcurve_app_tablefigure(paste("./p_curve/",i,"/p.txt", sep = ""))
+  table$Condition <- i
+  pcurve_table <- rbind(pcurve_table,table)
+}
+
+pcurve_table <- gather(pcurve_table,linetype,density,-Condition,-p.value,-N_Signif)
+
+pcurve_table$linetype <- ordered(pcurve_table$linetype, 
+                                 levels = c("Flat","Pwr33","Observed"),
+                                 labels = c("Null", "33% Power", "Observed"))
+pcurve_table$Condition <- ordered(pcurve_table$Condition,
+                                  levels = c("overall","speech","nonspeech","meaningful",
+                                             "nonmeaningful","novelty","familiarity"),
+                                  labels = c("Overall","Speech","Not Speech","Meaningful",
+                                             "Not Meaningful","Novelty","Familiarity"))
+
+```
+
+
+
+```{r plot_megapcurve, echo=FALSE}
+p_curve_megaplot <- ggplot(pcurve_table,aes(x=p.value,y=density, col = linetype),guide=FALSE)+
+  geom_line(lwd = 1.5,aes(linetype = linetype),guide=FALSE)+
+  scale_linetype_manual(name = "",values=c("solid","solid","dashed"), breaks = c("Null","33% Power","Observed"))+
+  facet_wrap(~Condition)+
+  xlim(c(0.01,0.05))+
+  ggtitle(expression(paste(italic(p),"-Curve by stimulus type",sep="")))+
+  theme_cowplot()+
+  theme(legend.position = c(0.35, 0.22), legend.background = element_rect(color = "black", size = 1),legend.key.width =  unit(0.4, "in"))+
+  labs(col="", x = expression(paste(italic(p),"-value",sep = "")), y = "Percentage of test results")
+p_curve_megaplot
+
+p_curve_overall <- ggplot(subset(pcurve_table, Condition %in% c("Overall")),aes(x=p.value,y=density, col = linetype),guide=FALSE)+
+  geom_line(lwd = 1.5,aes(linetype = linetype),guide=FALSE)+
+  scale_linetype_manual(name = "",values=c("solid","solid","dashed"), breaks = c("Null","33% Power","Observed"))+
+  xlim(c(0.01,0.05))+
+  ggtitle(expression(paste("Overall ",italic(p),"-Curve",sep="")))+
+  theme_cowplot()+
+  background_grid(major = "y", minor = "none")+
+  theme(legend.position = c(0.65, 0.91), legend.background = element_rect(color = "black", size = 1),legend.key.width =  unit(0.4, "in"))+
+  labs(col="", x = expression(paste(italic(p),"-value",sep = "")), y = "Percentage of test results")
+
+p_curve_meaningful <- ggplot(subset(pcurve_table, Condition %in% c("Meaningful","Not Meaningful")),aes(x=p.value,y=density, col = linetype), guide = FALSE)+
+  geom_line(lwd = 1.5,aes(linetype = linetype),guide=FALSE)+
+  scale_linetype_manual(name = "",values=c("solid","solid","dashed"), breaks = c("Null","33% Power","Observed"))+
+  facet_wrap(~Condition, nrow = 2)+
+  xlim(c(0.01,0.05))+
+  ggtitle(expression(paste(italic(p),"-Curve by meaningfulness",sep="")))+
+  theme_cowplot()+
+  background_grid(major = "y", minor = "none")+
+  theme(legend.position = c(0.4, 0.91), legend.background = element_rect(color = "black", size = 1),legend.key.width =  unit(0.4, "in"))+
+  labs(col="", x = expression(paste(italic(p),"-value",sep = "")), y = "Percentage of test results")
+
+p_curve_modality <- ggplot(subset(pcurve_table, Condition %in% c("Speech","Not Speech")),aes(x=p.value,y=density, col = linetype),guide=FALSE)+
+  geom_line(lwd = 1.5,aes(linetype = linetype),guide=FALSE)+
+  scale_linetype_manual(name = "",values=c("solid","solid","dashed"), breaks = c("Null","33% Power","Observed"))+
+  facet_wrap(~Condition, nrow = 2)+
+  xlim(c(0.01,0.05))+
+  ggtitle(expression(paste(italic(p),"-Curve by stimulus type",sep="")))+
+  theme_cowplot()+
+  background_grid(major = "y", minor = "none")+
+  theme(legend.position = c(0.4, 0.91), legend.background = element_rect(color = "black", size = 1),legend.key.width =  unit(0.4, "in"))+
+  labs(col="", x = expression(paste(italic(p),"-value",sep = "")), y = "Percentage of test results")
+
+p_curve_preference <- ggplot(subset(pcurve_table, Condition %in% c("Novelty","Familiarity")),aes(x=p.value,y=density, col = linetype),guide=FALSE)+
+  geom_line(lwd = 1.5,aes(linetype = linetype),guide=FALSE)+
+  scale_linetype_manual(name = "",values=c("solid","solid","dashed"), breaks = c("Null","33% Power","Observed"))+
+  facet_wrap(~Condition, nrow = 1)+
+  xlim(c(0.01,0.05))+
+  ggtitle(expression(paste(italic(p),"-Curve by infant preference",sep="")))+
+  theme_cowplot()+
+  background_grid(major = "y", minor = "none")+
+  theme(legend.position = c(0.6, 0.91), legend.background = element_rect(color = "black", size = 1),legend.key.width =  unit(0.4, "in"))+
+  labs(col="", x = expression(paste(italic(p),"-value",sep = "")), y = "Percentage of test results")
+
+
+overall_figure <- plot_grid(overall_funnel_plot, p_curve_overall, labels = "AUTO", scale = c(0.9,0.9),nrow = 1)
+overall_figure
+save_plot("overall_figure.tiff", overall_figure,
+          ncol = 2, # we're saving a grid plot of 2 columns
+          nrow = 1, # and 2 rows
+          # each individual subplot should have an aspect ratio of 1.3
+          base_aspect_ratio = 1.3
+          )
+meaningful_figure <- plot_grid(meaningful_bubble_graph,p_curve_meaningful,labels = "AUTO", rel_widths = c(1.5,1), scale = c(0.9,0.9))
+meaningful_figure 
+ggsave(filename = "meaningful_figure.tiff", plot = meaningful_figure, device = "tiff",width=8,height=5, units = "in", dpi=300)
+# save_plot("meaningful_sace.tiff", meaningful_figure,
+#           ncol = 2, # we're saving a grid plot of 2 columns
+#           nrow = 1, # and 2 rows
+#           # each individual subplot should have an aspect ratio of 1.3
+#           base_aspect_ratio = 1.5
+#           )
+modality_figure <- plot_grid(modality_bubble_graph,p_curve_modality,labels = "AUTO", rel_widths = c(1.5,1), scale = c(0.9,0.9))
+modality_figure
+ggsave(filename = "modality_figure.tiff", plot = modality_figure, device = "tiff",width=8,height=5, units = "in", dpi=300)
+
+p_curve_preference
+ggsave(filename = "preference_figure.tiff", plot =p_curve_preference, device = "tiff",width=8,height=4, units = "in", dpi=300)
+test<-0
+```
+
+
+
