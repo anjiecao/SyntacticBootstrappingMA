@@ -11,40 +11,172 @@ library(here)
 library(metafor)
 
 d <- read_csv(here("data/processed/syntactic_bootstrapping_tidy_data.csv"))
+alt_d <- read_csv(here("exploratory_analyses/07_PA/alt_ES.csv"))
 
 ```
 
 ```{r}
-model <- rma.mv(d_calc ~ sentence_structure, 
-                  V = d_var_calc,
-                  random = ~ 1 | short_cite/same_infant/row_id,
-                  method = "ML",
-                  data = d)
+null_model <- rma.mv(d_calc ~ 1, 
+                     V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = d) 
 
 
-X = model.matrix(age_model)
+
+
+X = model.matrix(null_model)
 # And for a mixed model procedure and a moderate degree of heterogeneity
-V_star = diag(d$d_var_calc + 2*(d$d_var_calc)/3)
+V_star = diag(d$d_var_calc + 2*(d$d_var_calc)/3) 
 SIGMA_star = solve(crossprod(X,solve(V_star))%*%X)
 
 criterial_value_on_z = qnorm(0.975)
-predictor_names = c("SS")
+predictor_names = c("intercept")
 
 estimated_power = tibble(
   es = rep(seq(0.01,1,0.01),3),
   predictor = rep(predictor_names, each = length(es)/length(predictor_names)),
-  es_variance = rep(c(SIGMA_star[2,2]), 
+  es_variance = rep(c(SIGMA_star[1,1]), 
                     each = length(es)/length(predictor_names)),
   power = 1 - pnorm(criterial_value_on_z - es/sqrt(es_variance))+
       pnorm(-criterial_value_on_z - es/sqrt(es_variance))
 )
 estimated_power$predictor  = factor(estimated_power$predictor, 
-                                    labels = c("SS"))
+                                    labels = predictor_names)
 stimulus_power = ggplot(estimated_power,aes(x = es, y = power, lty = predictor, color = predictor))+
-  geom_line(lwd = 1.5)+theme_cowplot()+xlab("Effect size")+ylab("Power")+
-  theme(legend.title=element_blank(), legend.position = c(0.5,0.5))+
-  scale_color_manual(values = 
-                c(brewer.pal(5,"Set1")[1],brewer.pal(5,"Set1")[3],brewer.pal(5,"Set1")[4]))
+  geom_line(lwd = 1.5)+
+  geom_vline(xintercept = null_model$beta) + 
+  theme_classic() + 
+    xlab("Effect size")+
+  ylab("Power")+
+  theme(legend.title=element_blank(), legend.position = c(0.5,0.5))
 stimulus_power
 ```
+
+
+```{r}
+theoretical_model <- rma.mv(d_calc ~ sentence_structure + agent_argument_type + mean_age_months, V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = d) 
+
+
+
+
+X = model.matrix(theoretical_model)
+# And for a mixed model procedure and a moderate degree of heterogeneity
+V_star = diag(d$d_var_calc + 2*(d$d_var_calc)/3) 
+SIGMA_star = solve(crossprod(X,solve(V_star))%*%X)
+
+criterial_value_on_z = qnorm(0.975)
+predictor_names = c("sentence_structure", "agent_argument", 
+                    "mean_age_months")
+
+estimated_power = tibble(
+  es = rep(seq(0.01,1,0.01),3),
+  predictor = rep(predictor_names, each = length(es)/length(predictor_names)),
+  es_variance = rep(c(SIGMA_star[2,2], SIGMA_star[3, 3], SIGMA_star[4, 4]), 
+                    each = length(es)/length(predictor_names)),
+  power = 1 - pnorm(criterial_value_on_z - es/sqrt(es_variance))+
+      pnorm(-criterial_value_on_z - es/sqrt(es_variance))
+)
+estimated_power$predictor  = factor(estimated_power$predictor, 
+                                    labels = predictor_names)
+stimulus_power = ggplot(estimated_power,aes(x = es, y = power, lty = predictor, color = predictor))+
+  geom_line(lwd = 1.5)+
+  theme_classic()+
+  xlab("Effect size")+ylab("Power")+
+  theme(legend.title=element_blank(), legend.position = c(0.5,0.5))
+stimulus_power
+```
+
+```{r}
+methodological_model <- rma.mv(d_calc ~ character_identification + practice_phase + presentation_type + test_mass_or_distributed + n_repetitions_sentence,
+                             V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = d)
+
+
+
+
+X = model.matrix(methodological_model)
+# And for a mixed model procedure and a moderate degree of heterogeneity
+V_star = diag(d$d_var_calc + 2*(d$d_var_calc)/3) 
+SIGMA_star = solve(crossprod(X,solve(V_star))%*%X)
+
+criterial_value_on_z = qnorm(0.975)
+predictor_names = c("character_identification", "practice_phase",
+                    "presentation_type", "test_mass_or_distributed", 
+                    "n_repetitions_sentence")
+
+estimated_power = tibble(
+  es = rep(seq(0.01,1,0.01),3),
+  predictor = rep(predictor_names, each = length(es)/length(predictor_names)),
+  es_variance = rep(c(SIGMA_star[2,2], SIGMA_star[3, 3], SIGMA_star[4, 4], 
+                       SIGMA_star[5, 5],  SIGMA_star[6, 6]), 
+                    each = length(es)/length(predictor_names)),
+  power = 1 - pnorm(criterial_value_on_z - es/sqrt(es_variance))+
+      pnorm(-criterial_value_on_z - es/sqrt(es_variance))
+)
+estimated_power$predictor  = factor(estimated_power$predictor, 
+                                    labels = predictor_names)
+stimulus_power = ggplot(estimated_power,aes(x = es, y = power, lty = predictor, color = predictor))+
+  geom_line(lwd = 1.5)+  
+  theme_classic() + 
+xlab("Effect size")+ylab("Power")+
+  theme(legend.title=element_blank(), legend.position = c(0.5,0.5))
+stimulus_power
+```
+
+# comparison 
+```{r}
+
+alt_id <- alt_d %>% 
+  filter(alternative_calc == "between") %>% 
+  select(unique_id) %>% 
+  pull
+
+ma_subset <- d %>% 
+  filter(unique_id %in% alt_id) %>% 
+  filter(sentence_structure == "transitive") %>% 
+  select(unique_id, short_cite, 
+         same_infant, plot_label, n_1, d_calc, d_var_calc, row_id) %>% 
+  mutate(calc_type = "within") %>% 
+  drop_na()
+
+alt_subset <- alt_d %>% 
+  filter(unique_id %in% alt_id) %>% 
+  rowid_to_column() %>% 
+  mutate(pooled_SD = sqrt(((n_1 - 1) * sd_1 ^ 2 + (n_2 - 1) * sd_2 ^ 2) / (n_1 + n_2 - 2)), 
+    d_calc = (x_1 - x_2) / pooled_SD, 
+    d_var_calc = ((n_1 + n_2) / (n_1 * n_2)) + (d_calc ^ 2 / (2 * (n_1 + n_2)))) %>% 
+  rename(row_id = rowid) %>% 
+  select(unique_id, short_cite, 
+         same_infant, plot_label,n_1, d_calc, d_var_calc, row_id) %>% 
+  mutate(calc_type = "between")%>% 
+  drop_na()
+
+comparison_df <- bind_rows(ma_subset, 
+                           alt_subset)
+
+comparison_model <- rma.mv(d_calc ~ calc_type,
+                             V = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = comparison_df)
+comparison_model
+```
+
+
+
+
+
+
+
+
+
+
+
+
 
