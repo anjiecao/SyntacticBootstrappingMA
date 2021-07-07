@@ -30,6 +30,7 @@ library(metafor)
 library(ggimage)
 library(imager)
 library(stringr)
+library(metapower)
 library(glue)
 library(heatmaply)
 library(PublicationBias)
@@ -246,7 +247,8 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 The forest plot below compares the two ways of calculating effect sizes for the subset of experimental conditions that use a between-group analysis in the original paper.  In other words, the original analyses compared the proportion of looking time at the causative events between transitive conditions and intransitive conditions. Effect sizes calculated using this method are denoted by the pink points. We also present the effect sizes calculated using the against-chance method on the same subset of the experimental conditions. These effect sizes are denoted with green points. The against-chance method is a more conservative way of estimating the effect size. As the forest plot shows, the meta-analytic effect size using the between-group calculation is larger than the meta-analytic effect size using the against-chance method. 
 
 
-```{r fig.height= 10}
+```{r}
+# fig.height= 10
 # select the same subset of ES for comparison
 alt_id <- alt_data %>% 
   filter(alternative_calc == "between") %>% 
@@ -258,20 +260,23 @@ ma_subset <- ma_data %>%
   filter(sentence_structure == "transitive") %>% 
   select(unique_id, short_cite, 
          same_infant, plot_label, n_1, d_calc, d_var_calc, row_id) %>% 
-  mutate(calc_type = "within")
+  mutate(calc_type = "Chance Comparison")
 
 alt_subset <- alt_data %>% 
   rowid_to_column() %>% 
   rename(row_id = rowid) %>% 
   select(unique_id, short_cite, 
          same_infant, plot_label,n_1, d_calc, d_var_calc, row_id) %>% 
-  mutate(calc_type = "between")
+  mutate(calc_type = "Cross-condition Comparison")
 
 within_forest_data <- convert_to_forest_data(ma_subset)
 between_forest_data <- convert_to_forest_data(alt_subset)
 double_forest_data <- bind_rows(within_forest_data, between_forest_data)
 
 generate_double_forest_plot(double_forest_data)
+
+
+
 ```
 
 
@@ -712,7 +717,7 @@ ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
 
 
 
-# Power analysis 
+# Power analysis for experiment 
 ```{r}
 
 pwr_no_mod_model <- rma.mv(d_calc~1, 
@@ -767,6 +772,182 @@ qplot(ns, ps, geom = c("point","line"),
       xlab("Number of participants (N)")
 ```
 
+# Post-hoc power analysis for Meta-analysis 
+
+While power analysis is more suited for prospective analysis than for retrospective analysis, we conducted two simulations varying the true effect size to see if the null effects in the present meta-analysis can be attributed to the lack of power. Because there was no consensus on calculating power for the multilevel multivariate models we used in the meta-analysis, we conducted our simulations on a mixed effect model using R package MetaPower (Griffin, 2020). 
+```{r}
+
+ess <- seq(0.01, 1.5, 0.01)
+null_model <- rma(yi = d_calc, 
+                    vi = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = ma_data )
+i2 <- null_model$I2
+mod_estimate <- mpower(
+              effect_size = null_model$beta %>% as.numeric(),
+              study_size = ma_data %>% select(n_1) %>% pull() %>% mean(),#questionable?
+              k = nrow(ma_data),
+              i2 = i2/100,
+              es_type = "d",
+              test_type = "two-tailed",
+              p = 0.05,
+              con_table = NULL
+              )
+```
+
+In the first simulation, we varied the included experimental conditions on the x-axis. The estimated power of the meta-analysis was plotted along the y-axis. The three curves in different colors represent the difference in the estimated power, controlled for the true effect sizes and the heterogeneity in the data. The red dotted line denotes the estimated power for the current meta-analytic effect size (*d*  = 0.24). The power analysis suggests that the current estimate has moderate power (Power: `r round(mod_estimate$power[[2]], 2)`).
+
+```{r}
+#ess <- seq(0.01, 1.5, 0.01)
+
+condition_n <- seq(10, 200, 1)
+
+#condition_n<- seq(10, 12, 1)
+es_ratio <- c(0.5, 1, 2)
+
+
+es_sims <- lapply(es_ratio, function(y){
+  
+  lapply(condition_n, 
+       function(x){
+         mpower(
+              effect_size = (null_model$beta %>% as.numeric()) * y,
+              study_size = ma_data %>% select(n_1) %>% pull() %>% mean(),#questionable?
+              k = x,
+              i2 = i2/100,
+              es_type = "d",
+              test_type = "two-tailed",
+              p = 0.05,
+              con_table = NULL
+              )$power[2]
+       }) %>% 
+  unlist() %>% 
+  tibble("power" = ., 
+         "condition" = condition_n, 
+         "ES_ratio" = y)
+  
+  
+  
+}) %>% 
+  bind_rows()
+
+  
+
+es_sims %>% 
+  mutate(ES_ratio_print = case_when(
+    ES_ratio == 0.5 ~ "x.5 Actual MA Effect Size", 
+    ES_ratio == 1 ~ "Actual MA Effect Size", 
+    ES_ratio == 2 ~ "x2 Actual MA Effect Size"
+  )) %>% 
+  ggplot(aes(x = condition, y = power, color = ES_ratio_print, group = ES_ratio)) + 
+  geom_point()+
+  geom_line() + 
+  geom_vline(xintercept = nrow(ma_data), 
+             color = "red", 
+             linetype = "dotted") + 
+  geom_hline(yintercept = mod_estimate$power[[2]], 
+             color = "red", 
+             linetype = "dotted") + 
+    annotate("text", x = nrow(ma_data) + 50, y = mod_estimate$power[[2]] + .05, label = "Estimated Post-hoc Power", vjust = -0.5) + 
+  xlab("Number of Conditions") +
+  xlim(10, 200)+
+  ylab("Estimated Power") + 
+  guides(color=guide_legend(title=""))
+
+```
+```{r}
+transitive_model <- rma(d_calc,
+                             vi = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = filter(ma_data, sentence_structure == "transitive"))
+
+intransitive_model <- rma(d_calc,
+                             vi = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = filter(ma_data, sentence_structure == "intransitive") )
+
+n_study_transitive <- ma_data %>% ungroup() %>% filter( sentence_structure == "transitive") %>% distinct(plot_label) %>% count() %>% pull()
+n_study_intransitive <- ma_data %>%  ungroup() %>% filter( sentence_structure == "intransitive") %>% distinct(plot_label) %>% count() %>% pull()
+
+
+moderator_estimate <- mod_power(
+n_groups = 2,
+effect_sizes = c(transitive_model$beta %>% as.numeric(),
+                 intransitive_model$beta %>% as.numeric()),
+study_size =  n_study_transitive + n_study_intransitive,
+k = n_study_transitive,#they are equal 
+i2 = 0.75,# i2/100, the paper is recommending to use a value like this because this is an average / rule of thumb thing, pg31
+es_type = "d",
+p = 0.05,
+con_table = NULL
+) 
+
+es_ratio <- c(0.5, 1, 2)
+condition_n <- seq(10, 200, 2)
+```
+
+
+In the second simulation, we simulated a power analysis for the moderator analysis. Similar to the first simulation, we varied the number of conditions included in the experiment for three different possible effect sizes. More specifically, we used the effect size of intransitive conditions as baseline while varying the effect size of transitive conditions. The red dotted line denotes the estimated power for the current moderator analysis. The power analysis suggests that the current moderator analysis might be under-powered (Power: `r round(moderator_estimate$mod_power[[2]], 2)`).
+
+
+```{r}
+
+
+trans_es <-  intransitive_model$beta %>% as.numeric() * es_ratio
+
+
+
+trans_es_sims <- lapply(es_ratio, function(y){
+    lapply(condition_n, 
+       function(x){
+         mod_power(
+              n_groups = 2,
+              effect_sizes = c(transitive_model$beta %>% as.numeric() * y,
+                               intransitive_model$beta %>% as.numeric()),
+              study_size =  2*x,
+              k = x,#they are equal 
+              i2 = 0.75,# i2/100, the paper is recommending to use a value like this because this is an average / rule of thumb thing, pg31
+              es_type = "d",
+              p = 0.05,
+              con_table = NULL
+              )$mod_power[[2]]
+       }) %>% 
+  unlist() %>% 
+  tibble("power" = ., 
+         "condition" = condition_n, 
+         "es_ratio" = y) 
+    
+  }) %>% 
+  bind_rows()
+  
+  
+  
+
+trans_es_sims %>% 
+  mutate(ES_ratio_print = case_when(
+    es_ratio == 0.5 ~ "x.5 Actual Transitive Condition Effect Size", 
+    es_ratio == 1 ~ "Actual Transitive Condition Effect Size", 
+    es_ratio == 2 ~ "x2 Actual Transitive Condition Effect Size"
+  )) %>% 
+  ggplot(aes(x = condition, y = power, color = ES_ratio_print, group = ES_ratio_print)) + 
+  geom_point()+
+  geom_line() + 
+  geom_vline(xintercept = n_study_transitive, 
+             color = "red", 
+             linetype = "dotted") + 
+  geom_hline(yintercept = moderator_estimate$mod_power[[2]], 
+             color = "red", 
+             linetype = "dotted") + 
+    annotate("text", x = n_study_transitive + 100, y = moderator_estimate$mod_power[[2]] + .05, label = "Estimated Post-hoc Power for Transitivity Effect", vjust = -0.5) + 
+  xlab("Number of Conditions") +
+  xlim(10, 200)+
+  ylab("Estimated Power") + 
+  guides(color=guide_legend(title=""))
+```
+
 
 
 
@@ -774,6 +955,9 @@ qplot(ns, ps, geom = c("point","line"),
 **References**
 
 Champely, S., Ekstrom, C., Dalgaard, P., Gill, J., Weibelzahl, S., Anandkumar, A., ... & De Rosario, M. H. (2018). Package ‘pwr’. R package version, 1(2).
+
+Griffin JW (2020). metapoweR: an R package for computing meta-analytic statistical power. R package version 0.2.1, https://CRAN.R-project.org/package=metapower.
+
 
 Hirsh-Pasek, K., Golinkoff, R. M., & Naigles, L. (1996). Young children’s use of syntactic frames to derive meaning. The origins of grammar: Evidence from early language comprehension, 123-158.
 

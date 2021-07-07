@@ -95,10 +95,10 @@ double_forest_data_withorder <- double_forest_data %>%
     rowid = if_else(es_type == "cumulative", 99, as.double(rowid)), #to always put the MA ES at bottom
     point_shape = if_else(es_type == "cumulative", 18, 16), 
     point_color = case_when(
-      es_type == "cumulative" && calc_type == "within" ~ "green",
-      es_type == "cumulative" && calc_type == "between" ~ "pink",
-      calc_type == "between" ~ "pink", 
-      calc_type == "within" ~ "green"
+      es_type == "cumulative" && calc_type == "Chance Comparison" ~ "green",
+      es_type == "cumulative" && calc_type == "Cross-condition Comparison" ~ "pink",
+      calc_type == "Cross-condition Comparison" ~ "pink", 
+      calc_type == "Chance Comparison" ~ "green"
     ), 
     label_color = case_when(
       es_type == "cumulative" ~  "green", 
@@ -141,9 +141,9 @@ double_forest_data_withorder %>%  # First sort by val. This sort the dataframe b
              color = calc_type
   )) + 
   geom_hline(aes(yintercept = 0),  color = "gray44",linetype = 2, size =.3) + 
-  geom_hline(aes(yintercept = filter(double_forest_data_withorder, es_type == "cumulative", calc_type == "within")$d_calc), 
+  geom_hline(aes(yintercept = filter(double_forest_data_withorder, es_type == "cumulative", calc_type == "Chance Comparison")$d_calc), 
              color = "#00BFC4", linetype = 2, size = .3) + 
-  geom_hline(aes(yintercept = filter(double_forest_data_withorder, es_type == "cumulative", calc_type == "between")$d_calc), 
+  geom_hline(aes(yintercept = filter(double_forest_data_withorder, es_type == "cumulative", calc_type == "Cross-condition Comparison")$d_calc), 
              color = "#F8766D", linetype = 2, size = .3) +
   geom_pointrange(size = .5, 
                   shape = double_forest_data_withorder$point_shape,
@@ -158,7 +158,7 @@ double_forest_data_withorder %>%  # First sort by val. This sort the dataframe b
                   position = pd, 
                   alpha = 1, 
   ) +
-  scale_color_manual(breaks = c("between", "within"),
+  scale_color_manual(breaks = c("Cross-condition Comparison", "Chance Comparison"),
                      values = c("#F8766D", "#00BFC4"))+ 
   coord_cartesian(clip = 'on') + 
   coord_flip() + 

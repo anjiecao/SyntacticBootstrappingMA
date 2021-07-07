@@ -14,9 +14,99 @@ d <- read_csv(here("data/processed/syntactic_bootstrapping_tidy_data.csv"))
 alt_d <- read_csv(here("exploratory_analyses/07_PA/alt_ES.csv"))
 
 ```
+```{r}
+d <- read_csv(here("data/processed/syntactic_bootstrapping_tidy_data.csv"))
+
+```
+```{r}
+d_no_point <-  d %>% 
+  filter(response_mode != "behavior")
+  
+rma.mv(d_calc, 
+                  V = d_var_calc,
+                  random = ~ 1 | short_cite/same_infant/row_id,
+                  method = "REML",
+                  data = d_no_point)
+```
+
+
 
 
 # comparison 
+## helper for converting the data 
+```{r}
+convert_to_forest_data <- function(raw_data){
+  # model for cumulative effect size 
+  model <- rma.mv(d_calc, 
+                  V = d_var_calc,
+                  random = ~ 1 | short_cite/same_infant/row_id,
+                  method = "REML",
+                  data = raw_data)
+  
+  this_moderator_estimate <- model$b[1]
+  this_moderator_SE <- model$se[1]
+  this_moderator_estimate.cil <- model$ci.lb[1]
+  this_moderator_estimate.cih <- model$ci.ub[1]
+  this_moderator_z <- model$zval[1]
+  this_moderator_p <- model$pval[1]
+  
+  # function to abbreviate label 
+  abbreviate_label <- function(original_label){
+    label_vec <- unlist(strsplit(original_label, ","))
+    # get the first label 
+    first_author_name <- label_vec[[1]]
+    year <- gsub("(-).*","",tail(label_vec, n=1))
+    number_label <- gsub(".*-","",tail(label_vec, n=1))
+    abbreviated_label <- paste0(first_author_name, " et al.,", year, "-", number_label)
+  }
+  
+  individual_data <- raw_data %>% 
+    select(short_cite, unique_id,d_calc,d_var_calc, n_1, plot_label,calc_type, row_id) %>% 
+    rowwise() %>% 
+    mutate(cil = d_calc - qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc),
+           cil = case_when(
+             (cil < -8) ~ -8, # truncate error bar for visibility reason 
+             TRUE ~ cil
+           ),
+           ciu = d_calc +
+             qnorm(alpha / 2, lower.tail = FALSE) * sqrt(d_var_calc), 
+           ciu = case_when(
+             (ciu > 5 ) ~ 5, # truncate error bar for visibility reason 
+             TRUE ~ ciu
+           ),
+           es_type = "individual",
+           meta = "no", 
+           label_color = "black",
+           print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""),
+           plot_label = case_when(
+             str_count(plot_label,",") >= 4 ~ abbreviate_label(plot_label),
+             TRUE ~ plot_label
+           )
+    )
+  
+  cumulative_data <- tibble_row(
+    short_cite = "Meta-Analytic Effect Size",
+    plot_label = "Meta-Analytic Effect Size",
+    d_calc = this_moderator_estimate, 
+    d_var_calc = NA, 
+    n_1 = 99, 
+    cil = this_moderator_estimate.cil, 
+    ciu = this_moderator_estimate.cih, 
+    es_type = "cumulative",
+    print_full = paste(round(d_calc,2), " [",round(cil,2),", ",round(ciu,2), "]", sep = ""), 
+    meta = "yes", 
+    label_color = "red", 
+    row_id = 0, 
+    calc_type = unique(individual_data$calc_type)
+  )
+  
+  forest_data <- bind_rows(individual_data, cumulative_data)
+  
+  return (forest_data)
+}
+```
+
+
 ```{r}
 
 alt_id <- alt_d %>% 
@@ -32,6 +122,7 @@ ma_subset <- d %>%
   mutate(calc_type = "within") %>% 
   drop_na()
 
+
 alt_subset <- alt_d %>% 
   filter(unique_id %in% alt_id) %>% 
   rowid_to_column() %>% 
@@ -44,15 +135,26 @@ alt_subset <- alt_d %>%
   mutate(calc_type = "between")%>% 
   drop_na()
 
-comparison_df <- bind_rows(ma_subset, 
-                           alt_subset)
+within_forest_data <- convert_to_forest_data(ma_subset)
+between_forest_data <- convert_to_forest_data(alt_subset)
 
-comparison_model <- rma.mv(d_calc ~ calc_type,
+comparison_df <- bind_rows(within_forest_data, between_forest_data)
+
+generate_double_forest_plot(comparison_df)
+
+```
+
+
+```{r}
+
+comparison_model_mv <- rma.mv(d_calc ~ calc_type,
                              V = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/row_id,
                      method = "REML",
                      data = comparison_df)
-comparison_model
+
+comparison_model_mv
+
 ```
 
 # power analysis
@@ -69,20 +171,74 @@ null_model
 i2
 ```
 
-
 ```{r}
-mpower(
-effect_size = null_model$beta %>% as.numeric(),
-study_size = d %>% select(n_1) %>% pull() %>% mean(),#questionable?
-k = nrow(d),
-i2 = i2/100,
-es_type = "d",
-test_type = "two-tailed",
-p = 0.05,
-con_table = NULL
-) %>% plot_mpower()
+
+mod_estimate <- mpower(
+              effect_size = null_model$beta %>% as.numeric(),
+              study_size = d %>% select(n_1) %>% pull() %>% mean(),#questionable?
+              k = nrow(d),
+              i2 = i2/100,
+              es_type = "d",
+              test_type = "two-tailed",
+              p = 0.05,
+              con_table = NULL
+              )
+
+ mpower(
+              effect_size = null_model$beta %>% as.numeric(),
+              study_size = d %>% select(n_1) %>% pull() %>% mean(),#questionable?
+              k = nrow(d),
+              i2 = i2/100,
+              es_type = "d",
+              test_type = "two-tailed",
+              p = 0.05,
+              con_table = NULL
+              ) %>% plot_mpower()
 ```
 
+
+
+```{r}
+ess <- seq(0.01, 3, 0.01)
+
+
+es_sims <- lapply(ess, 
+       function(x){
+         mpower(
+              effect_size = x,
+              study_size = d %>% select(n_1) %>% pull() %>% mean(),#questionable?
+              k = nrow(d),
+              i2 = i2/100,
+              es_type = "d",
+              test_type = "two-tailed",
+              p = 0.05,
+              con_table = NULL
+              )$power[2]
+       }) %>% 
+  unlist() %>% 
+  tibble("power" = ., 
+         "ess" = ess) 
+
+
+```
+
+```{r}
+es_sims %>% 
+  ggplot(aes(x = ess, y = power)) + 
+  geom_point()+
+  geom_line() + 
+  geom_vline(xintercept = null_model$beta %>% as.numeric(), 
+             color = "red", 
+             linetype = "dotted") + 
+  geom_hline(yintercept = mod_estimate$power[[2]], 
+             color = "red", 
+             linetype = "dotted") + 
+    annotate("text", x = null_model$beta %>% as.numeric() + 0.4, y = mod_estimate$power[[2]] + .05, label = "Current Meta-analysis Power", vjust = -0.5) + 
+  xlab("Effect Size") + 
+  xlim(0, 1.5)+
+  ylab("Estimated Power")
+
+```
 
 
 ## moderator analysis 
@@ -105,6 +261,19 @@ n_study_transitive <- d %>% filter( sentence_structure == "transitive") %>% dist
 n_study_intransitive <- d %>% filter( sentence_structure == "intransitive") %>% distinct(plot_label) %>% count() %>% pull()
 
 
+moderator_estimate <- mod_power(
+n_groups = 2,
+effect_sizes = c(transitive_model$beta %>% as.numeric(),
+                 intransitive_model$beta %>% as.numeric()),
+study_size =  n_study_transitive + n_study_intransitive,
+k = n_study_transitive,#they are equal 
+i2 = 0.75,# i2/100, the paper is recommending to use a value like this because this is an average / rule of thumb thing, pg31
+es_type = "d",
+p = 0.05,
+con_table = NULL
+) 
+
+
 mod_power(
 n_groups = 2,
 effect_sizes = c(transitive_model$beta %>% as.numeric(),
@@ -116,6 +285,46 @@ es_type = "d",
 p = 0.05,
 con_table = NULL
 ) %>% plot_mod_power()
+```
+
+```{r}
+times <- seq(1, 10, 0.1)
+
+trans_es <-  intransitive_model$beta %>% as.numeric() * times
+
+
+trans_es_sims <- lapply(trans_es, 
+       function(x){
+         mod_power(
+              n_groups = 2,
+              effect_sizes = c(x,
+                               intransitive_model$beta %>% as.numeric()),
+              study_size =  n_study_transitive + n_study_intransitive,
+              k = n_study_transitive,#they are equal 
+              i2 = 0.75,# i2/100, the paper is recommending to use a value like this because this is an average / rule of thumb thing, pg31
+              es_type = "d",
+              p = 0.05,
+              con_table = NULL
+              )$mod_power[[2]]
+       }) %>% 
+  unlist() %>% 
+  tibble("power" = ., 
+         "ess" = trans_es, 
+         "times" = times) 
+
+trans_es_sims %>% 
+  ggplot(aes(x = ess, y = power)) + 
+  geom_point()+
+  geom_line() + 
+  geom_vline(xintercept = transitive_model$beta %>% as.numeric(), 
+             color = "red", 
+             linetype = "dotted") + 
+  geom_hline(yintercept = moderator_estimate$mod_power[[2]], 
+             color = "red", 
+             linetype = "dotted") + 
+     annotate("text", x = transitive_model$beta %>% as.numeric() + 0.4, y = moderator_estimate$mod_power[[2]], + .05, label = "Current Meta-analysis Power", vjust = -0.5) + 
+  xlab("Effect Size (transitive condition)") + 
+  ylab("Estimated Power")
 ```
 
 
