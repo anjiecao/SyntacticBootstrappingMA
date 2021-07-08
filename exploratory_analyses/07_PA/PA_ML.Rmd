@@ -1,0 +1,109 @@
+---
+title: "poweranalysis"
+author: "Molly"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(metafor)
+library(metapower)
+
+ma_data <- read_csv(here("data/processed/syntactic_bootstrapping_tidy_data.csv"))
+
+```
+
+
+```{r}
+null_model <- rma(yi = d_calc, 
+                    vi = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = ma_data )
+
+i2 <- null_model$I2
+
+mod_estimate <- mpower(
+              effect_size = null_model$beta %>% as.numeric(),
+              study_size = ma_data %>% select(n_1) %>% pull() %>% mean(),#questionable?
+              k = nrow(ma_data),
+              i2 = i2/100,
+              es_type = "d",
+              test_type = "two-tailed",
+              p = 0.05,
+              con_table = NULL
+              )
+```
+
+
+
+```{r}
+transitive_model <- rma(d_calc,
+                             vi = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = filter(ma_data, sentence_structure == "transitive"))
+
+intransitive_model <- rma(d_calc,
+                             vi = d_var_calc,
+                    random = ~ 1 | short_cite/same_infant/row_id,
+                     method = "REML",
+                     data = filter(ma_data, sentence_structure == "intransitive") )
+
+n_study_transitive <- ma_data %>% ungroup() %>% filter( sentence_structure == "transitive") %>% distinct(plot_label) %>% count() %>% pull()
+n_study_intransitive <- ma_data %>%  ungroup() %>% filter( sentence_structure == "intransitive") %>% distinct(plot_label) %>% count() %>% pull()
+```
+
+```{r}
+actual_study_size = nrow(ma_data)
+actual_k <- nrow(ma_data)/2
+actual_i2 <- mean(c(intransitive_model$I2, c(transitive_model$I2)))
+
+power_sim_function <- function(es1, this_k, this_study_size, es2, this_i2){
+      power <- mod_power(
+              n_groups = 2,
+              effect_sizes = c(es1, es2),
+              study_size =  this_study_size,
+              k = this_k,
+              i2 = this_i2/100,
+              es_type = "d",
+              p = 0.05,
+              con_table = NULL
+              )$mod_power[[2]]
+      
+      data.frame(transitive_es = es1,
+                 k = this_k,
+                 estimated_power = power)
+}
+
+target_es <- c(seq(0, 1, .05))
+k_factor <- c(1, 2, 5,10)
+sim_es <- cross_df(list(transitive = target_es, k = k_factor*actual_k))
+estimated_power <- map2_df(
+          sim_es$transitive, 
+          sim_es$k,
+          power_sim_function,
+          actual_study_size,
+          0,
+          actual_i2) 
+
+plotting_data <-   estimated_power %>%
+  mutate(k_ratio_print = case_when(
+    k == actual_k*1 ~ "Actual # of conditions", 
+    k == actual_k*2 ~ "x2 actual # of conditions", 
+    k == actual_k*5 ~ "x5 actual # of conditions", 
+    k == actual_k*10 ~ "x10 actual # of conditions"
+  )) %>%
+  mutate(k_ratio_print = fct_relevel(k_ratio_print, "x10 actual # of conditions", "x5 actual # of conditions", "x2 actual # of conditions", "Actual # of conditions"))
+
+ggplot(plotting_data, aes(x = transitive_es, y = estimated_power, color = k_ratio_print, group = k_ratio_print)) +
+  geom_hline(aes(yintercept = .8), linetype = 2) +
+  geom_point() +
+  geom_line() +
+  xlab("Effect Size Difference") +
+  ylab("Estimated Power") +
+  ggtitle("Simulated power for moderator analyses") +
+  theme_classic() +
+  scale_color_discrete(name = "Number of conditions in MA")
+```
