@@ -772,18 +772,23 @@ qplot(ns, ps, geom = c("point","line"),
       xlab("Number of participants (N)")
 ```
 
-# Post-hoc power analysis for Meta-analysis 
+# Simulations of meta-analytic moderator power
 
-While power analysis is more suited for prospective analysis than for retrospective analysis, we conducted two simulations varying the true effect size to see if the null effects in the present meta-analysis can be attributed to the lack of power. Because there was no consensus on calculating power for the multilevel multivariate models we used in the meta-analysis, we conducted our simulations on a mixed effect model using R package MetaPower (Griffin, 2020). 
+For a number of the moderators we examined in our meta-analysis (e.g., noun phrase type), the average effect size did not statistically differ from zero. As such, in these cases, we failed to reject the null hypothesis.  This failure could be for two reasons: there is no true effect or there is an effect but we do not have the statistical power to detect it. We cannot determine which of these two reasons lead to the null moderating effects that we report, but we can examine our power  for moderator effects in the current meta-analysis (i.e. probability of rejecting a false null hypothesis).
+
+There are not agreed-upon methods for calculating power for the multilevel mixed effect meta-analytic models we report in the paper, but methods do exist for mixed effect models (Hedges & Pigott, 2004). We conducted simulations of power for moderating effects using an implementation of these methods in R (metapower; Griffin, 2020).
+
+
 ```{r}
 
-ess <- seq(0.01, 1.5, 0.01)
 null_model <- rma(yi = d_calc, 
                     vi = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/row_id,
                      method = "REML",
                      data = ma_data )
+
 i2 <- null_model$I2
+
 mod_estimate <- mpower(
               effect_size = null_model$beta %>% as.numeric(),
               study_size = ma_data %>% select(n_1) %>% pull() %>% mean(),#questionable?
@@ -796,66 +801,8 @@ mod_estimate <- mpower(
               )
 ```
 
-In the first simulation, we varied the included experimental conditions on the x-axis. The estimated power of the meta-analysis was plotted along the y-axis. The three curves in different colors represent the difference in the estimated power, controlled for the true effect sizes and the heterogeneity in the data. The red dotted line denotes the estimated power for the current meta-analytic effect size (*d*  = 0.24). The power analysis suggests that the current estimate has moderate power (Power: `r round(mod_estimate$power[[2]], 2)`).
-
-```{r}
-#ess <- seq(0.01, 1.5, 0.01)
-
-condition_n <- seq(10, 200, 1)
-
-#condition_n<- seq(10, 12, 1)
-es_ratio <- c(0.5, 1, 2)
 
 
-es_sims <- lapply(es_ratio, function(y){
-  
-  lapply(condition_n, 
-       function(x){
-         mpower(
-              effect_size = (null_model$beta %>% as.numeric()) * y,
-              study_size = ma_data %>% select(n_1) %>% pull() %>% mean(),#questionable?
-              k = x,
-              i2 = i2/100,
-              es_type = "d",
-              test_type = "two-tailed",
-              p = 0.05,
-              con_table = NULL
-              )$power[2]
-       }) %>% 
-  unlist() %>% 
-  tibble("power" = ., 
-         "condition" = condition_n, 
-         "ES_ratio" = y)
-  
-  
-  
-}) %>% 
-  bind_rows()
-
-  
-
-es_sims %>% 
-  mutate(ES_ratio_print = case_when(
-    ES_ratio == 0.5 ~ "x.5 Actual MA Effect Size", 
-    ES_ratio == 1 ~ "Actual MA Effect Size", 
-    ES_ratio == 2 ~ "x2 Actual MA Effect Size"
-  )) %>% 
-  ggplot(aes(x = condition, y = power, color = ES_ratio_print, group = ES_ratio)) + 
-  geom_point()+
-  geom_line() + 
-  geom_vline(xintercept = nrow(ma_data), 
-             color = "red", 
-             linetype = "dotted") + 
-  geom_hline(yintercept = mod_estimate$power[[2]], 
-             color = "red", 
-             linetype = "dotted") + 
-    annotate("text", x = nrow(ma_data) + 50, y = mod_estimate$power[[2]] + .05, label = "Estimated Post-hoc Power", vjust = -0.5) + 
-  xlab("Number of Conditions") +
-  xlim(10, 200)+
-  ylab("Estimated Power") + 
-  guides(color=guide_legend(title=""))
-
-```
 ```{r}
 transitive_model <- rma(d_calc,
                              vi = d_var_calc,
@@ -871,81 +818,77 @@ intransitive_model <- rma(d_calc,
 
 n_study_transitive <- ma_data %>% ungroup() %>% filter( sentence_structure == "transitive") %>% distinct(plot_label) %>% count() %>% pull()
 n_study_intransitive <- ma_data %>%  ungroup() %>% filter( sentence_structure == "intransitive") %>% distinct(plot_label) %>% count() %>% pull()
-
-
-moderator_estimate <- mod_power(
-n_groups = 2,
-effect_sizes = c(transitive_model$beta %>% as.numeric(),
-                 intransitive_model$beta %>% as.numeric()),
-study_size =  n_study_transitive + n_study_intransitive,
-k = n_study_transitive,#they are equal 
-i2 = 0.75,# i2/100, the paper is recommending to use a value like this because this is an average / rule of thumb thing, pg31
-es_type = "d",
-p = 0.05,
-con_table = NULL
-) 
-
-es_ratio <- c(0.5, 1, 2)
-condition_n <- seq(10, 200, 2)
 ```
 
-
-In the second simulation, we simulated a power analysis for the moderator analysis. Similar to the first simulation, we varied the number of conditions included in the experiment for three different possible effect sizes. More specifically, we used the effect size of intransitive conditions as baseline while varying the effect size of transitive conditions. The red dotted line denotes the estimated power for the current moderator analysis. The power analysis suggests that the current moderator analysis might be under-powered (Power: `r round(moderator_estimate$mod_power[[2]], 2)`).
-
-
 ```{r}
+# get actual MA params
+actual_study_size = ma_data %>% select(n_1) %>% pull() %>% mean()
+actual_k <- nrow(ma_data)/2
+actual_i2 <- mean(c(intransitive_model$I2, c(transitive_model$I2)))
 
-
-trans_es <-  intransitive_model$beta %>% as.numeric() * es_ratio
-
-
-
-trans_es_sims <- lapply(es_ratio, function(y){
-    lapply(condition_n, 
-       function(x){
-         mod_power(
+# function for getting power varying ES1 and k
+power_sim_function <- function(es1, this_k, this_study_size, es2, this_i2){
+      power <- mod_power(
               n_groups = 2,
-              effect_sizes = c(transitive_model$beta %>% as.numeric() * y,
-                               intransitive_model$beta %>% as.numeric()),
-              study_size =  2*x,
-              k = x,#they are equal 
-              i2 = 0.75,# i2/100, the paper is recommending to use a value like this because this is an average / rule of thumb thing, pg31
+              effect_sizes = c(es1, es2),
+              study_size =  this_study_size,# this should be participants
+              k = this_k,
+              i2 = this_i2/100,
               es_type = "d",
               p = 0.05,
               con_table = NULL
               )$mod_power[[2]]
-       }) %>% 
-  unlist() %>% 
-  tibble("power" = ., 
-         "condition" = condition_n, 
-         "es_ratio" = y) 
-    
-  }) %>% 
-  bind_rows()
-  
-  
-  
+      
+      data.frame(transitive_es = es1,
+                 k = this_k,
+                 estimated_power = power)
+}
 
-trans_es_sims %>% 
-  mutate(ES_ratio_print = case_when(
-    es_ratio == 0.5 ~ "x.5 Actual Transitive Condition Effect Size", 
-    es_ratio == 1 ~ "Actual Transitive Condition Effect Size", 
-    es_ratio == 2 ~ "x2 Actual Transitive Condition Effect Size"
-  )) %>% 
-  ggplot(aes(x = condition, y = power, color = ES_ratio_print, group = ES_ratio_print)) + 
-  geom_point()+
-  geom_line() + 
-  geom_vline(xintercept = n_study_transitive, 
-             color = "red", 
-             linetype = "dotted") + 
-  geom_hline(yintercept = moderator_estimate$mod_power[[2]], 
-             color = "red", 
-             linetype = "dotted") + 
-    annotate("text", x = n_study_transitive + 100, y = moderator_estimate$mod_power[[2]] + .05, label = "Estimated Post-hoc Power for Transitivity Effect", vjust = -0.5) + 
-  xlab("Number of Conditions") +
-  xlim(10, 200)+
-  ylab("Estimated Power") + 
-  guides(color=guide_legend(title=""))
+# do the thing
+target_es <- c(seq(0, 1, .05))
+k_factor <- c(1, 2, 5, 10)
+sim_es <- cross_df(list(transitive = target_es, k = k_factor*actual_k))
+#(ask abuot the map2_df))
+estimated_power <- map2_df(
+          sim_es$transitive, 
+          sim_es$k,
+          power_sim_function,
+          actual_study_size,
+          0,
+          actual_i2) 
+```
+
+To estimate power for a categorical moderating effect, we varied the effect size difference between the two levels of the moderator (e.g., "pronoun" vs. "noun"), and the number of conditions (studies) present for each level in the meta-analysis. We estimated the between study variance empirically ($I^2$ = `r round(actual_i2, 2)`). 
+
+The figure below shows the estimated power if our meta-analytic models for  moderator effects. Shown in purple is the estimated power, given the actual number of conditions present in our meta-analysis; other lines show estimated power if more conditions were present in our meta-analysis. The dashed line shows 80% power.
+
+This analysis suggests that we have reasonably high power to detect medium-to-large effects size differences (at least $d$ = .5), but low power to detect smaller effect sizes. Thus, the null effects for moderating effects reported in the paper should be interpreted with caution: while these analyses provide strong evidence that  moderator effects are not large, it remains possible that some of the null effects we report are actually non-zero but small in magnitude. 
+
+
+```{r}
+# Plot the thing
+plotting_data <-   estimated_power %>%
+  mutate(k_ratio_print = case_when(
+    k == actual_k*1 ~ "Actual # of conditions", 
+    k == actual_k*2 ~ "x2 actual # of conditions", 
+    k == actual_k*5 ~ "x5 actual # of conditions", 
+    k == actual_k*10 ~ "x10 actual # of conditions"
+  )) %>%
+  mutate(k_ratio_print = fct_relevel(k_ratio_print, "x10 actual # of conditions", "x5 actual # of conditions", "x2 actual # of conditions", "Actual # of conditions"))
+
+ggplot(plotting_data, aes(x = transitive_es, y = estimated_power, color = k_ratio_print, group = k_ratio_print)) +
+  geom_hline(aes(yintercept = .8), linetype = 2) +
+  geom_point() +
+  geom_line() +
+  xlab("Effect Size Difference") +
+  annotate("text", x = .85, y = .83, label = "80% power") +
+  ylab("Estimated Power") +
+  ggtitle("Simulated power for moderator analyses") +
+  theme_classic() +
+  scale_color_discrete(name = "Number of conditions in MA",
+                       labels = c(expression(paste(italic("x"), "10 actual # of conditions")), expression(paste(italic("x"), "5 actual # of conditions")),
+                                  expression(paste(italic("x"), "2 actual # of conditions")), "Actual # of conditions")) +
+  theme(legend.text.align = 0)
 ```
 
 
@@ -958,6 +901,7 @@ Champely, S., Ekstrom, C., Dalgaard, P., Gill, J., Weibelzahl, S., Anandkumar, A
 
 Griffin JW (2020). metapoweR: an R package for computing meta-analytic statistical power. R package version 0.2.1, https://CRAN.R-project.org/package=metapower.
 
+Hedges, L. V., & Pigott, T. D. (2004). The power of statistical tests for moderators in meta-analysis. Psychological methods, 9(4), 426.
 
 Hirsh-Pasek, K., Golinkoff, R. M., & Naigles, L. (1996). Young children’s use of syntactic frames to derive meaning. The origins of grammar: Evidence from early language comprehension, 123-158.
 
