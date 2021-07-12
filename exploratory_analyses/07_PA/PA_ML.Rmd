@@ -10,12 +10,19 @@ library(here)
 library(metafor)
 library(metapower)
 
-ma_data <- read_csv(here("data/processed/syntactic_bootstrapping_tidy_data.csv"))
-
 ```
+
+# Simulations of meta-analytic moderator power
+For a number of the moderators we examined in our meta-analysis (e.g., noun phrase type), the average effect size did not statistically differ from zero. As such, in these cases, we failed to reject the null hypothesis.  This failure could be for two reasons: there is no true effect or there is an effect but we do not have the statistical power to detect it. We cannot determine which of these two reasons lead to the null moderating effects that we report, but we can examine our power  for moderator effects in the current meta-analysis (i.e. probability of rejecting a false null hypothesis).
+
+There are not agreed-upon methods for calculating power for the multilevel mixed effect meta-analytic models we report in the paper, but methods do exist for mixed effect models (Hedges & Pigott, 2004). We conducted simulations of power for moderating effects using an implementation of these methods in R (metapower; Griffin, 2020).
+
+
 
 
 ```{r}
+ma_data <- read_csv(here("data/processed/syntactic_bootstrapping_tidy_data.csv"))
+
 null_model <- rma(yi = d_calc, 
                     vi = d_var_calc,
                     random = ~ 1 | short_cite/same_infant/row_id,
@@ -56,10 +63,12 @@ n_study_intransitive <- ma_data %>%  ungroup() %>% filter( sentence_structure ==
 ```
 
 ```{r}
+# get actual MA params
 actual_study_size = nrow(ma_data)
 actual_k <- nrow(ma_data)/2
 actual_i2 <- mean(c(intransitive_model$I2, c(transitive_model$I2)))
 
+# function for getting power varying ES1 and k
 power_sim_function <- function(es1, this_k, this_study_size, es2, this_i2){
       power <- mod_power(
               n_groups = 2,
@@ -77,8 +86,9 @@ power_sim_function <- function(es1, this_k, this_study_size, es2, this_i2){
                  estimated_power = power)
 }
 
+# do the thing
 target_es <- c(seq(0, 1, .05))
-k_factor <- c(1, 2, 5,10)
+k_factor <- c(1, 2, 5, 10)
 sim_es <- cross_df(list(transitive = target_es, k = k_factor*actual_k))
 estimated_power <- map2_df(
           sim_es$transitive, 
@@ -87,7 +97,17 @@ estimated_power <- map2_df(
           actual_study_size,
           0,
           actual_i2) 
+```
 
+To estimate power for a categorical moderating effect, we varied the effect size difference between the two levels of the moderator (e.g., "pronoun" vs. "noun"), and the number of conditions (studies) present for each level in the meta-analysis. We estimated the between study variance empirically ($I^2$ = `r round(actual_i2, 2)`). 
+
+The figure below shows the estimated power if our meta-analytic models for  moderator effects. Shown in purple is the estimated power, given the actual number of conditions present in our meta-analysis; other lines show estimated power if more conditions were present in our meta-analysis. The dashed line shows 80% power.
+
+This analysis suggests that we have reasonably high power to detect medium-to-large effects size differences (at least $d$ = .5), but low power to detect smaller effect sizes. Thus, the null effects for moderating effects reported in the paper should be interpretted with caution: while these analyses provide strong evidence that  moderator effects are not large, it remains possible that some of the null effects we report are actually non-zero but small in magnitude. 
+
+
+```{r}
+# Plot the thing
 plotting_data <-   estimated_power %>%
   mutate(k_ratio_print = case_when(
     k == actual_k*1 ~ "Actual # of conditions", 
@@ -102,8 +122,12 @@ ggplot(plotting_data, aes(x = transitive_es, y = estimated_power, color = k_rati
   geom_point() +
   geom_line() +
   xlab("Effect Size Difference") +
+  annotate("text", x = .85, y = .83, label = "80% power") +
   ylab("Estimated Power") +
   ggtitle("Simulated power for moderator analyses") +
   theme_classic() +
-  scale_color_discrete(name = "Number of conditions in MA")
+  scale_color_discrete(name = "Number of conditions in MA",
+                       labels = c(expression(paste(italic("x"), "10 actual # of conditions")), expression(paste(italic("x"), "5 actual # of conditions")),
+                                  expression(paste(italic("x"), "2 actual # of conditions")), "Actual # of conditions")) +
+  theme(legend.text.align = 0)
 ```
