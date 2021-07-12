@@ -4,14 +4,14 @@ title: 'Quantifying the syntactic bootstrapping effect in verb learning: A meta-
 author: "Anjie Cao and Molly Lewis"
 date: "`r Sys.Date()`"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     code_folding: hide
     number_sections: yes
     theme: paper
     toc: yes
     toc_float: no
-  pdf_document:
-    toc: yes
 subtitle: Supplementary Information
 ---
 
@@ -845,10 +845,9 @@ power_sim_function <- function(es1, this_k, this_study_size, es2, this_i2){
 }
 
 # do the thing
-target_es <- c(seq(0, 1, .05))
+target_es <- c(seq(0, 1.5, .05))
 k_factor <- c(1, 2, 5, 10)
 sim_es <- cross_df(list(transitive = target_es, k = k_factor*actual_k))
-#(ask abuot the map2_df))
 estimated_power <- map2_df(
           sim_es$transitive, 
           sim_es$k,
@@ -862,7 +861,7 @@ To estimate power for a categorical moderating effect, we varied the effect size
 
 The figure below shows the estimated power if our meta-analytic models for  moderator effects. Shown in purple is the estimated power, given the actual number of conditions present in our meta-analysis; other lines show estimated power if more conditions were present in our meta-analysis. The dashed line shows 80% power.
 
-This analysis suggests that we have reasonably high power to detect medium-to-large effects size differences (at least $d$ = .5), but low power to detect smaller effect sizes. Thus, the null effects for moderating effects reported in the paper should be interpreted with caution: while these analyses provide strong evidence that  moderator effects are not large, it remains possible that some of the null effects we report are actually non-zero but small in magnitude. 
+This analysis suggests that we have reasonably high power to detect large effects size differences (at least $d$ = ~1), but low power to detect smaller effect sizes. Thus, the null effects for moderating effects reported in the paper should be interpreted with caution: while these analyses provide strong evidence that moderator effects are not large, it remains possible that some of the null effects we report are actually non-zero but small in magnitude. 
 
 
 ```{r}
@@ -881,10 +880,11 @@ ggplot(plotting_data, aes(x = transitive_es, y = estimated_power, color = k_rati
   geom_point() +
   geom_line() +
   xlab("Effect Size Difference") +
-  annotate("text", x = .85, y = .83, label = "80% power") +
+  annotate("text", x = .1, y = .83, label = "80% power") +
   ylab("Estimated Power") +
   ggtitle("Simulated power for moderator analyses") +
   theme_classic() +
+  scale_x_continuous(breaks = seq(0, 1.5, 0.25)) +
   scale_color_discrete(name = "Number of conditions in MA",
                        labels = c(expression(paste(italic("x"), "10 actual # of conditions")), expression(paste(italic("x"), "5 actual # of conditions")),
                                   expression(paste(italic("x"), "2 actual # of conditions")), "Actual # of conditions")) +
