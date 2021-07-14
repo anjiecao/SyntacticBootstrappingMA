@@ -4,14 +4,14 @@ title: 'Quantifying the syntactic bootstrapping effect in verb learning: A meta-
 author: "Anjie Cao and Molly Lewis"
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    toc: yes
   html_document:
     code_folding: hide
     number_sections: yes
     theme: paper
     toc: yes
     toc_float: no
+  pdf_document:
+    toc: yes
 subtitle: Supplementary Information
 ---
 
