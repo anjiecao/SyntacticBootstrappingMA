@@ -291,7 +291,7 @@ These additional moderators were not included in the main analyses because of th
 
 
 ## Ordered by Row Average 
-```{r fig.width=9.5, fig.height=9.5}
+```{r fig.width=12.8, fig.height=9.5}
 ALL_CATEGORICAL_VARS <- c("presentation_type",
                       #"agent_argument_type", "patient_argument_type", 
                      "stimuli_modality", "stimuli_actor", "character_identification",   "practice_phase", "test_mass_or_distributed", "transitive_event_type", "intransitive_event_type")
@@ -334,11 +334,12 @@ all_pair_counts <- list(ALL_CATEGORICAL_VARS,
   row.names(all_counts_wide_matrix) <-  as.character(all_counts_wide$v1_long)
   heatmaply(all_counts_wide_matrix,
             fontsize_row = 8,
-            fontsize_col = 8)
+            fontsize_col = 8, 
+            key.title = "Number of Conditions")
 ```
 
 ## Ordered by groups        
-```{r fig.width=9.5, fig.height=9.5}
+```{r fig.width=12.5, fig.height=9.5}
 ALL_VARS <- colnames(all_counts_wide_matrix)
 ALL_VARS <- c("character_identification/yes", 
               "character_identification/no", 
@@ -369,7 +370,8 @@ heatmaply(ordered_matrix,
             fontsize_row = 8,
             fontsize_col = 8,
            Rowv = NA, 
-          Colv = NA)
+          Colv = NA, 
+          key.title = "Number of Conditions")
 ```
 
 
@@ -672,7 +674,7 @@ argument_type_print%>%
 
 # Variability in visual stimuli as a function of age
 
-To assess the relationship between visual stimuli complexity and participant age, we collected sample visual stimuli for each condition in our sample  Schematic illustrations of the visual stimuli were used when the actual screenshots were not provided. Screenshots of the text descriptions of the events were used when the visual stimuli were unavailable. Note that because some papers' publishers converted to the visual stimuli to black-and-white, we decided to grayscale all visual stimuli for easier visual comparison.  
+To assess the relationship between visual stimuli complexity and participant age, we collected sample visual stimuli for each condition in our sample (Panel A).  Schematic illustrations of the visual stimuli were used when the actual screenshots were not provided. Screenshots of the text descriptions of the events were used when the visual stimuli were unavailable. Note that because some papers' publishers converted to the visual stimuli to black-and-white, we decided to grayscale all visual stimuli for easier visual comparison.  
 
 With the exception of studies from one paper targeting the youngest participants in our sample (Jin, 2015), there was little systematic variability in the complexity of visual stimuli as a function of age. This suggests that adaptation of visual stimuli to participants' age is unlikely to be the cause of the lack of developmental change of the strength of the effect. 
 
@@ -695,7 +697,7 @@ age_model <- rma.mv(d_calc ~ mean_age, V = d_var_calc,
 
 ```
 
-```{r, fig.width = 10, fig.height = 8}
+```{r, fig.width = 3, fig.height = 3}
 ma_data_with_predictions <- predict(age_model) %>%
   as.data.frame() %>%
   bind_cols(ma_data) %>% 
@@ -703,21 +705,22 @@ ma_data_with_predictions <- predict(age_model) %>%
     mean_age_months = mean_age / 30.44
   )
 
-ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
+visual_stimuli_plot <- ggplot(ma_data_with_predictions, aes(x = mean_age_months, y = d_calc)) +
   geom_image(aes(image = stim_path)) +
   geom_smooth(method = "lm") +
   #geom_smooth(method = "lm", data = ma_data_with_predictions, aes(x = mean_age, y = pred)) +
   scale_x_continuous(breaks = seq(0, 48, by = 12), limits = c(9, 48)) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = "dashed") +
   ylab("Effect Size (d)") +
-  xlab("Mean age (months)")
+  xlab("Mean age (months)") + 
+  theme(axis.text=element_text(size=11),
+        axis.title=element_text(size=11))
 ```
 
 
 
 
 
-# Power analysis for experiment 
 ```{r}
 
 pwr_no_mod_model <- rma.mv(d_calc~1, 
@@ -745,9 +748,8 @@ current_power <- pwr::pwr.p.test(h = d_pwr,
 
 ```
 
-We conducted a power analysis using the `pwr` package (Champely et al., 2018). The x-axis represents the number of participants in each condition, and the y-axis represents the estimated power based on the power of estimated meta-analytic effect size (*d* = `r round(es_stimate,2)`). The horizontal black dotted line represents 80% power, and the vertical black dotted lines represent the number of participants needed to reach 80% power (*N* = `r round(pwr_80, 0)`). The red lines represents the current power (`r round(current_power * 100, 2)`%) based on the approximate mean sample sizes (*N* = `r round(mean_sample_size, 0)`) of the conditions included in the meta-analysis.
 
-```{r}
+```{r fig.width = 8, fig.height = 4}
 max_n <- min(max(60,
                      pwr::pwr.p.test(h = d_pwr,
                                      sig.level = .05,
@@ -760,7 +762,7 @@ pwrs <- data.frame(ns = seq(5, max_n, 5),
                    sig.level = .05)$power,
                    stringsAsFactors = FALSE)
 
-qplot(ns, ps, geom = c("point","line"),
+power_plot <- qplot(ns, ps, geom = c("point","line"),
           data = pwrs) +
       geom_hline(yintercept = .8, lty = 2) +
       geom_vline(xintercept = pwr_80, lty = 3) +
@@ -770,7 +772,14 @@ qplot(ns, ps, geom = c("point","line"),
       xlim(c(0,max_n)) +
       ylab("Power to reject the null at p < .05") +
       xlab("Number of participants (N)")
+
+cowplot::plot_grid(visual_stimuli_plot, power_plot, labels = c("A", "B"))
 ```
+
+# Power analysis for experiment 
+
+We conducted a power analysis using the `pwr` package (Panel B; Champely et al., 2018). The x-axis represents the number of participants in each condition, and the y-axis represents the estimated power based on the power of estimated meta-analytic effect size (*d* = `r round(es_stimate,2)`). The horizontal black dotted line represents 80% power, and the vertical black dotted lines represent the number of participants needed to reach 80% power (*N* = `r round(pwr_80, 0)`). The red lines represents the current power (`r round(current_power * 100, 2)`%) based on the approximate mean sample sizes (*N* = `r round(mean_sample_size, 0)`) of the conditions included in the meta-analysis.
+
 
 # Simulations of meta-analytic moderator power
 
@@ -864,7 +873,7 @@ The figure below shows the estimated power if our meta-analytic models for  mode
 This analysis suggests that we have reasonably high power to detect large effects size differences (at least $d$ = ~1), but low power to detect smaller effect sizes. Thus, the null effects for moderating effects reported in the paper should be interpreted with caution: while these analyses provide strong evidence that moderator effects are not large, it remains possible that some of the null effects we report are actually non-zero but small in magnitude. 
 
 
-```{r}
+```{r fig.width = 7, fig.height = 4}
 # Plot the thing
 plotting_data <-   estimated_power %>%
   mutate(k_ratio_print = case_when(
