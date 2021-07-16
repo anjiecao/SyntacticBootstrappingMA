@@ -27,7 +27,7 @@ abstract: |
   
   
 keywords          : "language acquisition, syntactic bootstrapping, meta-analysis, verb learning"
-wordcount         : "7995"
+wordcount         : "7994"
 bibliography      : ["references.bib"]
 csl               : "apa6-meta.csl"
 header-includes:
