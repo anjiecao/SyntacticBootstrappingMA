@@ -15,7 +15,7 @@ affiliation:
   - id            : "1"
     institution   : "Department of Psychology, Stanford University"
   - id            : "2"
-    institution   : "Department of Psychology, Carnegie Mellon Unviversity"
+    institution   : "Department of Psychology, Carnegie Mellon University"
 author_note: "Data Availability Statement: All data and analysis scripts are available at https://github.com/anjiecao/SyntacticBootstrappingMA."
 
  
@@ -27,7 +27,7 @@ abstract: |
   
   
 keywords          : "language acquisition, syntactic bootstrapping, meta-analysis, verb learning"
-wordcount         : "8221"
+wordcount         : "7995"
 bibliography      : ["references.bib"]
 csl               : "apa6-meta.csl"
 header-includes:

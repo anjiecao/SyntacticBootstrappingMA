@@ -242,7 +242,7 @@ var(d_{intransitive}) &= \frac{1}{N} + \frac{d^2}{2 * N} \\
 
 
 
-# Comparison of between- vs. within- subject effect size estimates
+# Cross-condition Comparison vs. Chance Comparison effect size estimates
 
 The forest plot below compares the two ways of calculating effect sizes for the subset of experimental conditions that use a between-group analysis in the original paper.  In other words, the original analyses compared the proportion of looking time at the causative events between transitive conditions and intransitive conditions. Effect sizes calculated using this method are denoted by the pink points. We also present the effect sizes calculated using the against-chance method on the same subset of the experimental conditions. These effect sizes are denoted with green points. The against-chance method is a more conservative way of estimating the effect size. As the forest plot shows, the meta-analytic effect size using the between-group calculation is larger than the meta-analytic effect size using the against-chance method. 
 
